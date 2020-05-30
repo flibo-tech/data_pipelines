@@ -1,0 +1,104 @@
+chromedriver: 'C:\\Users\\bhask\\Downloads\\chromedriver'
+
+movies_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\movies\'
+tv_series_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\tv_series\'
+scraped_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\'
+streaming_sources: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\streaming_sources\'
+to_upload: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\to_upload\'
+upload_resources: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\to_upload\resources\'
+
+tmdb_api_key: '57b66bd8b82b9db257af4184ca3f5e8d'
+
+sql:
+  host: '13.59.44.163'
+  port: 5432
+  db: 'flibo'
+  schema: 'app'
+  user: 'postgres'
+  password: 'yzalitup1'
+
+pem_key: 'C:\Users\bhask\Desktop\Flibo\t2_micro_2nd.pem'
+
+ec2:
+  user: 'ec2-user'
+  public_dns: 'ec2-13-59-44-163.us-east-2.compute.amazonaws.com'
+  file_upload_location: '/tmp/'
+
+scrape_data:
+  collect_new_imdb_ids: False # to collect just the imdb ids for new content releases
+  latest_release_date: '2020-05-15' # update this if collect_new_imdb_ids set as True
+  movies: [] #'movie_budget_n_metacritic_scrape', 'movie_content_scrape', 'movie_crew_scrape', 'movie_keywords_scrape', 'movie_synopsys_scrape', 'movie_technical_specs_scrape', 'movie_tmdb_artist_data_collection', 'movie_tmdb_data_collection'
+  tv_series: [] #'tv_series_content_scrape', 'tv_series_crew_scrape', 'tv_series_details_scrape', 'tv_series_keywords_scrape', 'tv_series_synopsys_scrape', 'tv_series_technical_specs_scrape', 'tv_series_tmdb_artist_data_collection', 'tv_series_tmdb_data_collection'
+  awards: [] #'awards_scrape' -- Before running this remember to delete latest year's awards scraped from database & file awards_scraped.csv at scraped_data_folder
+  countries: {
+    en_CA: {
+      name: 'Canada',
+      platforms: [119, 9, 212, 8, 73, 258, 305, 331, 326, 337, 241, 25, 230, 231, 283, 146, 87, 151, 223, 314, 175, 330, 78, 188, 348, 350, 140, 192, 3, 2, 68]
+    },
+    es_MX: {
+      name: 'Mexico',
+      platforms: [8, 119, 9, 167, 31, 339, 228, 283, 66, 188, 67, 100, 11, 229, 350, 3, 68, 2]
+    },
+    en_US: {
+      name: 'United States',
+      platforms: [119, 9, 358, 73, 212, 8, 15, 257, 200, 27, 31, 203, 299, 337, 37, 322, 198, 78, 363, 243, 188, 350, 3, 7, 2, 10, 68, 192, 352, 279, 105]
+    },
+    pt_BR: {
+      name: 'Brazil',
+      platforms: [8, 119, 9, 227, 19, 47, 167, 307, 31, 228, 283, 229, 11, 350, 3, 2, 68]
+    },
+    fr_FR: {
+      name: 'France',
+      platforms: [8, 119, 9, 138, 56, 193, 345, 283, 234, 147, 188, 11, 236, 354, 310, 350, 68, 58, 145, 35, 2, 3, 59, 192, 61, 324, 177]
+    },
+    de_DE: {
+      name: 'Germany',
+      platforms: [8, 119, 9, 6, 29, 30, 178, 298, 28, 334, 175, 201, 194, 304, 35, 33, 327, 285, 188, 142, 350, 130, 10, 68, 2, 133, 40, 192, 177, 3, 20]
+    },
+    it_IT: {
+      name: 'Italy',
+      platforms: [119, 9, 8, 29, 110, 109, 222, 39, 359, 283, 188, 100, 11, 350, 2, 40, 35, 3, 68]
+    },
+    ru_RU: {
+      name: 'Russia',
+      platforms: [115, 8, 113, 119, 9, 116, 188, 100, 11, 350, 354, 3, 2]
+    },
+    es_ES: {
+      name: 'Spain',
+      platforms: [63, 8, 119, 9, 149, 329, 257, 118, 336, 64, 35, 62, 283, 188, 100, 11, 350, 3, 2, 68]
+    },
+    en_GB: {
+      name: 'United Kingdom',
+      platforms: [119, 9, 8, 29, 39, 129, 287, 224, 103, 38, 194, 333, 283, 175, 296, 223, 137, 41, 188, 11, 350, 130, 2, 3, 40, 93, 10, 68, 192, 177, 35]
+    },
+    en_IN: {
+      name: 'India',
+      platforms: [8, 119, 9, 220, 73, 122, 232, 218, 309, 121, 237, 255, 158, 175, 319, 100, 315, 283, 11, 350, 2, 3, 192]
+    },
+    en_ID: {
+      name: 'Indonesia',
+      platforms: [8, 159, 158, 160, 175, 100, 11, 350, 2, 3]
+    },
+    ja_JP: {
+      name: 'Japan',
+      platforms: [8, 15, 85, 119, 9, 84, 86, 11, 350, 68, 2, 10, 3]
+    },
+    en_PH: {
+      name: 'Philippines',
+      platforms: [8, 119, 9, 160, 175, 100, 158, 11, 350, 3, 2]
+    },
+    en_AU: {
+      name: 'Australia',
+      platforms: [119, 9, 8, 191, 134, 21, 73, 132, 337, 357, 246, 135, 175, 223, 283, 87, 22, 82, 188, 100, 11, 350, 3, 24, 2, 192, 68]
+    }
+  }
+
+upload_data: [] # 'movies_details', 'tv_series_details', 'artists', 'content_crew', 'content_tags', 'awards_master', 'content_certificates', 'awards_distribution', 'live_search', 'upload_streaming_info'
+# Remember to remove or change names of files - artists_to_contents.csv & tags_to_contents.csv in upload_resources folder while running live_search for new data
+
+# similar movies algo
+algo:
+  weight_power: 0.65
+  neighbours: 50
+  vCPU: 96
+  calculate_similar_contents: False # This functionality calculates similar movies by fetching data from sql db only. Remember to remove or change name of files synonyms_similar_contents.csv & full_data.csv in upload_resources folder while running this for new data

@@ -1,0 +1,91 @@
+import warnings
+warnings.filterwarnings("ignore")
+
+import pandas as pd
+import yaml
+import sqlalchemy
+from multiprocessing import Pool
+import numpy as np
+import requests
+import time
+from random import shuffle
+
+
+config = yaml.safe_load(open('./../config.yml'))
+tmdb_api_key = config['tmdb_api_key']
+
+
+def parallelize_dataframe(df, func, n_cores=config['algo']['vCPU']):
+    df_split = np.array_split(df, n_cores)
+    pool = Pool(n_cores)
+    df = pd.concat(pool.map(func, df_split))
+    pool.close()
+    pool.join()
+    return df
+
+
+def get_images(row):
+    tmdb_api_keys = ['57b66bd8b82b9db257af4184ca3f5e8d', '8955de4a0f1c29f7f7f36604a33dda5a', 'c14e5706c5c83c58873f3223a58669c3',
+                     'b99f9c8de2ac177b4f4e93510f2244a2', '8e97a8723f3405c373541c5140da2698', 'f0776fdd5f16df5639f3deb28ae20add',
+                     '0bfa442ef7bd25b1323c003a19b6313f']
+    shuffle(tmdb_api_keys)
+    url = 'https://api.themoviedb.org/3/'+row['type']+'/'+str(row['tmdb_id'])+'/images?api_key=' + tmdb_api_keys[0] + '&language=en-US&include_image_language=en%2Cnull'
+    response = requests.get(url)
+    if response.status_code == 429:
+        print('Sleeping for 2 sec...')
+        time.sleep(2)
+        print('I feel great now!')
+        try:
+            response = requests.get(url)
+            response = response.json()
+        except:
+            return 'Error', 'Error'
+    else:
+        response = response.json()
+
+    if response:
+        backdrops = response.get('backdrops', [])
+        [x.update({
+            'fetched_tmdb_id': response.get('id'),
+            'tmdb_id': row['tmdb_id'],
+            'content_id': row['content_id'],
+            'image_type': 'backdrop'
+        }) for x in backdrops]
+
+        posters = response.get('posters', [])
+        [x.update({
+            'fetched_tmdb_id': response.get('id'),
+            'tmdb_id': row['tmdb_id'],
+            'content_id': row['content_id'],
+            'image_type': 'poster'
+        }) for x in posters]
+
+        return backdrops+posters
+    else:
+        return None, None
+
+
+def apply_get_images(df):
+    df['details'] = df.apply(lambda row: get_images(row), axis=1)
+    return df
+
+
+engine = sqlalchemy.create_engine(
+    'postgres://' + config['sql']['user'] + ':' + config['sql']['password'] + '@' + config['sql'][
+        'host'] + ':' + str(config['sql']['port']) + '/' + config['sql']['db'])
+conn = engine.connect()
+
+df_titles = pd.read_sql("""
+                            select content_id, tmdb_id, type
+                            from app.content_details
+                            where tmdb_id is not null
+                        """, con=conn)
+
+print('Collecting images...')
+df_images = parallelize_dataframe(df_titles, apply_get_images)
+
+print('Preparing dataframe...')
+df_images = pd.DataFrame(df_images['details'].sum())
+df_images['file_path'][pd.notnull(df_images['file_path'])] = df_images['file_path'][pd.notnull(df_images['file_path'])].apply(lambda x: 'https://image.tmdb.org/t/p/original'+x)
+
+df_images.to_csv('extra_images.csv', index=False)

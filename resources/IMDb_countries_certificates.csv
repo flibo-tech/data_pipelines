@@ -1,0 +1,236 @@
+Rating,Country,Age,PG,Banned
+G,Australia,0,0,0
+PG,Australia,15,1,0
+M,Australia,15,0,0
+MA,Australia,15,1,0
+R,Australia,18,0,0
+X,Australia,18,0,0
+KT,Belgium,0,0,0
+KNT,Belgium,15,0,0
+Livre,Brazil,0,0,0
+G,Canada,0,0,0
+13+,Canada,13,1,0
+PG,Canada,10,1,0
+14A,Canada,14,1,0
+18A,Canada,18,1,0
+R,Canada,18,0,0
+A,Canada,18,0,0
+TE,Chile,0,0,0
+A,Denmark,0,0,0
+11,Denmark,11,1,0
+15,Denmark,15,1,0
+S,Finland,0,0,0
+K-8/K-5,Finland,8,1,0
+K-10/K-7,Finland,10,1,0
+K-12/K-9,Finland,12,1,0
+X,France,18,0,0
+Tous publics,France,0,0,0
+BPjM Restricted,Germany,18,0,0
+o.Al.,Germany,0,0,0
+I,Hong Kong,0,0,0
+IIA,Hong Kong,10,0,0
+IIB,Hong Kong,15,0,0
+III,Hong Kong,18,0,0
+L,Iceland,0,0,0
+LH,Iceland,5,0,0
+G,Ireland,0,0,0
+PG,Ireland,10,1,0
+12A,Ireland,12,1,0
+12PG,Ireland,12,1,0
+15A,Ireland,15,1,0
+15,Ireland,15,1,0
+15PG,Ireland,15,1,0
+T,Italy,0,0,0
+U,Malaysia,0,0,0
+AL,Netherlands,0,0,0
+A,Norway,0,0,0
+7,Norway,7,1,0
+11,Norway,11,1,0
+15,Norway,15,1,0
+PG,New Zealand,15,1,0
+M,New Zealand,15,0,0
+G,New Zealand,0,0,0
+GY,New Zealand,13,0,0
+GA,New Zealand,18,0,0
+RP13,New Zealand,13,1,0
+RP16,New Zealand,16,1,0
+RP18,New Zealand,18,1,0
+SPG,Philippines,18,0,0
+G,Philippines,0,0,0
+PG-13,Philippines,13,1,0
+X,Philippines,18,0,0
+A.G.,Romania,0,0,0
+XXX,Romania,18,0,0
+G,Singapore,0,0,0
+PG,Singapore,10,1,0
+R(A),Singapore,18,0,0
+Limited,South Korea,18,0,0
+All,South Korea,0,0,0
+A/i,Spain,5,0,0
+T,Spain,0,0,0
+X,Spain,18,0,0
+Btl,Sweden,0,0,0
+7,Sweden,7,1,0
+11,Sweden,11,1,0
+Btl,Switzerland ,0,0,0
+X,United Kingdom,18,0,0
+A,United Kingdom,14,0,0
+AA,United Kingdom,14,0,0
+U,United Kingdom,0,0,0
+PG,United Kingdom,10,1,0
+12A,United Kingdom,12,1,0
+G,United States,0,0,0
+PG,United States,10,1,0
+PG-13,United States,13,1,0
+R,United States,17,1,0
+GP,United States,10,1,0
+M,United States,10,0,0
+TV-G,United States,0,0,0
+TV-PG,United States,10,1,0
+Approved,United States,10,0,0
+Passed,United States,10,0,0
+G,MPAA,0,0,0
+PG,MPAA,10,1,0
+R,MPAA,17,1,0
+Atp,Argentina,0,0,0
+M,Argentina,15,1,0
+Unrated,Argentina,,,0
+X,Argentina,18,0,0
+E,Australasia,,,0
+A,Australia,15,0,0
+NRC,Australia,15,1,0
+RC,Australia,,,1
+Revoked,Australia,,,1
+SOA,Australia,15,0,0
+(Banned),Austria,,,1
+(Banned),Brazil,,,1
+A,Bulgaria,0,0,0
+B,Bulgaria,0,0,0
+C,Bulgaria,12,1,0
+D,Bulgaria,16,0,0
+X,Bulgaria,18,,0
+(Banned),Canada,,,1
+AA,Canada,14,1,0
+E,Canada,,,0
+F,Canada,0,0,0
+PA,Canada,15,1,0
+RX,Canada,18,0,0
+XXX,Canada,18,0,0
+(Banned),Chile,,,1
+A,Chile,,,0
+R,Chile,,,0
+(Banned),China,,,1
+T,Colombia,0,0,0
+X,Colombia,18,0,0
+U,Czech Republic,0,0,0
+(Banned),Czechoslovakia,,,1
+(Banned),Denmark,,,1
+(Banned),East Germany,,,1
+(Banned),Egypt,,,1
+(Banned),Finland,,,1
+(Banned),France,,,1
+Unrated,France,,,0
+(Banned),Germany,,,1
+Not Rated,Germany,,,0
+Unrated,Germany,,,0
+K,Greece,0,0,0
+II,Hong Kong,15,0,0
+KN,Hungary,0,0,0
+(Banned),Iceland,,,1
+Unrated,Iceland,,,0
+(Banned),India,,,1
+A,India,18,0,0
+Not Rated,India,,,0
+U,India,0,0,0
+UA,India,12,1,0
+Unrated,India,,,0
+A,Indonesia,7,0,0
+D,Indonesia,17,0,0
+P,Indonesia,0,0,0
+R,Indonesia,13,0,0
+SU,Indonesia,0,0,0
+(Banned),Iran,,,1
+(Banned),Iraq,,,1
+(Banned),Ireland,,,1
+PG,Israel,,,0
+X,Israel,,,0
+(Banned),Italy,,,1
+Unrated,Italy,,,0
+(Banned),Japan,,,1
+All Ages,Japan,0,0,0
+G,Japan,0,0,0
+R,Japan,18,0,0
+Unrated,Japan,,,0
+(Banned),Kuwait,,,1
+(Banned),Lebanon,,,1
+V,Lithuania,,,0
+A,Luxembourg,,,0
+(Banned),Malaysia,,,1
+(Banned),Maldives,,,1
+PG,Maldives,12,1,0
+PG,Malta,12,1,0
+U,Malta,0,0,0
+A,Mexico,0,0,0
+AA,Mexico,0,0,0
+B,Mexico,12,0,0
+C,Mexico,18,0,0
+D,Mexico,18,0,0
+PG,Mongolia,,,0
+Unrated,Netherlands,,,0
+(Banned),New Zealand,,,1
+Objectionable,New Zealand,,,1
+R,New Zealand,18,0,0
+G,Nigeria,0,0,0
+PG,Nigeria,12,1,0
+RE,Nigeria,18,0,0
+(Banned),Norway,,,1
+Banned,Norway,,,1
+Apt,Peru,0,0,0
+(Banned),Philippines,,,1
+U,Philippines,,,0
+(Banned),Poland,,,1
+b.o.,Poland,0,0,0
+(Banned),Portugal,,,1
+T,Portugal,,,0
+PG,Puerto Rico,,,0
+(Banned),Russia,,,1
+(Banned),Singapore,,,1
+Unrated,Singapore,,,0
+(Banned),South Africa,,,1
+A,South Africa,0,0,0
+PG,South Africa,7,1,0
+XX,South Africa,,,1
+(Banned),South Korea,,,1
+(Banned),Soviet Union,,,1
+(Banned),Spain,,,1
+A,Spain,,,0
+S,Spain,,,0
+(Banned),Sweden,,,1
+G,Taiwan,0,0,0
+GP,Taiwan,,,0
+(Banned),Thailand,,,1
+G,Thailand,0,0,0
+G,Turkey,,,0
+(Banned),Ukraine,,,1
+(Banned),United Kingdom,,,1
+E,United Kingdom,,,0
+H,United Kingdom,16,0,0
+Not Rated,United Kingdom,,,0
+NR,United Kingdom,,,0
+R,United Kingdom,,,0
+Rejected,United Kingdom,,,1
+Uc,United Kingdom,0,0,0
+(Banned),United States,,,1
+AO,United States,18,0,0
+C,United States,4,0,0
+E,United States,5,0,0
+GA,United States,0,0,0
+Not Rated,United States,,,0
+Open,United States,0,0,0
+TV-MA,United States,17,0,0
+TV-Y,United States,0,0,0
+Unrated,United States,18,0,0
+X,United States,18,0,0
+(Banned),Vietnam,,,1
+(Banned),West Germany,,,1
+Not Rated,West Germany,,,0
