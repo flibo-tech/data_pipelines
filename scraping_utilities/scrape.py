@@ -40,7 +40,7 @@ if config['scrape_data']['collect_new_imdb_ids']:
     print('--------------------------------- collecting new imdb ids ---------------------------------')
     collect_new_imdb_ids()
 
-df_db_ids = pd.read_csv('db_ids.csv').head(1)
+df_db_ids = pd.read_csv('db_ids.csv').head(1000)
 db_ids = list(df_db_ids['imdb_content_id'].unique())
 
 # df_title_ids = pd.read_csv('imdb_ids.csv')
