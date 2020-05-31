@@ -7,9 +7,13 @@ from selenium.common.exceptions import TimeoutException
 import time
 import lxml.html as LH
 import yaml
+import tempfile
+import os
+import requests
 
 
 def movie_budget_n_metacritic_scrape(titles):
+    print(len(titles))
     from datetime import datetime # this import was not working somehow when it was above so brought it here
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
@@ -28,52 +32,69 @@ def movie_budget_n_metacritic_scrape(titles):
     i = 1
     j = 0
 
-    try:
-        df_movie_budget_n_metacritic_already_scraped = pd.read_csv(data_folder+'movie_budget_n_metacritic.csv')
-        titles_scraped = list(df_movie_budget_n_metacritic_already_scraped['title_id'])
-        del df_movie_budget_n_metacritic_already_scraped
-    except:
-        titles_scraped = []
-    print('Scraping history read...')
+    titles_scraped = []
+    # print('Scraping history read...')
 
     df_main = pd.DataFrame()
 
     for title_id in titles:
         if titles_scraped.count(title_id) == 0:
             try:
-                url = "http://www.imdb.com/title/"+title_id
-                driver.get(url)
+                html_content = requests.get("http://www.imdb.com/title/"+title_id).text
+
+                tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
+                tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
+                tp.close()
+
+                driver.get(tp.name)
+                os.remove(tp.name)
 
                 try:
                     title_wrapper = driver.find_element_by_class_name('title_wrapper')
-                    title_name = title_wrapper.text.split('\n')[0].split(' (')[0].strip()
-                    title_year = int(title_wrapper.find_element_by_tag_name('a').text)
+                    title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
+                    title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
                     go_ahead = True
                 except:
                     errors = driver.find_elements_by_class_name('error_message')
                     if errors:
-                        if errors[0].text.count('URL was not found') == 0:
+                        if errors[0].text.replace('\\n', '').strip().count('URL was not found') == 0:
                             print('Sleeping for 2 minutes...')
                             time.sleep(2*60)
                             try:
-                                driver.get(url)
+                                html_content = requests.get("http://www.imdb.com/title/" + title_id).text
+
+                                tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
+                                tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
+                                tp.close()
+
+                                driver.get(tp.name)
+                                os.remove(tp.name)
+
                                 title_wrapper = driver.find_element_by_class_name('title_wrapper')
-                                title_name = title_wrapper.text.split('\n')[0].split(' (')[0].strip()
-                                title_year = int(title_wrapper.find_element_by_tag_name('a').text)
+                                title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
+                                title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
                                 go_ahead = True
                             except:
                                 go_ahead = False
                         else:
                             go_ahead = False
                     else:
-                        if driver.find_element_by_xpath("//*").text == '':
+                        if driver.find_element_by_xpath("//*").text.replace('\\n', '').strip() == '':
                             print('Sleeping for 2 minutes...')
                             time.sleep(2*60)
                             try:
-                                driver.get(url)
+                                html_content = requests.get("http://www.imdb.com/title/" + title_id).text
+
+                                tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
+                                tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
+                                tp.close()
+
+                                driver.get(tp.name)
+                                os.remove(tp.name)
+
                                 title_wrapper = driver.find_element_by_class_name('title_wrapper')
-                                title_name = title_wrapper.text.split('\n')[0].split(' (')[0].strip()
-                                title_year = int(title_wrapper.find_element_by_tag_name('a').text)
+                                title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
+                                title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
                                 go_ahead = True
                             except:
                                 go_ahead = False
@@ -83,51 +104,51 @@ def movie_budget_n_metacritic_scrape(titles):
                 if go_ahead:
                     subtext = title_wrapper.find_element_by_class_name('subtext')
                     try:
-                        release_date = subtext.text.split('|')[-1].strip()
+                        release_date = subtext.text.replace('\\n', '').strip().split('|')[-1].strip()
                         run_time = subtext.find_element_by_tag_name('time')
                         if run_time:
-                            run_time = run_time.text
+                            run_time = run_time.text.replace('\\n', '').strip()
                     except:
                         release_date = None
                         run_time = None
                     try:
                         rating_element = driver.find_element_by_class_name('imdbRating')
-                        imdb_rating = rating_element.find_element_by_tag_name('strong').text
-                        num_votes = rating_element.find_element_by_tag_name('a').text.replace(',', '')
+                        imdb_rating = rating_element.find_element_by_tag_name('strong').text.replace('\\n', '').strip()
+                        num_votes = rating_element.find_element_by_tag_name('a').text.replace('\\n', '').strip().replace(',', '')
                     except:
                         imdb_rating = None
                         num_votes = None
 
                     try:
-                        summary_text = driver.find_element_by_class_name('summary_text').text
+                        summary_text = driver.find_element_by_class_name('summary_text').text.replace('\\n', '').strip()
                     except:
                         summary_text = None
 
                     try:
-                        metacritic_score = driver.find_element_by_class_name('titleReviewBarItem').text.split('\n')[0]
+                        metacritic_score = driver.find_element_by_class_name('titleReviewBarItem').text.replace('\\n', '').strip().split('\n')[0]
                     except:
                         metacritic_score = None
 
                     try:
-                        reviews = driver.find_element_by_css_selector('.titleReviewBarItem.titleReviewbarItemBorder').text
+                        reviews = driver.find_element_by_css_selector('.titleReviewBarItem.titleReviewbarItemBorder').text.replace('\\n', '').strip()
                     except:
                         reviews = None
 
                     try:
-                        awards = driver.find_element_by_css_selector('.article.highlighted').text
+                        awards = driver.find_element_by_css_selector('.article.highlighted').text.replace('\\n', '').strip()
                     except:
                         awards = None
 
                     try:
-                        details = driver.find_element_by_id('titleDetails').text
+                        details = driver.find_element_by_id('titleDetails').text.replace('\\n', '').strip()
                     except:
                         details = None
 
                     try:
                         elements = driver.find_elements_by_css_selector('.see-more.inline.canwrap')
                         for element in elements:
-                            if element.text.count('Genres:') != 0:
-                                genres = [x.strip() for x in element.text.replace('Genres:', '').split('|')]
+                            if element.text.replace('\\n', '').strip().count('Genres:') != 0:
+                                genres = [x.strip() for x in element.text.replace('\\n', '').strip().replace('Genres:', '').split('|')]
                     except:
                         genres = None
 
@@ -188,32 +209,9 @@ def movie_budget_n_metacritic_scrape(titles):
                 print('Time remaining as per current speed - '+('%.1f'%(time_remaining))+' days')
                 print('\n')
                 time_checkpoint = datetime.now()
-
-            if i%100 == 0:
-                if df_main.shape[0] > 0:
-                    try:
-                        df_movie_budget_n_metacritic = pd.read_csv(data_folder+'movie_budget_n_metacritic.csv')
-                    except:
-                        df_movie_budget_n_metacritic = pd.DataFrame()
-
-                    df_movie_budget_n_metacritic = pd.concat([df_movie_budget_n_metacritic,df_main], axis=0)
-                    df_movie_budget_n_metacritic.to_csv(data_folder+'movie_budget_n_metacritic.csv', index=False)
-                    del df_movie_budget_n_metacritic
-                    df_main = pd.DataFrame()
             i += 1
         else:
             j += 1
-
-    if df_main.shape[0] > 0:
-        try:
-            df_movie_budget_n_metacritic = pd.read_csv(data_folder+'movie_budget_n_metacritic.csv')
-        except:
-            df_movie_budget_n_metacritic = pd.DataFrame()
-
-        df_movie_budget_n_metacritic = pd.concat([df_movie_budget_n_metacritic,df_main], axis=0)
-        df_movie_budget_n_metacritic.to_csv(data_folder+'movie_budget_n_metacritic.csv', index=False)
-        del df_movie_budget_n_metacritic
-        df_main = pd.DataFrame()
 
 
 
@@ -223,7 +221,8 @@ def movie_budget_n_metacritic_scrape(titles):
 
     #################################################################################################################################################################################
 
-    df = pd.read_csv(data_folder+'movie_budget_n_metacritic.csv')
+    df = df_main.copy()
+    del df_main
 
     def country(details):
         try:
@@ -422,6 +421,4 @@ def movie_budget_n_metacritic_scrape(titles):
     df['gross_USA'] = df.apply(lambda row: normalize_budget(row['gross_USA'], row['release_year']), axis=1)
     df['gross_worldwide'] = df.apply(lambda row: normalize_budget(row['gross_worldwide'], row['release_year']), axis=1)
 
-    df.to_csv(data_folder+'cleaned_movie_budget_n_metacritic.csv', index=False)
-
-    return True
+    return df

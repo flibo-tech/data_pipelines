@@ -6,6 +6,8 @@ sys.path.extend(['./movies', './tv_series', './streaming_sources', './awards'])
 
 import yaml
 import pandas as pd
+from multiprocessing import Pool
+import numpy as np
 
 from movie_budget_n_metacritic_scrape import *
 from movie_content_scrape import *
@@ -38,22 +40,35 @@ if config['scrape_data']['collect_new_imdb_ids']:
     print('--------------------------------- collecting new imdb ids ---------------------------------')
     collect_new_imdb_ids()
 
-df_db_ids = pd.read_csv('db_ids.csv')
+df_db_ids = pd.read_csv('db_ids.csv').head(1000)
 db_ids = list(df_db_ids['imdb_content_id'].unique())
 
-df_title_ids = pd.read_csv('imdb_ids.csv')
-print('Count of total ids -', df_title_ids.shape[0])
-df_title_ids = df_title_ids[~(df_title_ids['title_id'].isin(db_ids))]
-print('Count of ids after removing already scraped -', df_title_ids.shape[0])
+# df_title_ids = pd.read_csv('imdb_ids.csv')
+# print('Count of total ids -', df_title_ids.shape[0])
+# df_title_ids = df_title_ids[~(df_title_ids['title_id'].isin(db_ids))]
+# print('Count of ids after removing already scraped -', df_title_ids.shape[0])
+
+
+def parallelize_dataframe(titles, func, n_cores=config['algo']['vCPU']):
+    df_titles = pd.DataFrame(titles).rename(columns={0:'titles'})
+    df_split = np.array_split(df_titles, n_cores)
+
+    pool = Pool(n_cores)
+    df = pd.concat(pool.map(func, list(df_split['titles'])))
+    pool.close()
+    pool.join()
+    return df
 
 
 print('--------------------------------- scraping movies ---------------------------------')
-movies_titles = list(df_title_ids['title_id'][df_title_ids['type']=='feature'].unique())
+# movies_titles = list(df_title_ids['title_id'][df_title_ids['type']=='feature'].unique())
+movies_titles = db_ids
 print(len(movies_titles), 'movies to be scraped...')
 for scrape_function in config['scrape_data']['movies']:
     print('\n')
     print('----------- scraping data - ' + scrape_function + ' -----------')
-    eval(scrape_function)(movies_titles)
+    df_temp = parallelize_dataframe(movies_titles, eval(scrape_function))
+    df_temp.to_csv('~/final_file.csv', index=False)
     print('\n')
 print('--------------------------------- finished scraping movies ---------------------------------\n\n')
 
