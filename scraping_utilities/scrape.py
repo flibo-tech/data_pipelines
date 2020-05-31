@@ -54,7 +54,7 @@ def parallelize_dataframe(titles, func, n_cores=config['algo']['vCPU']):
     df_split = np.array_split(df_titles, n_cores)
 
     pool = Pool(n_cores)
-    df = pd.concat(pool.map(func, list(df_split['titles'])))
+    df = pd.concat(pool.map(func, df_split))
     pool.close()
     pool.join()
     return df

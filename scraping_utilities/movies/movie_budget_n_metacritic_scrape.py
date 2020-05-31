@@ -12,7 +12,8 @@ import os
 import requests
 
 
-def movie_budget_n_metacritic_scrape(titles):
+def movie_budget_n_metacritic_scrape(df_titles):
+    titles = list(df_titles['titles'])
     print(len(titles))
     from datetime import datetime # this import was not working somehow when it was above so brought it here
     options = webdriver.ChromeOptions()
