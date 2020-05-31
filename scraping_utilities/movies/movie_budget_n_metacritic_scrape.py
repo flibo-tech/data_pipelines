@@ -146,6 +146,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                         details = None
 
                     try:
+                        genres = None
                         elements = driver.find_elements_by_css_selector('.see-more.inline.canwrap')
                         for element in elements:
                             if element.text.replace('\\n', '').strip().count('Genres:') != 0:
