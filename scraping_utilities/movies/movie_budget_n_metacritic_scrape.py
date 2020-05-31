@@ -47,7 +47,6 @@ def movie_budget_n_metacritic_scrape(df_titles):
                 tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
                 tp.close()
 
-                print('file:///'+tp.name)
                 driver.get('file:///'+tp.name)
                 os.remove(tp.name)
 

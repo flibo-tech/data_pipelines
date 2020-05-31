@@ -40,7 +40,7 @@ if config['scrape_data']['collect_new_imdb_ids']:
     print('--------------------------------- collecting new imdb ids ---------------------------------')
     collect_new_imdb_ids()
 
-df_db_ids = pd.read_csv('db_ids.csv').head(1)
+df_db_ids = pd.read_csv('db_ids.csv').head(1000)
 db_ids = list(df_db_ids['imdb_content_id'].unique())
 
 # df_title_ids = pd.read_csv('imdb_ids.csv')
@@ -73,18 +73,18 @@ for scrape_function in config['scrape_data']['movies']:
 print('--------------------------------- finished scraping movies ---------------------------------\n\n')
 
 
-print('--------------------------------- scraping tv_series ---------------------------------')
-tv_series_titles = list(df_title_ids['title_id'][df_title_ids['type']=='tv_series'].unique())
-print(len(tv_series_titles), 'tv_series to be scraped...')
-for scrape_function in config['scrape_data']['tv_series']:
-    print('\n')
-    print('----------- scraping data - ' + scrape_function + ' -----------')
-    eval(scrape_function)(tv_series_titles)
-    print('\n')
-print('--------------------------------- finished scraping tv_series ---------------------------------\n\n')
-
-
-print('--------------------------------- scraping awards ---------------------------------')
-for scrape_function in config['scrape_data']['awards']:
-    eval(scrape_function)()
-print('--------------------------------- finished scraping awards ---------------------------------\n\n')
+# print('--------------------------------- scraping tv_series ---------------------------------')
+# tv_series_titles = list(df_title_ids['title_id'][df_title_ids['type']=='tv_series'].unique())
+# print(len(tv_series_titles), 'tv_series to be scraped...')
+# for scrape_function in config['scrape_data']['tv_series']:
+#     print('\n')
+#     print('----------- scraping data - ' + scrape_function + ' -----------')
+#     eval(scrape_function)(tv_series_titles)
+#     print('\n')
+# print('--------------------------------- finished scraping tv_series ---------------------------------\n\n')
+#
+#
+# print('--------------------------------- scraping awards ---------------------------------')
+# for scrape_function in config['scrape_data']['awards']:
+#     eval(scrape_function)()
+# print('--------------------------------- finished scraping awards ---------------------------------\n\n')
