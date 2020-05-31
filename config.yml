@@ -1,4 +1,4 @@
-chromedriver: '~/data_pipelines/chromedriver'
+chromedriver: '/home/ec2-user/data_pipelines/chromedriver'
 
 movies_data_folder: '~/'
 tv_series_data_folder: '~/'
