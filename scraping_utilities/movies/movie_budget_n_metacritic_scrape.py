@@ -17,6 +17,8 @@ def movie_budget_n_metacritic_scrape(df_titles):
     print(len(titles))
     from datetime import datetime # this import was not working somehow when it was above so brought it here
     options = webdriver.ChromeOptions()
+    options.binary_location = '/usr/bin/chromedriver'
+    chrome_driver_binary = "/usr/bin/chromedriver"
     options.add_argument('--headless')
     options.add_argument('--window-size=800x800')
     options.add_argument('--disable-gpu')
@@ -27,7 +29,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
     config = yaml.safe_load(open('./../config.yml'))
     data_folder = config['movies_data_folder']
 
-    driver = webdriver.Chrome(config['chromedriver'], chrome_options=options)
+    driver = webdriver.Chrome(chrome_driver_binary, chrome_options=options)
 
     scrape_start_time = datetime.now()
     i = 1
