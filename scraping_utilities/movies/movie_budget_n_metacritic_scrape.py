@@ -10,6 +10,10 @@ import yaml
 import tempfile
 import os
 import requests
+from selenium.webdriver.remote.remote_connection import LOGGER, logging
+
+
+LOGGER.setLevel(logging.WARNING)
 
 
 def get_driver(ip):
@@ -43,17 +47,19 @@ def should_go_ahead(title_id, ip, driver, ips):
     tp.close()
 
     driver.get('file:///' + tp.name)
-    os.remove(tp.name)
 
     try:
         title_wrapper = driver.find_element_by_class_name('title_wrapper')
         go_ahead = True
+        os.remove(tp.name)
     except:
         errors = driver.find_elements_by_class_name('error_message')
         if errors:
             if errors[0].text.replace('\\n', '').strip().count('URL was not found') != 0:
                 go_ahead = False
+                os.remove(tp.name)
         elif driver.find_element_by_xpath("//*").text.replace('\\n', '').strip().count('Error 503') != 0:
+            os.remove(tp.name)
             if ips:
                 print('Closing driver for -', title_id, ip)
                 ip = ips.pop()
@@ -68,6 +74,10 @@ def should_go_ahead(title_id, ip, driver, ips):
             else:
                 go_ahead = False
                 ip = None
+        else:
+            go_ahead = False
+            print('No reason found for -', title_id, '-', ip, '-', tp.name)
+            print('\n')
 
     return go_ahead, driver, ip, ips, title_wrapper
 
