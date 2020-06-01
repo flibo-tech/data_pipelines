@@ -23,7 +23,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
     options.add_argument('log-level=3')
-    # options.add_argument('--proxy-server=67.205.161.254')
+    options.add_argument('--proxy-server='+ip)
 
     config = yaml.safe_load(open('./../config.yml'))
     data_folder = config['movies_data_folder']
@@ -119,6 +119,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                             a = 4
 
                 if go_ahead:
+                    os.remove(tp.name)
                     subtext = title_wrapper.find_element_by_class_name('subtext')
                     try:
                         release_date = subtext.text.replace('\\n', '').strip().split('|')[-1].strip()

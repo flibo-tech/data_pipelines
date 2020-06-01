@@ -42,8 +42,8 @@ if __name__ == "__main__":
         print('Proxies gathered -', len(proxies))
         req_proxy = RequestProxy()
         for proxy in req_proxy.get_proxy_list():
-            if proxy.country in ['India', 'United Kingdom', 'United States', 'Singapore', 'Netherlands', 'Japan', 'Canada']:
-                proxies.append(proxy.ip)
+            # if proxy.country in ['India', 'United Kingdom', 'United States', 'Singapore', 'Netherlands', 'Japan', 'Canada']:
+            proxies.append(proxy.ip)
         proxies = list(set(proxies))[:config['algo']['vCPU']]
     print('Enough proxies gathered.')
 
