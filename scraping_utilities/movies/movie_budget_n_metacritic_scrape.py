@@ -37,6 +37,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
     # print('Scraping history read...')
 
     df_main = pd.DataFrame()
+    a = None
 
     for title_id in titles:
         if titles_scraped.count(title_id) == 0:
@@ -55,7 +56,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                     title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
                     title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
                     go_ahead = True
-                except:
+                except Exception as e:
                     errors = driver.find_elements_by_class_name('error_message')
                     if errors:
                         if errors[0].text.replace('\\n', '').strip().count('URL was not found') == 0:
@@ -75,10 +76,12 @@ def movie_budget_n_metacritic_scrape(df_titles):
                                 title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
                                 title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
                                 go_ahead = True
-                            except:
+                            except Exception as e:
                                 go_ahead = False
+                                a = 1
                         else:
                             go_ahead = False
+                            a = 2
                     else:
                         if driver.find_element_by_xpath("//*").text.replace('\\n', '').strip() == '':
                             print('Sleeping for 2 minutes...')
@@ -97,10 +100,12 @@ def movie_budget_n_metacritic_scrape(df_titles):
                                 title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
                                 title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
                                 go_ahead = True
-                            except:
+                            except Exception as e:
                                 go_ahead = False
+                                a = 3
                         else:
                             go_ahead = False
+                            a = 4
 
                 if go_ahead:
                     subtext = title_wrapper.find_element_by_class_name('subtext')
@@ -178,7 +183,8 @@ def movie_budget_n_metacritic_scrape(df_titles):
                         df_main = pd.concat([df_main,df], axis=0)
                         del df
                 else:
-                    print('Skipping', title_id, 'as code broke for it.')
+                    # print('Skipping', title_id, 'as code broke for it.')
+                    print('Skipping', a, e)
                     j += 1
             except TimeoutException as ex:
                 titles.append(title_id)
