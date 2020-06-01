@@ -38,6 +38,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
 
     df_main = pd.DataFrame()
     a = None
+    ex = None
 
     for title_id in titles:
         if titles_scraped.count(title_id) == 0:
@@ -57,6 +58,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                     title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
                     go_ahead = True
                 except Exception as e:
+                    ex = e
                     errors = driver.find_elements_by_class_name('error_message')
                     if errors:
                         if errors[0].text.replace('\\n', '').strip().count('URL was not found') == 0:
@@ -77,6 +79,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                                 title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
                                 go_ahead = True
                             except Exception as e:
+                                ex = e
                                 go_ahead = False
                                 a = 1
                         else:
@@ -101,6 +104,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                                 title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
                                 go_ahead = True
                             except Exception as e:
+                                ex = e
                                 go_ahead = False
                                 a = 3
                         else:
@@ -184,7 +188,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                         del df
                 else:
                     # print('Skipping', title_id, 'as code broke for it.')
-                    print('Skipping', a, e)
+                    print('Skipping', a, ex)
                     j += 1
             except TimeoutException as ex:
                 titles.append(title_id)
