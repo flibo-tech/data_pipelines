@@ -12,114 +12,92 @@ import os
 import requests
 
 
-def movie_budget_n_metacritic_scrape(df_titles):
-    ip = list(df_titles['ip'].unique())[0]
-    titles = list(df_titles['titles'])
-    print(len(titles), '-', ip)
-    from datetime import datetime # this import was not working somehow when it was above so brought it here
+def get_driver(ip):
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     options.add_argument('--window-size=800x800')
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
     options.add_argument('log-level=3')
-    options.add_argument('--proxy-server='+ip)
-
-    config = yaml.safe_load(open('./../config.yml'))
-    data_folder = config['movies_data_folder']
+    options.add_argument('--proxy-server=' + ip)
 
     driver = webdriver.Chrome(chrome_options=options)
 
+    return driver
+
+
+def should_go_ahead(title_id, ip, driver, ips):
+    go_ahead = False
+    title_wrapper = None
+
     proxyDict = {
-        "http": 'http://'+ip,
-        "https": 'https://'+ip,
-        "ftp": 'ftp://'+ip
+        "http": 'http://' + ip,
+        "https": 'https://' + ip,
+        "ftp": 'ftp://' + ip
     }
+
+    html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
+
+    tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
+    tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
+    tp.close()
+
+    driver.get('file:///' + tp.name)
+    os.remove(tp.name)
+
+    try:
+        title_wrapper = driver.find_element_by_class_name('title_wrapper')
+        go_ahead = True
+    except:
+        errors = driver.find_elements_by_class_name('error_message')
+        if errors:
+            if errors[0].text.replace('\\n', '').strip().count('URL was not found') != 0:
+                go_ahead = False
+        elif driver.find_element_by_xpath("//*").text.replace('\\n', '').strip().count('Error 503') != 0:
+            if ips:
+                print('Closing driver for -', title_id, ip)
+                ip = ips.pop()
+                driver.close()
+                driver = get_driver(ip)
+                print('Remaining IPs -', len(ips))
+                print('\n')
+                try:
+                    return should_go_ahead(title_id, ip, driver, ips)
+                except RecursionError:
+                    go_ahead = False
+            else:
+                go_ahead = False
+                ip = None
+
+    return go_ahead, driver, ip, ips, title_wrapper
+
+
+def movie_budget_n_metacritic_scrape(df_titles):
+    ips = eval(list(df_titles['ips'].unique())[0])
+    ip = ips.pop()
+    titles = list(df_titles['titles'])
+    print(len(titles), '-', len(ips), '-', ip)
+    from datetime import datetime # this import was not working somehow when it was above so brought it here
+
+    config = yaml.safe_load(open('./../config.yml'))
+    data_folder = config['movies_data_folder']
 
     scrape_start_time = datetime.now()
     i = 1
     j = 0
 
-    titles_scraped = []
-    # print('Scraping history read...')
-
+    driver = get_driver(ip)
     df_main = pd.DataFrame()
-    a = None
-    ex = None
 
     for title_id in titles:
-        if titles_scraped.count(title_id) == 0:
+        if ip:
             try:
-                html_content = requests.get("http://www.imdb.com/title/"+title_id, proxies=proxyDict).text
-
-                tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
-                tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
-                tp.close()
-
-                driver.get('file:///'+tp.name)
-                # os.remove(tp.name)
-
-                try:
-                    title_wrapper = driver.find_element_by_class_name('title_wrapper')
-                    title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
-                    title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
-                    go_ahead = True
-                except Exception as e:
-                    ex = e
-                    errors = driver.find_elements_by_class_name('error_message')
-                    if errors:
-                        if errors[0].text.replace('\\n', '').strip().count('URL was not found') == 0:
-                            print('Sleeping for 2 minutes...')
-                            time.sleep(2*60)
-                            try:
-                                html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
-
-                                tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
-                                tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
-                                tp.close()
-
-                                driver.get(tp.name)
-                                # os.remove(tp.name)
-
-                                title_wrapper = driver.find_element_by_class_name('title_wrapper')
-                                title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
-                                title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
-                                go_ahead = True
-                            except Exception as e:
-                                ex = e
-                                go_ahead = False
-                                a = 1
-                        else:
-                            go_ahead = False
-                            a = 2
-                    else:
-                        if driver.find_element_by_xpath("//*").text.replace('\\n', '').strip() == '':
-                            print('Sleeping for 2 minutes...')
-                            time.sleep(2*60)
-                            try:
-                                html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
-
-                                tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
-                                tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
-                                tp.close()
-
-                                driver.get(tp.name)
-                                # os.remove(tp.name)
-
-                                title_wrapper = driver.find_element_by_class_name('title_wrapper')
-                                title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
-                                title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
-                                go_ahead = True
-                            except Exception as e:
-                                ex = e
-                                go_ahead = False
-                                a = 3
-                        else:
-                            go_ahead = False
-                            a = 4
+                go_ahead, driver, ip, ips, title_wrapper = should_go_ahead(title_id, ip, driver, ips)
 
                 if go_ahead:
-                    os.remove(tp.name)
+                    title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
+                    title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
+
                     subtext = title_wrapper.find_element_by_class_name('subtext')
                     try:
                         release_date = subtext.text.replace('\\n', '').strip().split('|')[-1].strip()
@@ -195,16 +173,19 @@ def movie_budget_n_metacritic_scrape(df_titles):
                         df_main = pd.concat([df_main,df], axis=0)
                         del df
                 else:
-                    # print('Skipping', title_id, 'as code broke for it.')
-                    print('Skipping', tp.name, a, ex)
+                    if ip:
+                        print('Skipping', title_id, 'as did not receive any data for it.')
+                    else:
+                        print('Skipping', title_id, 'as proxy ended.')
+                    print('\n')
                     j += 1
             except TimeoutException as ex:
                 titles.append(title_id)
                 print('\n')
                 print('Skipping '+title_id+' because of Selenium TimeoutException')
                 print('\n')
-                del driver
-                driver = webdriver.Chrome(config['chromedriver'], chrome_options=options)
+                driver.close()
+                driver = get_driver(ip)
             if i%25 == 0:
                 print('Movies scraped -',(i+j))
 
@@ -230,8 +211,6 @@ def movie_budget_n_metacritic_scrape(df_titles):
                 print('\n')
                 time_checkpoint = datetime.now()
             i += 1
-        else:
-            j += 1
 
 
 

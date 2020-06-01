@@ -39,13 +39,12 @@ if __name__ == "__main__":
     print('Requesting proxies...')
     proxies = []
     while len(proxies) < config['algo']['vCPU']:
-        print('Proxies gathered -', len(proxies))
         req_proxy = RequestProxy()
         for proxy in req_proxy.get_proxy_list():
             # if proxy.country in ['India', 'United Kingdom', 'United States', 'Singapore', 'Netherlands', 'Japan', 'Canada']:
             proxies.append(proxy.ip)
-        proxies = list(set(proxies))[:config['algo']['vCPU']]
-    print('Enough proxies gathered.')
+        proxies = list(set(proxies))
+    print(len(proxies), 'proxies gathered.')
 
     if config['scrape_data']['collect_new_imdb_ids']:
         print('--------------------------------- collecting db imdb ids ---------------------------------')
@@ -62,13 +61,14 @@ if __name__ == "__main__":
     # df_title_ids = df_title_ids[~(df_title_ids['title_id'].isin(db_ids))]
     # print('Count of ids after removing already scraped -', df_title_ids.shape[0])
 
-    def parallelize_dataframe(titles, func, n_cores=config['algo']['vCPU']):
+    def parallelize_dataframe(titles, proxies, func, n_cores=config['algo']['vCPU']):
         df_titles = pd.DataFrame(titles).rename(columns={0:'titles'})
         df_split = np.array_split(df_titles, n_cores)
+        proxies = np.array_split(proxies, n_cores)
 
         for i in range(n_cores):
             if not df_split[i].empty:
-                df_split[i]['ip'] = proxies[i]
+                df_split[i]['ips'] = str(list(proxies[i]))
 
         pool = Pool(n_cores)
         df = pd.concat(pool.map(func, df_split))
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     for scrape_function in config['scrape_data']['movies']:
         print('\n')
         print('----------- scraping data - ' + scrape_function + ' -----------')
-        df_temp = parallelize_dataframe(movies_titles, eval(scrape_function))
+        df_temp = parallelize_dataframe(movies_titles, proxies, eval(scrape_function))
         df_temp.to_csv('~/final_file.csv', index=False)
         print('\n')
     print('--------------------------------- finished scraping movies ---------------------------------\n\n')
