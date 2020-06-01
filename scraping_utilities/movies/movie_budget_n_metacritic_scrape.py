@@ -50,7 +50,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                 tp.close()
 
                 driver.get('file:///'+tp.name)
-                os.remove(tp.name)
+                # os.remove(tp.name)
 
                 try:
                     title_wrapper = driver.find_element_by_class_name('title_wrapper')
@@ -72,7 +72,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                                 tp.close()
 
                                 driver.get(tp.name)
-                                os.remove(tp.name)
+                                # os.remove(tp.name)
 
                                 title_wrapper = driver.find_element_by_class_name('title_wrapper')
                                 title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
@@ -97,7 +97,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                                 tp.close()
 
                                 driver.get(tp.name)
-                                os.remove(tp.name)
+                                # os.remove(tp.name)
 
                                 title_wrapper = driver.find_element_by_class_name('title_wrapper')
                                 title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
@@ -188,7 +188,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                         del df
                 else:
                     # print('Skipping', title_id, 'as code broke for it.')
-                    print('Skipping', a, ex)
+                    print('Skipping', tp.name, a, ex)
                     j += 1
             except TimeoutException as ex:
                 titles.append(title_id)
