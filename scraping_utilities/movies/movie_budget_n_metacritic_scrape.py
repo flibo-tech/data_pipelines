@@ -22,7 +22,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
     options.add_argument('log-level=3')
-    # options.add_argument('--proxy-server=207.157.220.8')
+    options.add_argument('--proxy-server=67.205.161.254')
 
     config = yaml.safe_load(open('./../config.yml'))
     data_folder = config['movies_data_folder']
