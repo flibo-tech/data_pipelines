@@ -13,8 +13,9 @@ import requests
 
 
 def movie_budget_n_metacritic_scrape(df_titles):
+    ip = list(df_titles['ip'].unique())[0]
     titles = list(df_titles['titles'])
-    print(len(titles))
+    print(len(titles), '-', ip)
     from datetime import datetime # this import was not working somehow when it was above so brought it here
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
@@ -22,12 +23,18 @@ def movie_budget_n_metacritic_scrape(df_titles):
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
     options.add_argument('log-level=3')
-    options.add_argument('--proxy-server=67.205.161.254')
+    # options.add_argument('--proxy-server=67.205.161.254')
 
     config = yaml.safe_load(open('./../config.yml'))
     data_folder = config['movies_data_folder']
 
     driver = webdriver.Chrome(chrome_options=options)
+
+    proxyDict = {
+        "http": 'http://'+ip,
+        "https": 'https://'+ip,
+        "ftp": 'ftp://'+ip
+    }
 
     scrape_start_time = datetime.now()
     i = 1
@@ -43,7 +50,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
     for title_id in titles:
         if titles_scraped.count(title_id) == 0:
             try:
-                html_content = requests.get("http://www.imdb.com/title/"+title_id).text
+                html_content = requests.get("http://www.imdb.com/title/"+title_id, proxies=proxyDict).text
 
                 tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
                 tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
@@ -65,7 +72,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                             print('Sleeping for 2 minutes...')
                             time.sleep(2*60)
                             try:
-                                html_content = requests.get("http://www.imdb.com/title/" + title_id).text
+                                html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
 
                                 tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
                                 tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
@@ -90,7 +97,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                             print('Sleeping for 2 minutes...')
                             time.sleep(2*60)
                             try:
-                                html_content = requests.get("http://www.imdb.com/title/" + title_id).text
+                                html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
 
                                 tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
                                 tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
