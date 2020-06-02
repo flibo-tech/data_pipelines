@@ -67,37 +67,31 @@ if __name__ == "__main__":
 
         return df
 
-
-    def get_proxies(n_cores):
-        proxies = []
-        req_proxy = RequestProxy()
-        for proxy in req_proxy.get_proxy_list():
-            proxies.append(proxy.ip + ':' + str(proxy.port))
-
-        proxies = list(set(proxies))
-        print(len(proxies), 'proxies gathered.')
-        print('Starting to validate proxies...')
-
-        print(1)
-        df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
-        print(2)
-        df_split = np.array_split(df_proxies, n_cores)
-        print(3)
-
-        pool = Pool(n_cores)
-        print(4)
-        df = pd.concat(pool.map(validate_proxies, df_split))
-        print(5)
-        pool.close()
-        pool.join()
-
-        proxies = list(df['valid_proxy'].unique())
-        print('Remaining proxies after validation -', len(proxies))
-
-        return proxies
-
     print('Requesting proxies...')
-    proxies = get_proxies(config['algo']['vCPU'])
+    proxies = []
+    req_proxy = RequestProxy()
+    for proxy in req_proxy.get_proxy_list():
+        proxies.append(proxy.ip + ':' + str(proxy.port))
+
+    proxies = list(set(proxies))
+    print(len(proxies), 'proxies gathered.')
+    print('Starting to validate proxies...')
+
+    print(1)
+    df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
+    print(2)
+    df_split = np.array_split(df_proxies, config['algo']['vCPU'])
+    print(3)
+
+    pool = Pool(config['algo']['vCPU'])
+    print(4)
+    df = pd.concat(pool.map(validate_proxies, df_split))
+    print(5)
+    pool.close()
+    pool.join()
+
+    proxies = list(df['valid_proxy'].unique())
+    print('Remaining proxies after validation -', len(proxies))
 
     if config['scrape_data']['collect_new_imdb_ids']:
         print('--------------------------------- collecting db imdb ids ---------------------------------')
