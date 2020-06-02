@@ -1,43 +1,27 @@
 import warnings
 warnings.filterwarnings("ignore")
 
-from selenium import webdriver
+import sys
+sys.path.extend(['./..'])
+
 import pandas as pd
 from selenium.common.exceptions import TimeoutException
-import time
-import lxml.html as LH
 import yaml
 import tempfile
 import os
 import requests
-from selenium.webdriver.remote.remote_connection import LOGGER, logging
+
+from utilities import get_driver
 
 
-LOGGER.setLevel(logging.WARNING)
-
-
-def get_driver(ip):
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--window-size=800x800')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    options.add_argument('log-level=3')
-    options.add_argument('--proxy-server=' + ip)
-
-    driver = webdriver.Chrome(chrome_options=options)
-
-    return driver
-
-
-def should_go_ahead(title_id, ip, driver, ips):
+def should_go_ahead(title_id, proxy, driver, proxies):
     go_ahead = False
     title_wrapper = None
 
     proxyDict = {
-        "http": 'http://' + ip,
-        "https": 'https://' + ip,
-        "ftp": 'ftp://' + ip
+        "http": 'http://' + proxy,
+        "https": 'https://' + proxy,
+        "ftp": 'ftp://' + proxy
     }
 
     html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
@@ -60,33 +44,33 @@ def should_go_ahead(title_id, ip, driver, ips):
                 os.remove(tp.name)
         elif driver.find_element_by_xpath("//*").text.replace('\\n', '').strip().count('Error 503') != 0:
             os.remove(tp.name)
-            if ips:
-                print('Closing driver for -', title_id, ip)
-                ip = ips.pop()
+            if proxies:
+                print('Closing driver for -', title_id, proxy)
+                proxy = proxies.pop()
                 driver.close()
-                driver = get_driver(ip)
-                print('Remaining IPs -', len(ips))
+                driver = get_driver(proxy)
+                print('Remaining proxies -', len(proxies))
                 print('\n')
                 try:
-                    return should_go_ahead(title_id, ip, driver, ips)
+                    return should_go_ahead(title_id, proxy, driver, proxies)
                 except RecursionError:
                     go_ahead = False
             else:
                 go_ahead = False
-                ip = None
+                proxy = None
         else:
             go_ahead = False
-            print('No reason found for -', title_id, '-', ip, '-', tp.name)
+            print('No reason found for -', title_id, '-', proxy, '-', tp.name)
             print('\n')
 
-    return go_ahead, driver, ip, ips, title_wrapper
+    return go_ahead, driver, proxy, proxies, title_wrapper
 
 
 def movie_budget_n_metacritic_scrape(df_titles):
-    ips = eval(list(df_titles['ips'].unique())[0])
-    ip = ips.pop()
+    proxies = eval(list(df_titles['proxies'].unique())[0])
+    proxy = proxies.pop()
     titles = list(df_titles['titles'])
-    print(len(titles), '-', len(ips), '-', ip)
+    print(len(titles), '-', len(proxies), '-', proxy)
     from datetime import datetime # this import was not working somehow when it was above so brought it here
 
     config = yaml.safe_load(open('./../config.yml'))
@@ -96,13 +80,13 @@ def movie_budget_n_metacritic_scrape(df_titles):
     i = 1
     j = 0
 
-    driver = get_driver(ip)
+    driver = get_driver(proxy)
     df_main = pd.DataFrame()
 
     for title_id in titles:
-        if ip:
+        if proxy:
             try:
-                go_ahead, driver, ip, ips, title_wrapper = should_go_ahead(title_id, ip, driver, ips)
+                go_ahead, driver, proxy, proxies, title_wrapper = should_go_ahead(title_id, proxy, driver, proxies)
 
                 if go_ahead:
                     title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
@@ -183,7 +167,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                         df_main = pd.concat([df_main,df], axis=0)
                         del df
                 else:
-                    if ip:
+                    if proxy:
                         print('Skipping', title_id, 'as did not receive any data for it.')
                     else:
                         print('Skipping', title_id, 'as proxy ended.')
@@ -195,7 +179,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                 print('Skipping '+title_id+' because of Selenium TimeoutException')
                 print('\n')
                 driver.close()
-                driver = get_driver(ip)
+                driver = get_driver(proxy)
             if i%25 == 0:
                 print('Movies scraped -',(i+j))
 
@@ -233,201 +217,202 @@ def movie_budget_n_metacritic_scrape(df_titles):
     df = df_main.copy()
     del df_main
 
-    def country(details):
-        try:
-            return details.split('Country: ')[1].split('\r')[0].split('\n')[0].split(' | ')
-        except:
-            return None
-
-    def language(details):
-        try:
-            return details.split('Language: ')[1].split('\r')[0].split('\n')[0].split(' | ')
-        except:
-            return None
-
-    def filming_location(details):
-        try:
-            return details.split('Filming Locations: ')[1].split(' See more')[0].split('\r')[0].split('\n')[0]
-        except:
-            return None
-
-    def production_house(details):
-        try:
-            return details.split('Production Co: ')[1].split(' See more')[0].split(',')
-        except:
-            return None
-
-    def budget(details):
-        try:
-            return details.split('Budget:')[1].split('\r')[0].split(' (')[0].split('\n')[0]
-        except:
-            return None
-
-    def opening_weekend_USA(details):
-        try:
-            return details.split('Opening Weekend USA:')[1].split('\r')[0].split(', ')[0].split('\n')[0]
-        except:
-            return None
-
-    def gross_USA(details):
-        try:
-            return details.split('Gross USA:')[1].split('\r')[0].split(', ')[0].split('\n')[0]
-        except:
-            return None
-
-    def gross_worldwide(details):
-        try:
-            return details.split('Cumulative Worldwide Gross:')[1].split('\r')[0].split(', ')[0].split('\n')[0]
-        except:
-            return None
-
-    def reviews_list(reviews):
-        try:
-            return reviews.split('\n')[1].split(' | ')
-        except:
-            return None
-
-    def wins_n_nomintations(awards):
-        try:
-            return awards.split('. See more')[0]
-        except:
-            return None
-
-    df['country'] = df['details'].apply(lambda x: country(x))
-    df['language'] = df['details'].apply(lambda x: language(x))
-    df['filming_location'] = df['details'].apply(lambda x: filming_location(x))
-    df['production_house'] = df['details'].apply(lambda x: production_house(x))
-    df['budget'] = df['details'].apply(lambda x: budget(x))
-    df['opening_weekend_USA'] = df['details'].apply(lambda x: opening_weekend_USA(x))
-    df['gross_USA'] = df['details'].apply(lambda x: gross_USA(x))
-    df['gross_worldwide'] = df['details'].apply(lambda x: gross_worldwide(x))
-    del df['details']
-    df['reviews_list'] = df['reviews'].apply(lambda x: reviews_list(x))
-    del df['reviews']
-    df['wins_n_nomintations'] = df['awards'].apply(lambda x: wins_n_nomintations(x))
-    del df['awards']
-
-    def no_of_reviews(reviews_list):
-        critic = None
-        user = None
-        try:
-            for item in reviews_list:
-                if item.split(' ')[1]=='critic':
-                    critic = item.split(' ')[0]
-                else:
-                    user = item.split(' ')[0]
-        except:
-            pass
-        return critic, user
-
-    df['critic_review'], df['user_review'] = zip(*df['reviews_list'].apply(no_of_reviews))
-    del df['reviews_list']
-
-    import re
-    def total_win_nominations(wins_n_nomintations):
-        gp = re.search('^[Nominated for\s]+([\d]+)', str(wins_n_nomintations), re.I)
-        try:
-            add_nominations = int(gp.group(1))
-        except:
-            add_nominations = 0
-
-        gp = re.search('^[Won\s]+([\d]+)', str(wins_n_nomintations), re.I)
-        try:
-            add_wins = int(gp.group(1))
-        except:
-            add_wins = 0
-
-        gp = re.search('([\d]+)(?= win)', str(wins_n_nomintations), re.I)
-        try:
-            total_wins = int(gp.group(1))
-        except:
-            total_wins = 0
-
-        gp = re.search('([\d]+)(?= nomination)', str(wins_n_nomintations), re.I)
-        try:
-            total_nominations = int(gp.group(1))
-        except:
-            total_nominations = 0
-
-        total_wins = total_wins+add_wins
-        total_wins = total_wins if total_wins else None
-        total_nominations = total_nominations+add_nominations
-        total_nominations = total_nominations if total_nominations else None
-
-        return total_wins, total_nominations
-
-    df['award_wins'], df['award_nominations'] = zip(*df['wins_n_nomintations'].apply(total_win_nominations))
-    del df['wins_n_nomintations']
-
-
-    def metacritic(score):
-        try:
-            return int(score)
-        except:
-            return None
-    df['metacritic_score'] = df['metacritic_score'].apply(lambda x: metacritic(x))
-    del df['summary_text']
-
-
-
-
-    df.rename(columns={'title_year':'release_year'}, inplace=True)
-
-
-
-
-    from currency_converter import CurrencyConverter
-    from datetime import datetime
-    c = CurrencyConverter()
-    df_curr_xc = pd.read_csv('./../resources/currency_exchange.csv')
-    df_inflation = pd.read_csv('./../resources/usd_inflation.csv')
-    curr_mapping = {
-        '£':'GBP',
-        '€':'EUR',
-        '$':'USD'
-    }
-    def normalize_budget(budget, year):
-        last_date = None
-        currency = None
-        try:
-            year = int(year)
-        except:
-            year = None
-        if budget and year:
-            currency = re.search('^([\D]+)', budget).group(1).strip()
-            budget = float(budget.replace(currency,'').replace(',','').replace(' ','').strip())
-            currency = curr_mapping.get(currency, currency)
+    if not df.empty:
+        def country(details):
             try:
-                if currency != 'USD':
-                    budget = c.convert(budget, currency, new_currency='USD', date=datetime.strptime(str(year)+'/1/1', '%Y/%m/%d'))
-                price_old = df_inflation['value'][df_inflation['year']==year].asobject[0]
-                price_new = df_inflation['value'][df_inflation['year']==2018].asobject[0]
-                budget = budget*(price_new/price_old)
-                currency = 'USD'
-                year = 2018
+                return details.split('Country: ')[1].split('\r')[0].split('\n')[0].split(' | ')
             except:
+                return None
+
+        def language(details):
+            try:
+                return details.split('Language: ')[1].split('\r')[0].split('\n')[0].split(' | ')
+            except:
+                return None
+
+        def filming_location(details):
+            try:
+                return details.split('Filming Locations: ')[1].split(' See more')[0].split('\r')[0].split('\n')[0]
+            except:
+                return None
+
+        def production_house(details):
+            try:
+                return details.split('Production Co: ')[1].split(' See more')[0].split(',')
+            except:
+                return None
+
+        def budget(details):
+            try:
+                return details.split('Budget:')[1].split('\r')[0].split(' (')[0].split('\n')[0]
+            except:
+                return None
+
+        def opening_weekend_USA(details):
+            try:
+                return details.split('Opening Weekend USA:')[1].split('\r')[0].split(', ')[0].split('\n')[0]
+            except:
+                return None
+
+        def gross_USA(details):
+            try:
+                return details.split('Gross USA:')[1].split('\r')[0].split(', ')[0].split('\n')[0]
+            except:
+                return None
+
+        def gross_worldwide(details):
+            try:
+                return details.split('Cumulative Worldwide Gross:')[1].split('\r')[0].split(', ')[0].split('\n')[0]
+            except:
+                return None
+
+        def reviews_list(reviews):
+            try:
+                return reviews.split('\n')[1].split(' | ')
+            except:
+                return None
+
+        def wins_n_nomintations(awards):
+            try:
+                return awards.split('. See more')[0]
+            except:
+                return None
+
+        df['country'] = df['details'].apply(lambda x: country(x))
+        df['language'] = df['details'].apply(lambda x: language(x))
+        df['filming_location'] = df['details'].apply(lambda x: filming_location(x))
+        df['production_house'] = df['details'].apply(lambda x: production_house(x))
+        df['budget'] = df['details'].apply(lambda x: budget(x))
+        df['opening_weekend_USA'] = df['details'].apply(lambda x: opening_weekend_USA(x))
+        df['gross_USA'] = df['details'].apply(lambda x: gross_USA(x))
+        df['gross_worldwide'] = df['details'].apply(lambda x: gross_worldwide(x))
+        del df['details']
+        df['reviews_list'] = df['reviews'].apply(lambda x: reviews_list(x))
+        del df['reviews']
+        df['wins_n_nomintations'] = df['awards'].apply(lambda x: wins_n_nomintations(x))
+        del df['awards']
+
+        def no_of_reviews(reviews_list):
+            critic = None
+            user = None
+            try:
+                for item in reviews_list:
+                    if item.split(' ')[1]=='critic':
+                        critic = item.split(' ')[0]
+                    else:
+                        user = item.split(' ')[0]
+            except:
+                pass
+            return critic, user
+
+        df['critic_review'], df['user_review'] = zip(*df['reviews_list'].apply(no_of_reviews))
+        del df['reviews_list']
+
+        import re
+        def total_win_nominations(wins_n_nomintations):
+            gp = re.search('^[Nominated for\s]+([\d]+)', str(wins_n_nomintations), re.I)
+            try:
+                add_nominations = int(gp.group(1))
+            except:
+                add_nominations = 0
+
+            gp = re.search('^[Won\s]+([\d]+)', str(wins_n_nomintations), re.I)
+            try:
+                add_wins = int(gp.group(1))
+            except:
+                add_wins = 0
+
+            gp = re.search('([\d]+)(?= win)', str(wins_n_nomintations), re.I)
+            try:
+                total_wins = int(gp.group(1))
+            except:
+                total_wins = 0
+
+            gp = re.search('([\d]+)(?= nomination)', str(wins_n_nomintations), re.I)
+            try:
+                total_nominations = int(gp.group(1))
+            except:
+                total_nominations = 0
+
+            total_wins = total_wins+add_wins
+            total_wins = total_wins if total_wins else None
+            total_nominations = total_nominations+add_nominations
+            total_nominations = total_nominations if total_nominations else None
+
+            return total_wins, total_nominations
+
+        df['award_wins'], df['award_nominations'] = zip(*df['wins_n_nomintations'].apply(total_win_nominations))
+        del df['wins_n_nomintations']
+
+
+        def metacritic(score):
+            try:
+                return int(score)
+            except:
+                return None
+        df['metacritic_score'] = df['metacritic_score'].apply(lambda x: metacritic(x))
+        del df['summary_text']
+
+
+
+
+        df.rename(columns={'title_year':'release_year'}, inplace=True)
+
+
+
+
+        from currency_converter import CurrencyConverter
+        from datetime import datetime
+        c = CurrencyConverter()
+        df_curr_xc = pd.read_csv('./../resources/currency_exchange.csv')
+        df_inflation = pd.read_csv('./../resources/usd_inflation.csv')
+        curr_mapping = {
+            '£':'GBP',
+            '€':'EUR',
+            '$':'USD'
+        }
+        def normalize_budget(budget, year):
+            last_date = None
+            currency = None
+            try:
+                year = int(year)
+            except:
+                year = None
+            if budget and year:
+                currency = re.search('^([\D]+)', budget).group(1).strip()
+                budget = float(budget.replace(currency,'').replace(',','').replace(' ','').strip())
+                currency = curr_mapping.get(currency, currency)
                 try:
                     if currency != 'USD':
-                        rate = df_curr_xc['rate'][(df_curr_xc['currency']==currency) & (df_curr_xc['year']==year)].asobject[0]
-                        budget = rate*budget
+                        budget = c.convert(budget, currency, new_currency='USD', date=datetime.strptime(str(year)+'/1/1', '%Y/%m/%d'))
                     price_old = df_inflation['value'][df_inflation['year']==year].asobject[0]
                     price_new = df_inflation['value'][df_inflation['year']==2018].asobject[0]
                     budget = budget*(price_new/price_old)
                     currency = 'USD'
                     year = 2018
                 except:
-                    pass
-        return {
-            'currency': currency,
-            'amount': budget,
-            'year': year
-        }
+                    try:
+                        if currency != 'USD':
+                            rate = df_curr_xc['rate'][(df_curr_xc['currency']==currency) & (df_curr_xc['year']==year)].asobject[0]
+                            budget = rate*budget
+                        price_old = df_inflation['value'][df_inflation['year']==year].asobject[0]
+                        price_new = df_inflation['value'][df_inflation['year']==2018].asobject[0]
+                        budget = budget*(price_new/price_old)
+                        currency = 'USD'
+                        year = 2018
+                    except:
+                        pass
+            return {
+                'currency': currency,
+                'amount': budget,
+                'year': year
+            }
 
 
 
-    df['budget'] = df.apply(lambda row: normalize_budget(row['budget'], row['release_year']), axis=1)
-    df['opening_weekend_USA'] = df.apply(lambda row: normalize_budget(row['opening_weekend_USA'], row['release_year']), axis=1)
-    df['gross_USA'] = df.apply(lambda row: normalize_budget(row['gross_USA'], row['release_year']), axis=1)
-    df['gross_worldwide'] = df.apply(lambda row: normalize_budget(row['gross_worldwide'], row['release_year']), axis=1)
+        df['budget'] = df.apply(lambda row: normalize_budget(row['budget'], row['release_year']), axis=1)
+        df['opening_weekend_USA'] = df.apply(lambda row: normalize_budget(row['opening_weekend_USA'], row['release_year']), axis=1)
+        df['gross_USA'] = df.apply(lambda row: normalize_budget(row['gross_USA'], row['release_year']), axis=1)
+        df['gross_worldwide'] = df.apply(lambda row: normalize_budget(row['gross_worldwide'], row['release_year']), axis=1)
 
     return df

@@ -31,20 +31,15 @@ from tv_series_tmdb_data_collection import *
 
 from awards_scrape import *
 
+from utilities import get_proxies
+
 
 
 if __name__ == "__main__":
     config = yaml.safe_load(open('./../config.yml'))
 
     print('Requesting proxies...')
-    proxies = []
-    while len(proxies) < config['algo']['vCPU']:
-        req_proxy = RequestProxy()
-        for proxy in req_proxy.get_proxy_list():
-            # if proxy.country in ['India', 'United Kingdom', 'United States', 'Singapore', 'Netherlands', 'Japan', 'Canada']:
-            proxies.append(proxy.ip)
-        proxies = list(set(proxies))
-    print(len(proxies), 'proxies gathered.')
+    proxies = get_proxies()
 
     if config['scrape_data']['collect_new_imdb_ids']:
         print('--------------------------------- collecting db imdb ids ---------------------------------')
