@@ -34,12 +34,17 @@ from awards_scrape import *
 
 
 if __name__ == "__main__":
-    from utilities import *
+    # from utilities import *
 
     config = yaml.safe_load(open('./../config.yml'))
 
     print('Requesting proxies...')
-    proxies = get_proxies()
+    proxies = []
+    req_proxy = RequestProxy()
+    for proxy in req_proxy.get_proxy_list():
+        proxies.append(proxy.ip + ':' + str(proxy.port))
+
+    proxies = list(set(proxies))
 
     if config['scrape_data']['collect_new_imdb_ids']:
         print('--------------------------------- collecting db imdb ids ---------------------------------')
