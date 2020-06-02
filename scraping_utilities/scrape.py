@@ -88,7 +88,7 @@ if __name__ == "__main__":
     print(len(proxies), 'proxies gathered.')
     print('Starting to validate proxies...')
 
-    df = parallelize_dataframe(proxies=proxies, func=validate_proxies, a=1)
+    df = parallelize_dataframe(proxies=proxies, func=eval('validate_proxies'), a=1)
 
 
     proxies = list(df['valid_proxy'].unique())
