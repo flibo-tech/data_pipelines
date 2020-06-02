@@ -41,21 +41,6 @@ if __name__ == "__main__":
 
     config = yaml.safe_load(open('./../config.yml'))
 
-    def parallelize_validation(proxies, func, n_cores):
-        print(1)
-        df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
-        print(2)
-        df_split = np.array_split(df_proxies, n_cores)
-        print(3)
-
-        pool = Pool(n_cores)
-        print(4)
-        df = pd.concat(pool.map(func, df_split))
-        print(5)
-        pool.close()
-        pool.join()
-        return df
-
 
     def validate_proxies(df_proxies):
         print(6)
@@ -84,6 +69,21 @@ if __name__ == "__main__":
 
 
     def get_proxies(n_cores):
+        def parallelize_validation(proxies, func, n_cores):
+            print(1)
+            df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
+            print(2)
+            df_split = np.array_split(df_proxies, n_cores)
+            print(3)
+
+            pool = Pool(n_cores)
+            print(4)
+            df = pd.concat(pool.map(func, df_split))
+            print(5)
+            pool.close()
+            pool.join()
+            return df
+
         proxies = []
         req_proxy = RequestProxy()
         for proxy in req_proxy.get_proxy_list():
