@@ -82,7 +82,7 @@ if __name__ == "__main__":
     proxies = []
     req_proxy = RequestProxy()
     for proxy in req_proxy.get_proxy_list():
-        proxies.append(proxy.ip + ':' + str(proxy.port))
+        proxies.append(proxy.ip)
 
     proxies = list(set(proxies))
     print(len(proxies), 'proxies gathered.')
