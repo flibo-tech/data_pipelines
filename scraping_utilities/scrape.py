@@ -81,13 +81,13 @@ if __name__ == "__main__":
         proxies.append(proxy.ip + ':' + str(proxy.port))
 
     proxies = list(set(proxies))
-    print(len(proxies), 'proxies gathered.')
-    print('Starting to validate proxies...')
-
-    df = parallelize_dataframe(proxies=proxies, func=validate_proxies, a=1)
-
-
-    proxies = list(df['valid_proxy'].unique())
+    # print(len(proxies), 'proxies gathered.')
+    # print('Starting to validate proxies...')
+    #
+    # df = parallelize_dataframe(proxies=proxies, func=validate_proxies, a=1)
+    #
+    #
+    # proxies = list(df['valid_proxy'].unique())
     print('Remaining proxies after validation -', len(proxies))
 
     if config['scrape_data']['collect_new_imdb_ids']:
