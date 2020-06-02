@@ -88,7 +88,7 @@ def should_go_ahead(title_id, proxy, driver, session, proxies):
 
 def movie_budget_n_metacritic_scrape(df_titles):
     proxies = eval(list(df_titles['proxies'].unique())[0])
-    proxy = None
+    proxy = 'no_proxy'
     titles = list(df_titles['titles'])
     print(len(titles), '-', len(proxies), '-', proxy)
     from datetime import datetime # this import was not working somehow when it was above so brought it here

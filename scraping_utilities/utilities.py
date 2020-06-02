@@ -19,7 +19,7 @@ def get_driver(proxy=None):
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
     options.add_argument('log-level=3')
-    if proxy:
+    if (proxy is not None) and (proxy != 'no_proxy'):
         options.add_argument('--proxy-server=' + proxy)
 
     driver = webdriver.Chrome(chrome_options=options)
@@ -39,7 +39,7 @@ def get_session(proxy=None):
         'upgrade-insecure-requests': '1',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36'
     })
-    if proxy:
+    if (proxy is not None) and (proxy != 'no_proxy'):
         session.proxies.update({
                 'http': 'http://' + proxy,
                 'https': 'https://' + proxy,
