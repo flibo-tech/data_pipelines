@@ -27,6 +27,24 @@ def get_driver(proxy=None):
     return driver
 
 
+def parallelize_scraping(titles, proxies, func, n_cores=config['algo']['vCPU']):
+    n_cores = np.min([n_cores,len(proxies)])
+
+    df_titles = pd.DataFrame(titles).rename(columns={0:'titles'})
+    df_split = np.array_split(df_titles, n_cores)
+    proxies = np.array_split(proxies, n_cores)
+
+    for i in range(n_cores):
+        if not df_split[i].empty:
+            df_split[i]['proxies'] = str(list(proxies[i]))
+
+    pool = Pool(n_cores)
+    df = pd.concat(pool.map(func, df_split))
+    pool.close()
+    pool.join()
+    return df
+
+
 def parallelize_validation(proxies, func, n_cores=config['algo']['vCPU']):
     df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
     df_split = np.array_split(df_proxies, n_cores)
@@ -40,7 +58,6 @@ def parallelize_validation(proxies, func, n_cores=config['algo']['vCPU']):
 
 def validate_proxies(df_proxies):
     proxies = list(df_proxies['proxy'].unique())
-    print(len(proxies))
     title_id = 'tt0111161' #The Shawshank Redemption
 
     valid_proxies = []
