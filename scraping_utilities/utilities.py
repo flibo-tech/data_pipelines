@@ -25,22 +25,6 @@ def parallelize_validation(proxies, func, n_cores=config['algo']['vCPU']):
     return df
 
 
-def get_proxies():
-    proxies = []
-    req_proxy = RequestProxy()
-    for proxy in req_proxy.get_proxy_list():
-        proxies.append(proxy.ip + ':' + str(proxy.port))
-
-    proxies = list(set(proxies))
-    print(len(proxies), 'proxies gathered.')
-    print('Starting to validate proxies...')
-    df_proxies = parallelize_validation(proxies, validate_proxies)
-    proxies = list(df_proxies['valid_proxy'].unique())
-    print('Remaining proxies after validation -', len(proxies))
-
-    return proxies
-
-
 def validate_proxies(df_proxies):
     print(6)
     proxies = list(df_proxies['proxy'].unique())
@@ -65,3 +49,19 @@ def validate_proxies(df_proxies):
     df = pd.DataFrame(valid_proxies).rename(columns={0: 'valid_proxy'})
 
     return df
+
+
+def get_proxies():
+    proxies = []
+    req_proxy = RequestProxy()
+    for proxy in req_proxy.get_proxy_list():
+        proxies.append(proxy.ip + ':' + str(proxy.port))
+
+    proxies = list(set(proxies))
+    print(len(proxies), 'proxies gathered.')
+    print('Starting to validate proxies...')
+    df_proxies = parallelize_validation(proxies, validate_proxies)
+    proxies = list(df_proxies['valid_proxy'].unique())
+    print('Remaining proxies after validation -', len(proxies))
+
+    return proxies

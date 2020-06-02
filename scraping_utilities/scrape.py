@@ -31,20 +31,13 @@ from tv_series_tmdb_data_collection import *
 
 from awards_scrape import *
 
-
+from utilities import get_proxies
 
 if __name__ == "__main__":
-    # from utilities import *
-
     config = yaml.safe_load(open('./../config.yml'))
 
     print('Requesting proxies...')
-    proxies = []
-    req_proxy = RequestProxy()
-    for proxy in req_proxy.get_proxy_list():
-        proxies.append(proxy.ip + ':' + str(proxy.port))
-
-    proxies = list(set(proxies))
+    proxies = get_proxies()
 
     if config['scrape_data']['collect_new_imdb_ids']:
         print('--------------------------------- collecting db imdb ids ---------------------------------')
@@ -70,9 +63,7 @@ if __name__ == "__main__":
             if not df_split[i].empty:
                 df_split[i]['ips'] = str(list(proxies[i]))
 
-        print('aaaaaa')
         pool = Pool(n_cores)
-        print('bbbbbb')
         df = pd.concat(pool.map(func, df_split))
         pool.close()
         pool.join()
