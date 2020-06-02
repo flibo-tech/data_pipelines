@@ -69,21 +69,6 @@ if __name__ == "__main__":
 
 
     def get_proxies(n_cores):
-        def parallelize_validation(proxies, func, n_cores):
-            print(1)
-            df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
-            print(2)
-            df_split = np.array_split(df_proxies, n_cores)
-            print(3)
-
-            pool = Pool(n_cores)
-            print(4)
-            df = pd.concat(pool.map(func, df_split))
-            print(5)
-            pool.close()
-            pool.join()
-            return df
-
         proxies = []
         req_proxy = RequestProxy()
         for proxy in req_proxy.get_proxy_list():
@@ -92,8 +77,21 @@ if __name__ == "__main__":
         proxies = list(set(proxies))
         print(len(proxies), 'proxies gathered.')
         print('Starting to validate proxies...')
-        df_proxies = parallelize_validation(proxies, validate_proxies, n_cores)
-        proxies = list(df_proxies['valid_proxy'].unique())
+
+        print(1)
+        df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
+        print(2)
+        df_split = np.array_split(df_proxies, n_cores)
+        print(3)
+
+        pool = Pool(n_cores)
+        print(4)
+        df = pd.concat(pool.map(validate_proxies, df_split))
+        print(5)
+        pool.close()
+        pool.join()
+
+        proxies = list(df['valid_proxy'].unique())
         print('Remaining proxies after validation -', len(proxies))
 
         return proxies
