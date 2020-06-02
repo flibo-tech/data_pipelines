@@ -66,9 +66,9 @@ if __name__ == "__main__":
             print(1)
             df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
             print(2)
-            df_split = np.array_split(df_proxies, config['algo']['vCPU'])
-            print(3)
+            df_split = np.array_split(df_proxies, n_cores)
 
+            print(3)
             pool = Pool(n_cores)
             print(4)
             df = pd.concat(pool.map(func, df_split))
@@ -85,13 +85,13 @@ if __name__ == "__main__":
         proxies.append(proxy.ip + ':' + str(proxy.port))
 
     proxies = list(set(proxies))
-    # print(len(proxies), 'proxies gathered.')
-    # print('Starting to validate proxies...')
-    #
-    # df = parallelize_dataframe(proxies=proxies, func=validate_proxies, a=1)
-    #
-    #
-    # proxies = list(df['valid_proxy'].unique())
+    print(len(proxies), 'proxies gathered.')
+    print('Starting to validate proxies...')
+
+    df = parallelize_dataframe(proxies=proxies, func=validate_proxies, a=1)
+
+
+    proxies = list(df['valid_proxy'].unique())
     print('Remaining proxies after validation -', len(proxies))
 
     if config['scrape_data']['collect_new_imdb_ids']:
