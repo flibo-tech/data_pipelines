@@ -27,6 +27,28 @@ def get_driver(proxy=None):
     return driver
 
 
+def get_session(proxy=None):
+    session = requests.Session()
+    session.headers.update({
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'accept-encoding': 'gzip, deflate, br',
+        'accept-language': 'en-US,en;q=0.9',
+        'sec-fetch-dest': 'document',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'none',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36'
+    })
+    if proxy:
+        session.proxies.update({
+                'http': 'http://' + proxy,
+                'https': 'https://' + proxy,
+                'ftp': 'ftp://' + proxy
+            })
+
+    return session
+
+
 def parallelize_scraping(titles, proxies, func, n_cores=config['algo']['vCPU']):
     n_cores = np.min([n_cores,len(proxies)])
 
@@ -72,11 +94,13 @@ def validate_proxies(df_proxies):
             "ftp": 'ftp://' + proxy
         }
         try:
-            html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict, timeout=3).text
+            session = get_session(proxy)
+            html_content = session.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict, timeout=5).text
             if html_content.count('title_wrapper') != 0:
                 valid_proxies.append(proxy)
+            session.close()
         except:
-            pass
+            session.close()
 
     df = pd.DataFrame(valid_proxies).rename(columns={0: 'valid_proxy'})
 

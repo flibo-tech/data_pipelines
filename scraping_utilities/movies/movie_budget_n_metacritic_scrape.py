@@ -11,10 +11,10 @@ import tempfile
 import os
 import requests
 
-from utilities import get_driver
+from utilities import get_driver, get_session
 
 
-def should_go_ahead(title_id, proxy, driver, proxies):
+def should_go_ahead(title_id, proxy, driver, session, proxies):
     go_ahead = False
     title_wrapper = None
 
@@ -24,46 +24,66 @@ def should_go_ahead(title_id, proxy, driver, proxies):
         "ftp": 'ftp://' + proxy
     }
 
-    html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
-
-    tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
-    tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
-    tp.close()
-
-    driver.get('file:///' + tp.name)
-
     try:
-        title_wrapper = driver.find_element_by_class_name('title_wrapper')
-        go_ahead = True
-        os.remove(tp.name)
-    except:
-        errors = driver.find_elements_by_class_name('error_message')
-        if errors:
-            if errors[0].text.replace('\\n', '').strip().count('URL was not found') != 0:
-                go_ahead = False
-                os.remove(tp.name)
-        elif driver.find_element_by_xpath("//*").text.replace('\\n', '').strip().count('Error 503') != 0:
+        html_content = session.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict, timeout=5).text
+
+        tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
+        tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
+        tp.close()
+
+        driver.get('file:///' + tp.name)
+
+        try:
+            title_wrapper = driver.find_element_by_class_name('title_wrapper')
+            go_ahead = True
             os.remove(tp.name)
-            if proxies:
-                print('Closing driver for -', title_id, proxy)
-                proxy = proxies.pop()
-                driver.close()
-                driver = get_driver(proxy)
-                print('Remaining proxies -', len(proxies))
-                print('\n')
-                try:
-                    return should_go_ahead(title_id, proxy, driver, proxies)
-                except RecursionError:
+        except:
+            errors = driver.find_elements_by_class_name('error_message')
+            if errors:
+                if errors[0].text.replace('\\n', '').strip().count('URL was not found') != 0:
                     go_ahead = False
+                    os.remove(tp.name)
+            elif driver.find_element_by_xpath("//*").text.replace('\\n', '').strip().count('Error 503') != 0:
+                os.remove(tp.name)
+                if proxies:
+                    print('Closing driver for -', title_id, proxy)
+                    proxy = proxies.pop()
+                    driver.close()
+                    driver = get_driver(proxy)
+                    session.close()
+                    session = get_session(proxy)
+                    print('Remaining proxies -', len(proxies))
+                    print('\n')
+                    try:
+                        return should_go_ahead(title_id, proxy, driver, session, proxies)
+                    except RecursionError:
+                        go_ahead = False
+                else:
+                    go_ahead = False
+                    proxy = None
             else:
                 go_ahead = False
-                proxy = None
+                print('No reason found for -', title_id, '-', proxy, '-', tp.name)
+                print('\n')
+    except requests.exceptions.Timeout:
+        if proxies:
+            print('Closing driver for -', title_id, proxy)
+            proxy = proxies.pop()
+            driver.close()
+            driver = get_driver(proxy)
+            session.close()
+            session = get_session(proxy)
+            print('Remaining proxies -', len(proxies))
+            print('\n')
+            try:
+                return should_go_ahead(title_id, proxy, driver, session, proxies)
+            except RecursionError:
+                go_ahead = False
         else:
             go_ahead = False
-            print('No reason found for -', title_id, '-', proxy, '-', tp.name)
-            print('\n')
+            proxy = None
 
-    return go_ahead, driver, proxy, proxies, title_wrapper
+    return go_ahead, driver, session, proxy, proxies, title_wrapper
 
 
 def movie_budget_n_metacritic_scrape(df_titles):
@@ -81,12 +101,13 @@ def movie_budget_n_metacritic_scrape(df_titles):
     j = 0
 
     driver = get_driver(proxy)
+    session = get_session(proxy)
     df_main = pd.DataFrame()
 
     for title_id in titles:
         if proxy:
             try:
-                go_ahead, driver, proxy, proxies, title_wrapper = should_go_ahead(title_id, proxy, driver, proxies)
+                go_ahead, driver, session, proxy, proxies, title_wrapper = should_go_ahead(title_id, proxy, driver, session, proxies)
 
                 if go_ahead:
                     title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
@@ -168,7 +189,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                         del df
                 else:
                     if proxy:
-                        print('Skipping', title_id, 'as did not receive any data for it.')
+                        print('Skipping', title_id, '- something wrong.')
                     else:
                         print('Skipping', title_id, 'as proxy ended.')
                     print('\n')
