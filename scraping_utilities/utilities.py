@@ -4,13 +4,8 @@ import pandas as pd
 import numpy as np
 import yaml
 from multiprocessing import Pool
-from selenium.webdriver.remote.remote_connection import LOGGER, logging
-from selenium import webdriver
-import tempfile
-import os
 
 
-LOGGER.setLevel(logging.WARNING)
 config = yaml.safe_load(open('./../config.yml'))
 
 
@@ -28,21 +23,6 @@ def parallelize_validation(proxies, func, n_cores=config['algo']['vCPU']):
     pool.close()
     pool.join()
     return df
-
-
-def get_driver(proxy=None):
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--window-size=800x800')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    options.add_argument('log-level=3')
-    if proxy:
-        options.add_argument('--proxy-server=' + proxy)
-
-    driver = webdriver.Chrome(chrome_options=options)
-
-    return driver
 
 
 def get_proxies():
