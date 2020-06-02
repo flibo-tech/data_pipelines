@@ -59,7 +59,6 @@ def get_proxies():
 def validate_proxies(df_proxies):
     proxies = list(df_proxies['proxy'].unique())
     title_id = 'tt0111161' #The Shawshank Redemption
-    driver = get_driver()
 
     valid_proxies = []
     for proxy in proxies:
@@ -71,19 +70,8 @@ def validate_proxies(df_proxies):
             "ftp": 'ftp://' + proxy
         }
         html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
-
-        tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
-        tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
-        tp.close()
-
-        driver.get('file:///' + tp.name)
-        try:
-            driver.find_element_by_class_name('title_wrapper')
+        if html_content.count('title_wrapper') != 0:
             valid_proxies.append(proxy)
-        except:
-            pass
-        os.remove(tp.name)
-    driver.close()
 
     df = pd.DataFrame(valid_proxies).rename(columns={0: 'valid_proxy'})
 
