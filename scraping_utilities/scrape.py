@@ -78,15 +78,16 @@ if __name__ == "__main__":
             return df
 
 
-    print('Requesting proxies...')
-    proxies = []
-    req_proxy = RequestProxy()
-    for proxy in req_proxy.get_proxy_list():
-        proxies.append(proxy.ip)
-
-    proxies = list(set(proxies))
-    print(len(proxies), 'proxies gathered.')
-    print('Starting to validate proxies...')
+    # print('Requesting proxies...')
+    # proxies = []
+    # req_proxy = RequestProxy()
+    # for proxy in req_proxy.get_proxy_list():
+    #     proxies.append(proxy.ip + ':' + str(proxy.port))
+    #
+    # proxies = list(set(proxies))
+    # print(len(proxies), 'proxies gathered.')
+    # print('Starting to validate proxies...')
+    proxies = [str(x) for x in range(500)]
 
     df = parallelize_dataframe(proxies=proxies, func=eval('validate_proxies'), a=1)
 
