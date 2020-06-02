@@ -25,14 +25,15 @@ def parallelize_dataframe(proxies, func, n_cores=config['algo']['vCPU']):
     return df
 
 
-def get_driver(proxy):
+def get_driver(proxy=None):
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     options.add_argument('--window-size=800x800')
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
     options.add_argument('log-level=3')
-    options.add_argument('--proxy-server=' + proxy)
+    if proxy:
+        options.add_argument('--proxy-server=' + proxy)
 
     driver = webdriver.Chrome(chrome_options=options)
 
@@ -58,11 +59,11 @@ def get_proxies():
 def validate_proxies(df_proxies):
     proxies = list(df_proxies['proxy'].unique())
     title_id = 'tt0111161' #The Shawshank Redemption
+    driver = get_driver()
 
     valid_proxies = []
     for proxy in proxies:
         print('Validating proxy -', proxy)
-        driver = get_driver(proxy)
 
         proxyDict = {
             "http": 'http://' + proxy,
@@ -82,7 +83,7 @@ def validate_proxies(df_proxies):
         except:
             pass
         os.remove(tp.name)
-        driver.close()
+    driver.close()
 
     df = pd.DataFrame(valid_proxies).rename(columns={0: 'valid_proxy'})
 
