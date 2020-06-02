@@ -40,11 +40,14 @@ def parallelize_validation(proxies, func, n_cores=config['algo']['vCPU']):
 
 def validate_proxies(df_proxies):
     proxies = list(df_proxies['proxy'].unique())
+    print(len(proxies))
     title_id = 'tt0111161' #The Shawshank Redemption
 
     valid_proxies = []
+    i = 0
     for proxy in proxies:
-        print('Validating proxy -', proxy)
+        i+=1
+        print('Validating proxy -', proxy, '-', i, '/', len(proxies))
 
         proxyDict = {
             "http": 'http://' + proxy,
@@ -52,7 +55,7 @@ def validate_proxies(df_proxies):
             "ftp": 'ftp://' + proxy
         }
         try:
-            html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
+            html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict, timeout=3).text
             if html_content.count('title_wrapper') != 0:
                 valid_proxies.append(proxy)
         except:
