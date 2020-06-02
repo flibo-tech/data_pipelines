@@ -9,6 +9,11 @@ import pandas as pd
 from multiprocessing import Pool
 import numpy as np
 from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
+from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
+import requests
+import pandas as pd
+import numpy as np
+from multiprocessing import Pool
 
 from movie_budget_n_metacritic_scrape import *
 from movie_content_scrape import *
@@ -31,41 +36,12 @@ from tv_series_tmdb_data_collection import *
 
 from awards_scrape import *
 
+from utilities import *
 
 if __name__ == "__main__":
-    from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
-    import requests
-    import pandas as pd
-    import numpy as np
-    from multiprocessing import Pool
 
     config = yaml.safe_load(open('./../config.yml'))
 
-
-    def validate_proxies(df_proxies):
-        print(6)
-        proxies = list(df_proxies['proxy'].unique())
-        title_id = 'tt0111161'  # The Shawshank Redemption
-
-        valid_proxies = []
-        for proxy in proxies:
-            print('Validating proxy -', proxy)
-
-            proxyDict = {
-                "http": 'http://' + proxy,
-                "https": 'https://' + proxy,
-                "ftp": 'ftp://' + proxy
-            }
-            try:
-                html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
-                if html_content.count('title_wrapper') != 0:
-                    valid_proxies.append(proxy)
-            except:
-                pass
-
-        df = pd.DataFrame(valid_proxies).rename(columns={0: 'valid_proxy'})
-
-        return df
 
     print('Requesting proxies...')
     proxies = []
