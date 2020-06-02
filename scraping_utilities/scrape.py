@@ -39,6 +39,8 @@ if __name__ == "__main__":
     import numpy as np
     from multiprocessing import Pool
 
+    config = yaml.safe_load(open('./../config.yml'))
+
     def parallelize_validation(proxies, func, n_cores):
         print(1)
         df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
