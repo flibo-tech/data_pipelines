@@ -15,11 +15,16 @@ config = yaml.safe_load(open('./../config.yml'))
 
 
 def parallelize_validation(proxies, func, n_cores=config['algo']['vCPU']):
+    print(1)
     df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
+    print(2)
     df_split = np.array_split(df_proxies, n_cores)
+    print(3)
 
     pool = Pool(n_cores)
+    print(4)
     df = pd.concat(pool.map(func, df_split))
+    print(5)
     pool.close()
     pool.join()
     return df
@@ -57,6 +62,7 @@ def get_proxies():
 
 
 def validate_proxies(df_proxies):
+    print(6)
     proxies = list(df_proxies['proxy'].unique())
     title_id = 'tt0111161' #The Shawshank Redemption
 
