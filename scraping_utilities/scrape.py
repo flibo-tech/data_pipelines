@@ -8,7 +8,6 @@ import yaml
 import pandas as pd
 from multiprocessing import Pool
 import numpy as np
-from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
 
 from movie_budget_n_metacritic_scrape import *
 from movie_content_scrape import *

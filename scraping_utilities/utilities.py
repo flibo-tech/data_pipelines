@@ -19,8 +19,6 @@ def parallelize_validation(proxies, func, n_cores=config['algo']['vCPU']):
 
     pool = Pool(n_cores)
     print(4)
-    time.sleep(30)
-    print(5)
     df = pd.concat(pool.map(func, df_split))
     print(5)
     pool.close()
@@ -44,9 +42,11 @@ def validate_proxies(df_proxies):
         }
         try:
             html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
+            print(html_content)
             if html_content.count('title_wrapper') != 0:
                 valid_proxies.append(proxy)
-        except:
+        except Exception as e:
+            print(e)
             pass
 
     df = pd.DataFrame(valid_proxies).rename(columns={0: 'valid_proxy'})

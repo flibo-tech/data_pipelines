@@ -11,7 +11,7 @@ from selenium.webdriver.remote.remote_connection import LOGGER, logging
 from selenium import webdriver
 
 
-LOGGER.setLevel(logging.WARNING)
+# LOGGER.setLevel(logging.WARNING)
 
 
 def get_driver(proxy=None):
