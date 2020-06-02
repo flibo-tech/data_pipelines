@@ -45,7 +45,9 @@ if __name__ == "__main__":
 
     def parallelize_dataframe(titles=None, proxies=None, func=None, n_cores=config['algo']['vCPU'], a=None):
         if a == 2:
+            print(1)
             df_titles = pd.DataFrame(titles).rename(columns={0:'titles'})
+            print(2)
             df_split = np.array_split(df_titles, n_cores)
             proxies = np.array_split(proxies, n_cores)
 
@@ -53,7 +55,9 @@ if __name__ == "__main__":
                 if not df_split[i].empty:
                     df_split[i]['ips'] = str(list(proxies[i]))
 
+            print(3)
             pool = Pool(n_cores)
+            print(4)
             df = pd.concat(pool.map(func, df_split))
             pool.close()
             pool.join()
