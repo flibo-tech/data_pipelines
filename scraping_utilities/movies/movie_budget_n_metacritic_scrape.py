@@ -1,32 +1,17 @@
 import warnings
 warnings.filterwarnings("ignore")
 
+import sys
+sys.path.extend(['./..'])
+
 import pandas as pd
 from selenium.common.exceptions import TimeoutException
 import yaml
 import tempfile
 import os
 import requests
-from selenium.webdriver.remote.remote_connection import LOGGER, logging
-from selenium import webdriver
 
-
-# LOGGER.setLevel(logging.WARNING)
-
-
-def get_driver(proxy=None):
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--window-size=800x800')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    options.add_argument('log-level=3')
-    if proxy:
-        options.add_argument('--proxy-server=' + proxy)
-
-    driver = webdriver.Chrome(chrome_options=options)
-
-    return driver
+from utilities import get_driver
 
 
 def should_go_ahead(title_id, proxy, driver, proxies):

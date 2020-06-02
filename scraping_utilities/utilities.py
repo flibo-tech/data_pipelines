@@ -4,30 +4,43 @@ import pandas as pd
 import numpy as np
 import yaml
 from multiprocessing import Pool
-import time
+from selenium.webdriver.remote.remote_connection import LOGGER, logging
+from selenium import webdriver
+
+
+LOGGER.setLevel(logging.WARNING)
 
 
 config = yaml.safe_load(open('./../config.yml'))
 
 
+def get_driver(proxy=None):
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument('--window-size=800x800')
+    options.add_argument('--disable-gpu')
+    options.add_argument('--no-sandbox')
+    options.add_argument('log-level=3')
+    if proxy:
+        options.add_argument('--proxy-server=' + proxy)
+
+    driver = webdriver.Chrome(chrome_options=options)
+
+    return driver
+
+
 def parallelize_validation(proxies, func, n_cores=config['algo']['vCPU']):
-    print(1)
     df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
-    print(2)
     df_split = np.array_split(df_proxies, n_cores)
-    print(3)
 
     pool = Pool(n_cores)
-    print(4)
     df = pd.concat(pool.map(func, df_split))
-    print(5)
     pool.close()
     pool.join()
     return df
 
 
 def validate_proxies(df_proxies):
-    print(6)
     proxies = list(df_proxies['proxy'].unique())
     title_id = 'tt0111161' #The Shawshank Redemption
 
@@ -42,11 +55,9 @@ def validate_proxies(df_proxies):
         }
         try:
             html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
-            print(html_content)
             if html_content.count('title_wrapper') != 0:
                 valid_proxies.append(proxy)
-        except Exception as e:
-            print(e)
+        except:
             pass
 
     df = pd.DataFrame(valid_proxies).rename(columns={0: 'valid_proxy'})
@@ -60,7 +71,7 @@ def get_proxies():
     for proxy in req_proxy.get_proxy_list():
         proxies.append(proxy.ip + ':' + str(proxy.port))
 
-    proxies = list(set(proxies))[:10]
+    proxies = list(set(proxies))
     print(len(proxies), 'proxies gathered.')
     print('Starting to validate proxies...')
     df_proxies = parallelize_validation(proxies, validate_proxies)
