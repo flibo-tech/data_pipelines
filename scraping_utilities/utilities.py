@@ -55,14 +55,13 @@ def validate_proxies(df_proxies):
 
 
 def get_proxies():
-    # proxies = []
-    # req_proxy = RequestProxy()
-    # for proxy in req_proxy.get_proxy_list():
-    #     proxies.append(proxy.ip + ':' + str(proxy.port))
-    #
-    # proxies = list(set(proxies))
-    # print(len(proxies), 'proxies gathered.')
-    proxies = [str(x) for x in range(500)]
+    proxies = []
+    req_proxy = RequestProxy()
+    for proxy in req_proxy.get_proxy_list():
+        proxies.append(proxy.ip + ':' + str(proxy.port))
+
+    proxies = list(set(proxies))[:10]
+    print(len(proxies), 'proxies gathered.')
     print('Starting to validate proxies...')
     df_proxies = parallelize_validation(proxies, validate_proxies)
     proxies = list(df_proxies['valid_proxy'].unique())
