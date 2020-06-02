@@ -9,11 +9,6 @@ import pandas as pd
 from multiprocessing import Pool
 import numpy as np
 from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
-from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
-import requests
-import pandas as pd
-import numpy as np
-from multiprocessing import Pool
 
 from movie_budget_n_metacritic_scrape import *
 from movie_content_scrape import *
@@ -39,61 +34,10 @@ from awards_scrape import *
 from utilities import *
 
 if __name__ == "__main__":
-
     config = yaml.safe_load(open('./../config.yml'))
 
-
-    def parallelize_dataframe(titles=None, proxies=None, func=None, n_cores=config['algo']['vCPU'], a=None):
-        if a == 2:
-            print(1)
-            df_titles = pd.DataFrame(titles).rename(columns={0:'titles'})
-            print(2)
-            df_split = np.array_split(df_titles, n_cores)
-            proxies = np.array_split(proxies, n_cores)
-
-            for i in range(n_cores):
-                if not df_split[i].empty:
-                    df_split[i]['ips'] = str(list(proxies[i]))
-
-            print(3)
-            pool = Pool(n_cores)
-            print(4)
-            df = pd.concat(pool.map(func, df_split))
-            pool.close()
-            pool.join()
-            return df
-        else:
-            print(1)
-            df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
-            print(2)
-            df_split = np.array_split(df_proxies, n_cores)
-
-            print(3)
-            pool = Pool(n_cores)
-            print(4)
-            df = pd.concat(pool.map(func, df_split))
-            print(5)
-            pool.close()
-            pool.join()
-            return df
-
-
-    # print('Requesting proxies...')
-    # proxies = []
-    # req_proxy = RequestProxy()
-    # for proxy in req_proxy.get_proxy_list():
-    #     proxies.append(proxy.ip + ':' + str(proxy.port))
-    #
-    # proxies = list(set(proxies))
-    # print(len(proxies), 'proxies gathered.')
-    # print('Starting to validate proxies...')
-    proxies = [str(x) for x in range(500)]
-
-    df = parallelize_dataframe(proxies=proxies, func=eval('validate_proxies'), a=1)
-
-
-    proxies = list(df['valid_proxy'].unique())
-    print('Remaining proxies after validation -', len(proxies))
+    print('Requesting proxies...')
+    proxies = get_proxies()
 
     if config['scrape_data']['collect_new_imdb_ids']:
         print('--------------------------------- collecting db imdb ids ---------------------------------')
@@ -110,6 +54,22 @@ if __name__ == "__main__":
     # df_title_ids = df_title_ids[~(df_title_ids['title_id'].isin(db_ids))]
     # print('Count of ids after removing already scraped -', df_title_ids.shape[0])
 
+    def parallelize_dataframe(titles, proxies, func, n_cores=config['algo']['vCPU']):
+        df_titles = pd.DataFrame(titles).rename(columns={0:'titles'})
+        df_split = np.array_split(df_titles, n_cores)
+        proxies = np.array_split(proxies, n_cores)
+
+        for i in range(n_cores):
+            if not df_split[i].empty:
+                df_split[i]['ips'] = str(list(proxies[i]))
+
+        pool = Pool(n_cores)
+        df = pd.concat(pool.map(func, df_split))
+        pool.close()
+        pool.join()
+        return df
+
+
     print('--------------------------------- scraping movies ---------------------------------')
     # movies_titles = list(df_title_ids['title_id'][df_title_ids['type']=='feature'].unique())
     movies_titles = db_ids
@@ -117,7 +77,7 @@ if __name__ == "__main__":
     for scrape_function in config['scrape_data']['movies']:
         print('\n')
         print('----------- scraping data - ' + scrape_function + ' -----------')
-        df_temp = parallelize_dataframe(titles=movies_titles, proxies=proxies, func=eval(scrape_function), a=2)
+        df_temp = parallelize_dataframe(movies_titles, proxies, eval(scrape_function))
         df_temp.to_csv('~/final_file.csv', index=False)
         print('\n')
     print('--------------------------------- finished scraping movies ---------------------------------\n\n')
