@@ -10,6 +10,7 @@ import yaml
 import tempfile
 import os
 import requests
+import time
 
 from utilities import get_driver, get_session
 
@@ -18,14 +19,8 @@ def should_go_ahead(title_id, proxy, driver, session, proxies):
     go_ahead = False
     title_wrapper = None
 
-    proxyDict = {
-        "http": 'http://' + proxy,
-        "https": 'https://' + proxy,
-        "ftp": 'ftp://' + proxy
-    }
-
     try:
-        html_content = session.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict, timeout=5).text
+        html_content = session.get("http://www.imdb.com/title/" + title_id, timeout=5).text
 
         tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
         tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
@@ -82,13 +77,18 @@ def should_go_ahead(title_id, proxy, driver, session, proxies):
         else:
             go_ahead = False
             proxy = None
+    except requests.exceptions.ChunkedEncodingError:
+        time.sleep(1)
+        session.close()
+        session = get_session(proxy)
+        return should_go_ahead(title_id, proxy, driver, session, proxies)
 
     return go_ahead, driver, session, proxy, proxies, title_wrapper
 
 
 def movie_budget_n_metacritic_scrape(df_titles):
     proxies = eval(list(df_titles['proxies'].unique())[0])
-    proxy = proxies.pop()
+    proxy = None
     titles = list(df_titles['titles'])
     print(len(titles), '-', len(proxies), '-', proxy)
     from datetime import datetime # this import was not working somehow when it was above so brought it here

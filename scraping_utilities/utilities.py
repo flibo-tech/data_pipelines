@@ -88,14 +88,9 @@ def validate_proxies(df_proxies):
         i+=1
         print('Validating proxy -', proxy, '-', i, '/', len(proxies))
 
-        proxyDict = {
-            "http": 'http://' + proxy,
-            "https": 'https://' + proxy,
-            "ftp": 'ftp://' + proxy
-        }
         try:
             session = get_session(proxy)
-            html_content = session.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict, timeout=5).text
+            html_content = session.get("http://www.imdb.com/title/" + title_id, timeout=5).text
             if html_content.count('title_wrapper') != 0:
                 valid_proxies.append(proxy)
             session.close()
