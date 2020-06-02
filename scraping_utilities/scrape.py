@@ -70,7 +70,9 @@ if __name__ == "__main__":
             if not df_split[i].empty:
                 df_split[i]['ips'] = str(list(proxies[i]))
 
+        print('aaaaaa')
         pool = Pool(n_cores)
+        print('bbbbbb')
         df = pd.concat(pool.map(func, df_split))
         pool.close()
         pool.join()
