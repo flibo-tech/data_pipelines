@@ -69,9 +69,12 @@ def validate_proxies(df_proxies):
             "https": 'https://' + proxy,
             "ftp": 'ftp://' + proxy
         }
-        html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
-        if html_content.count('title_wrapper') != 0:
-            valid_proxies.append(proxy)
+        try:
+            html_content = requests.get("http://www.imdb.com/title/" + title_id, proxies=proxyDict).text
+            if html_content.count('title_wrapper') != 0:
+                valid_proxies.append(proxy)
+        except:
+            pass
 
     df = pd.DataFrame(valid_proxies).rename(columns={0: 'valid_proxy'})
 
