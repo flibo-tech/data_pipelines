@@ -14,7 +14,7 @@ LOGGER.setLevel(logging.WARNING)
 config = yaml.safe_load(open('./../config.yml'))
 
 
-def parallelize_dataframe(proxies, func, n_cores=config['algo']['vCPU']):
+def parallelize_validation(proxies, func, n_cores=config['algo']['vCPU']):
     df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
     df_split = np.array_split(df_proxies, n_cores)
 
@@ -49,7 +49,7 @@ def get_proxies():
     proxies = list(set(proxies))
     print(len(proxies), 'proxies gathered.')
     print('Starting to validate proxies...')
-    df_proxies = parallelize_dataframe(proxies, validate_proxies)
+    df_proxies = parallelize_validation(proxies, validate_proxies)
     proxies = list(df_proxies['valid_proxy'].unique())
     print('Remaining proxies after validation -', len(proxies))
 
