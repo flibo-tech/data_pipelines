@@ -31,13 +31,14 @@ from tv_series_tmdb_data_collection import *
 
 from awards_scrape import *
 
-from utilities import get_proxies
 
 if __name__ == "__main__":
+    from utilities import get_proxies
+
     config = yaml.safe_load(open('./../config.yml'))
 
     print('Requesting proxies...')
-    proxies = get_proxies()
+    proxies = get_proxies(config['algo']['vCPU'])
 
     if config['scrape_data']['collect_new_imdb_ids']:
         print('--------------------------------- collecting db imdb ids ---------------------------------')
