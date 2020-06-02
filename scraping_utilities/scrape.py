@@ -31,7 +31,7 @@ from tv_series_tmdb_data_collection import *
 
 from awards_scrape import *
 
-from utilities import get_proxies
+from utilities import *
 
 
 
