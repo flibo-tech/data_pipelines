@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import yaml
 from multiprocessing import Pool
+import time
 
 
 config = yaml.safe_load(open('./../config.yml'))
@@ -18,6 +19,8 @@ def parallelize_validation(proxies, func, n_cores=config['algo']['vCPU']):
 
     pool = Pool(n_cores)
     print(4)
+    time.sleep(30)
+    print(5)
     df = pd.concat(pool.map(func, df_split))
     print(5)
     pool.close()
