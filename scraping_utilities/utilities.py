@@ -9,8 +9,6 @@ from selenium import webdriver
 
 
 LOGGER.setLevel(logging.WARNING)
-
-
 config = yaml.safe_load(open('./../config.yml'))
 
 
