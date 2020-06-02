@@ -43,6 +43,37 @@ if __name__ == "__main__":
     config = yaml.safe_load(open('./../config.yml'))
 
 
+    def parallelize_dataframe(titles=None, proxies=None, func=None, n_cores=config['algo']['vCPU'], a=None):
+        if a == 2:
+            df_titles = pd.DataFrame(titles).rename(columns={0:'titles'})
+            df_split = np.array_split(df_titles, n_cores)
+            proxies = np.array_split(proxies, n_cores)
+
+            for i in range(n_cores):
+                if not df_split[i].empty:
+                    df_split[i]['ips'] = str(list(proxies[i]))
+
+            pool = Pool(n_cores)
+            df = pd.concat(pool.map(func, df_split))
+            pool.close()
+            pool.join()
+            return df
+        else:
+            print(1)
+            df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
+            print(2)
+            df_split = np.array_split(df_proxies, config['algo']['vCPU'])
+            print(3)
+
+            pool = Pool(n_cores)
+            print(4)
+            df = pd.concat(pool.map(func, df_split))
+            print(5)
+            pool.close()
+            pool.join()
+            return df
+
+
     print('Requesting proxies...')
     proxies = []
     req_proxy = RequestProxy()
@@ -53,18 +84,8 @@ if __name__ == "__main__":
     print(len(proxies), 'proxies gathered.')
     print('Starting to validate proxies...')
 
-    print(1)
-    df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
-    print(2)
-    df_split = np.array_split(df_proxies, config['algo']['vCPU'])
-    print(3)
+    df = parallelize_dataframe(proxies=proxies, func=validate_proxies, a=1)
 
-    pool = Pool(config['algo']['vCPU'])
-    print(4)
-    df = pd.concat(pool.map(validate_proxies, df_split))
-    print(5)
-    pool.close()
-    pool.join()
 
     proxies = list(df['valid_proxy'].unique())
     print('Remaining proxies after validation -', len(proxies))
@@ -84,22 +105,6 @@ if __name__ == "__main__":
     # df_title_ids = df_title_ids[~(df_title_ids['title_id'].isin(db_ids))]
     # print('Count of ids after removing already scraped -', df_title_ids.shape[0])
 
-    def parallelize_dataframe(titles, proxies, func, n_cores=config['algo']['vCPU']):
-        df_titles = pd.DataFrame(titles).rename(columns={0:'titles'})
-        df_split = np.array_split(df_titles, n_cores)
-        proxies = np.array_split(proxies, n_cores)
-
-        for i in range(n_cores):
-            if not df_split[i].empty:
-                df_split[i]['ips'] = str(list(proxies[i]))
-
-        pool = Pool(n_cores)
-        df = pd.concat(pool.map(func, df_split))
-        pool.close()
-        pool.join()
-        return df
-
-
     print('--------------------------------- scraping movies ---------------------------------')
     # movies_titles = list(df_title_ids['title_id'][df_title_ids['type']=='feature'].unique())
     movies_titles = db_ids
@@ -107,7 +112,7 @@ if __name__ == "__main__":
     for scrape_function in config['scrape_data']['movies']:
         print('\n')
         print('----------- scraping data - ' + scrape_function + ' -----------')
-        df_temp = parallelize_dataframe(movies_titles, proxies, eval(scrape_function))
+        df_temp = parallelize_dataframe(titles=movies_titles, proxies=proxies, func=eval(scrape_function), a=2)
         df_temp.to_csv('~/final_file.csv', index=False)
         print('\n')
     print('--------------------------------- finished scraping movies ---------------------------------\n\n')
