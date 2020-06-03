@@ -128,7 +128,6 @@ def movie_budget_n_metacritic_scrape(df_titles):
 
     for title_id in titles:
         if proxy:
-            time.sleep(1)
             try:
                 go_ahead, driver, session, proxy, proxies, title_wrapper = should_go_ahead(title_id, proxy, driver, session, proxies)
 
