@@ -46,17 +46,21 @@ def should_go_ahead(title_id, proxy, driver, session, proxies):
                 os.remove(tp.name)
                 if proxies:
                     print('Closing driver for -', title_id, proxy)
-                    proxy = proxies.pop()
+                    # proxy = proxies.pop()
                     # driver.close()
                     # driver = get_driver(proxy)
+                    print('Error 503, Sleeping for 5 sec...')
+                    time.sleep(5)
                     driver = None
                     session.close()
                     session = get_session(proxy)
-                    print('Remaining proxies -', len(proxies))
+                    # print('Remaining proxies -', len(proxies))
                     print('\n')
                     try:
                         return should_go_ahead(title_id, proxy, driver, session, proxies)
                     except RecursionError:
+                        print('Error 503, enough of recursion.')
+                        print('\n')
                         go_ahead = False
                 else:
                     go_ahead = False
@@ -68,32 +72,43 @@ def should_go_ahead(title_id, proxy, driver, session, proxies):
     except requests.exceptions.Timeout:
         if proxies:
             print('Closing driver for -', title_id, proxy)
-            proxy = proxies.pop()
+            # proxy = proxies.pop()
             # driver.close()
             # driver = get_driver(proxy)
+            print('Timeout, Sleeping for 5 sec...')
+            time.sleep(5)
             driver = None
             session.close()
             session = get_session(proxy)
-            print('Remaining proxies -', len(proxies))
+            # print('Remaining proxies -', len(proxies))
             print('\n')
             try:
                 return should_go_ahead(title_id, proxy, driver, session, proxies)
             except RecursionError:
+                print('Timeout, enough of recursion.')
+                print('\n')
                 go_ahead = False
         else:
             go_ahead = False
             proxy = None
     except requests.exceptions.ChunkedEncodingError:
-        time.sleep(1)
+        print('ChunkedEncodingError, sleeping for 5 sec...')
+        time.sleep(5)
         session.close()
         session = get_session(proxy)
-        return should_go_ahead(title_id, proxy, driver, session, proxies)
+        try:
+            return should_go_ahead(title_id, proxy, driver, session, proxies)
+        except RecursionError:
+            print('ChunkedEncodingError, enough of recursion.')
+            print('\n')
+            go_ahead = False
 
     return go_ahead, driver, session, proxy, proxies, title_wrapper
 
 
 def movie_budget_n_metacritic_scrape(df_titles):
     proxies = eval(list(df_titles['proxies'].unique())[0])
+    proxies = [1]
     proxy = 'no_proxy'
     titles = list(df_titles['titles'])
     print(len(titles), '-', len(proxies), '-', proxy)

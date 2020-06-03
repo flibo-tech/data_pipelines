@@ -115,4 +115,4 @@ def get_proxies():
     # proxies = list(df_proxies['valid_proxy'].unique())
     # print('Remaining proxies after validation -', len(proxies))
 
-    return [str(i) for i in range(10)]
+    return [str(i) for i in range(20)]
