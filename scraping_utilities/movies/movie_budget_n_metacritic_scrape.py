@@ -26,7 +26,7 @@ def should_go_ahead(title_id, proxy, driver, session, proxies):
         tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
         tp.close()
 
-        driver.get('file:///' + tp.name)
+        # driver.get('file:///' + tp.name)
 
         # try:
         if html_content.count('title_wrapper') != 0:
