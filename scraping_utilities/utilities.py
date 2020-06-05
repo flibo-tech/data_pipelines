@@ -6,6 +6,8 @@ import yaml
 from multiprocessing import Pool
 from selenium.webdriver.remote.remote_connection import LOGGER, logging
 from selenium import webdriver
+import boto3
+import time
 
 
 LOGGER.setLevel(logging.WARNING)
@@ -57,3 +59,164 @@ def parallelize_scraping(titles, func, n_cores=config['algo']['vCPU']):
     pool.close()
     pool.join()
     return df
+
+
+def launch_spot_instance():
+    session = boto3.Session(
+        aws_access_key_id=config['s3']['aws_access_key_id'],
+        aws_secret_access_key=config['s3']['aws_secret_access_key'],
+        region_name=config['s3']['region_name']
+    )
+    client = session.client('ec2')
+
+    print('Submitting fleet request...')
+    response = client.request_spot_fleet(
+        SpotFleetRequestConfig={
+            "IamFleetRole": "arn:aws:iam::772835535876:role/aws-ec2-spot-fleet-tagging-role",
+            "AllocationStrategy": "capacityOptimized",
+            "TargetCapacity": 1,
+            "TerminateInstancesWithExpiration": True,
+            "LaunchSpecifications": [],
+            "Type": "request",
+            "LaunchTemplateConfigs": [
+                {
+                    "LaunchTemplateSpecification": {
+                        "LaunchTemplateId": "lt-0801fa586840fa707",
+                        "Version": "4"
+                    },
+                    "Overrides": [
+                        {
+                            "InstanceType": "c5d.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-aff487d5"
+                        },
+                        {
+                            "InstanceType": "c5d.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "c5d.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-49ae7405"
+                        },
+                        {
+                            "InstanceType": "m4.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-aff487d5"
+                        },
+                        {
+                            "InstanceType": "m4.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "m4.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-49ae7405"
+                        },
+                        {
+                            "InstanceType": "c5n.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-aff487d5"
+                        },
+                        {
+                            "InstanceType": "c5n.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "c5n.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-49ae7405"
+                        },
+                        {
+                            "InstanceType": "r3.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-aff487d5"
+                        },
+                        {
+                            "InstanceType": "r3.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "r3.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-49ae7405"
+                        },
+                        {
+                            "InstanceType": "c4.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-aff487d5"
+                        },
+                        {
+                            "InstanceType": "c4.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "c4.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-49ae7405"
+                        },
+                        {
+                            "InstanceType": "a1.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-aff487d5"
+                        },
+                        {
+                            "InstanceType": "a1.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "a1.xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-49ae7405"
+                        }
+                    ]
+                }
+            ]
+        }
+    )
+    spot_fleet_request_id = response['SpotFleetRequestId']
+    print('Fleet request id -', spot_fleet_request_id)
+
+    print('Fetching instances...')
+    response = client.describe_spot_fleet_instances(
+        SpotFleetRequestId=spot_fleet_request_id
+    )
+    while len(response['ActiveInstances']) == 0:
+        time.sleep(5)
+        print('Fetching instances again...')
+        response = client.describe_spot_fleet_instances(
+            SpotFleetRequestId=spot_fleet_request_id
+        )
+    instance_id = response['ActiveInstances'][0]['InstanceId']
+    print('Instance id -', instance_id)
+
+    print('Fetching instance public dns...')
+    response = client.describe_instances(
+        InstanceIds=[instance_id]
+    )
+    public_dns = response['Reservations'][0]['Instances'][0]['PublicDnsName']
+    
+    return spot_fleet_request_id, public_dns
+
+
+def close_spot_fleet_request_and_instances(spot_fleet_request_id):
+    session = boto3.Session(
+        aws_access_key_id=config['s3']['aws_access_key_id'],
+        aws_secret_access_key=config['s3']['aws_secret_access_key'],
+        region_name=config['s3']['region_name']
+    )
+    client = session.client('ec2')
+    
+    print('Cancelling fleet request & terminating instances...')
+    client.cancel_spot_fleet_requests(
+        SpotFleetRequestIds=[spot_fleet_request_id],
+        TerminateInstances=True
+    )
+    
+    return True

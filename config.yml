@@ -27,6 +27,7 @@ ec2:
 scrape_data:
   collect_new_imdb_ids: False # to collect just the imdb ids for new content releases
   latest_release_date: '2020-05-15' # update this if collect_new_imdb_ids set as True
+  scrape_using_spot_instance: True
   movies: ['movie_budget_n_metacritic_scrape'] #'movie_budget_n_metacritic_scrape', 'movie_content_scrape', 'movie_crew_scrape', 'movie_keywords_scrape', 'movie_synopsys_scrape', 'movie_technical_specs_scrape', 'movie_tmdb_artist_data_collection', 'movie_tmdb_data_collection'
   tv_series: [] #'tv_series_content_scrape', 'tv_series_crew_scrape', 'tv_series_details_scrape', 'tv_series_keywords_scrape', 'tv_series_synopsys_scrape', 'tv_series_technical_specs_scrape', 'tv_series_tmdb_artist_data_collection', 'tv_series_tmdb_data_collection'
   awards: [] #'awards_scrape' -- Before running this remember to delete latest year's awards scraped from database & file awards_scraped.csv at scraped_data_folder
@@ -102,3 +103,9 @@ algo:
   neighbours: 50
   vCPU: 4
   calculate_similar_contents: False # This functionality calculates similar movies by fetching data from sql db only. Remember to remove or change name of files synonyms_similar_contents.csv & full_data.csv in upload_resources folder while running this for new data
+
+# s3 credentials
+s3:
+  aws_access_key_id: 'AKIAJCSQHQZCL3V5UZKQ'
+  aws_secret_access_key: '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'
+  region_name: 'us-east-2'

@@ -33,47 +33,54 @@ from utilities import *
 if __name__ == "__main__":
     config = yaml.safe_load(open('./../config.yml'))
 
-    if config['scrape_data']['collect_new_imdb_ids']:
-        print('--------------------------------- collecting db imdb ids ---------------------------------')
-        collect_db_imdb_ids(config)
+    if config['scrape_data']['scrape_using_spot_instance']:
+        # df_db_ids = pd.read_csv('db_ids.csv').head(10000)
+        # movies_titles = list(df_db_ids['imdb_content_id'].unique())
+        # for scrape_function in config['scrape_data']['movies']:
+        #     df_temp = parallelize_scraping(movies_titles, eval(scrape_function))
+        #     df_temp.to_csv('~/final_file.csv', index=False)
+        spot_fleet_request_id, public_dns = launch_spot_instance()
+        close_spot_fleet_request_and_instances(spot_fleet_request_id)
+    else:
+        if config['scrape_data']['collect_new_imdb_ids']:
+            print('--------------------------------- collecting db imdb ids ---------------------------------')
+            collect_db_imdb_ids(config)
 
-        print('--------------------------------- collecting new imdb ids ---------------------------------')
-        collect_new_imdb_ids()
+            print('--------------------------------- collecting new imdb ids ---------------------------------')
+            collect_new_imdb_ids()
 
-    df_db_ids = pd.read_csv('db_ids.csv').head(10000)
-    db_ids = list(df_db_ids['imdb_content_id'].unique())
+        df_db_ids = pd.read_csv('db_ids.csv')
+        db_ids = list(df_db_ids['imdb_content_id'].unique())
 
-    # df_title_ids = pd.read_csv('imdb_ids.csv')
-    # print('Count of total ids -', df_title_ids.shape[0])
-    # df_title_ids = df_title_ids[~(df_title_ids['title_id'].isin(db_ids))]
-    # print('Count of ids after removing already scraped -', df_title_ids.shape[0])
-
-
-    print('--------------------------------- scraping movies ---------------------------------')
-    # movies_titles = list(df_title_ids['title_id'][df_title_ids['type']=='feature'].unique())
-    movies_titles = db_ids
-    print(len(movies_titles), 'movies to be scraped...')
-    for scrape_function in config['scrape_data']['movies']:
+        df_title_ids = pd.read_csv('imdb_ids.csv')
+        print('Count of total ids -', df_title_ids.shape[0])
+        df_title_ids = df_title_ids[~(df_title_ids['title_id'].isin(db_ids))]
+        print('Count of ids after removing already scraped -', df_title_ids.shape[0])
         print('\n')
-        print('----------- scraping data - ' + scrape_function + ' -----------')
-        df_temp = parallelize_scraping(movies_titles, eval(scrape_function))
-        df_temp.to_csv('~/final_file.csv', index=False)
+
+        print('--------------------------------- scraping movies ---------------------------------')
+        movies_titles = list(df_title_ids['title_id'][df_title_ids['type']=='feature'].unique())
+        print(len(movies_titles), 'movies to be scraped...')
+        for scrape_function in config['scrape_data']['movies']:
+            print('\n')
+            print('----------- scraping data - ' + scrape_function + ' -----------')
+            eval(scrape_function)(movies_titles)
+            print('\n')
+        print('--------------------------------- finished scraping movies ---------------------------------\n\n')
         print('\n')
-    print('--------------------------------- finished scraping movies ---------------------------------\n\n')
 
+        print('--------------------------------- scraping tv_series ---------------------------------')
+        tv_series_titles = list(df_title_ids['title_id'][df_title_ids['type']=='tv_series'].unique())
+        print(len(tv_series_titles), 'tv_series to be scraped...')
+        for scrape_function in config['scrape_data']['tv_series']:
+            print('\n')
+            print('----------- scraping data - ' + scrape_function + ' -----------')
+            eval(scrape_function)(tv_series_titles)
+            print('\n')
+        print('--------------------------------- finished scraping tv_series ---------------------------------\n\n')
+        print('\n')
 
-    # print('--------------------------------- scraping tv_series ---------------------------------')
-    # tv_series_titles = list(df_title_ids['title_id'][df_title_ids['type']=='tv_series'].unique())
-    # print(len(tv_series_titles), 'tv_series to be scraped...')
-    # for scrape_function in config['scrape_data']['tv_series']:
-    #     print('\n')
-    #     print('----------- scraping data - ' + scrape_function + ' -----------')
-    #     eval(scrape_function)(tv_series_titles)
-    #     print('\n')
-    # print('--------------------------------- finished scraping tv_series ---------------------------------\n\n')
-    #
-    #
-    # print('--------------------------------- scraping awards ---------------------------------')
-    # for scrape_function in config['scrape_data']['awards']:
-    #     eval(scrape_function)()
-    # print('--------------------------------- finished scraping awards ---------------------------------\n\n')
+        print('--------------------------------- scraping awards ---------------------------------')
+        for scrape_function in config['scrape_data']['awards']:
+            eval(scrape_function)()
+        print('--------------------------------- finished scraping awards ---------------------------------\n\n')
