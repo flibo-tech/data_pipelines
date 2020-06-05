@@ -19,7 +19,7 @@ def get_driver(proxy=None):
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
     options.add_argument('log-level=3')
-    if (proxy is not None) and (proxy != 'no_proxy'):
+    if proxy:
         options.add_argument('--proxy-server=' + proxy)
 
     driver = webdriver.Chrome(chrome_options=options)
@@ -39,7 +39,7 @@ def get_session(proxy=None):
         'upgrade-insecure-requests': '1',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36'
     })
-    if (proxy is not None) and (proxy != 'no_proxy'):
+    if proxy:
         session.proxies.update({
                 'http': 'http://' + proxy,
                 'https': 'https://' + proxy,
@@ -49,70 +49,11 @@ def get_session(proxy=None):
     return session
 
 
-def parallelize_scraping(titles, proxies, func, n_cores=config['algo']['vCPU']):
-    n_cores = np.min([n_cores,len(proxies)])
-
+def parallelize_scraping(titles, func, n_cores=config['algo']['vCPU']):
     df_titles = pd.DataFrame(titles).rename(columns={0:'titles'})
     df_split = np.array_split(df_titles, n_cores)
-    proxies = np.array_split(proxies, n_cores)
-
-    for i in range(n_cores):
-        if not df_split[i].empty:
-            df_split[i]['proxies'] = str(list(proxies[i]))
-
     pool = Pool(n_cores)
     df = pd.concat(pool.map(func, df_split))
     pool.close()
     pool.join()
     return df
-
-
-def parallelize_validation(proxies, func, n_cores=config['algo']['vCPU']):
-    df_proxies = pd.DataFrame(proxies).rename(columns={0: 'proxy'})
-    df_split = np.array_split(df_proxies, n_cores)
-
-    pool = Pool(n_cores)
-    df = pd.concat(pool.map(func, df_split))
-    pool.close()
-    pool.join()
-    return df
-
-
-def validate_proxies(df_proxies):
-    proxies = list(df_proxies['proxy'].unique())
-    title_id = 'tt0111161' #The Shawshank Redemption
-
-    valid_proxies = []
-    i = 0
-    for proxy in proxies:
-        i+=1
-        print('Validating proxy -', proxy, '-', i, '/', len(proxies))
-
-        try:
-            session = get_session(proxy)
-            html_content = session.get("http://www.imdb.com/title/" + title_id, timeout=5).text
-            if html_content.count('title_wrapper') != 0:
-                valid_proxies.append(proxy)
-            session.close()
-        except:
-            session.close()
-
-    df = pd.DataFrame(valid_proxies).rename(columns={0: 'valid_proxy'})
-
-    return df
-
-
-def get_proxies():
-    # proxies = []
-    # req_proxy = RequestProxy()
-    # for proxy in req_proxy.get_proxy_list():
-    #     proxies.append(proxy.ip + ':' + str(proxy.port))
-    #
-    # proxies = list(set(proxies))
-    # print(len(proxies), 'proxies gathered.')
-    # print('Starting to validate proxies...')
-    # df_proxies = parallelize_validation(proxies, validate_proxies)
-    # proxies = list(df_proxies['valid_proxy'].unique())
-    # print('Remaining proxies after validation -', len(proxies))
-
-    return [str(i) for i in range(20)]

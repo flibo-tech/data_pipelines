@@ -15,7 +15,7 @@ import time
 from utilities import get_driver, get_session
 
 
-def should_go_ahead(title_id, proxy, driver, session, proxies):
+def should_go_ahead(title_id, driver, session):
     go_ahead = False
     title_wrapper = None
 
@@ -26,78 +26,56 @@ def should_go_ahead(title_id, proxy, driver, session, proxies):
         tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
         tp.close()
 
-        # driver.get('file:///' + tp.name)
+        driver.get('file:///' + tp.name)
+        os.remove(tp.name)
 
-        # try:
         if html_content.count('title_wrapper') != 0:
-            # title_wrapper = driver.find_element_by_class_name('title_wrapper')
+            title_wrapper = driver.find_element_by_class_name('title_wrapper')
             go_ahead = True
-            # os.remove(tp.name)
-        # except:
         else:
-            # errors = driver.find_elements_by_class_name('error_message')
-            # if errors:
-            #     if errors[0].text.replace('\\n', '').strip().count('URL was not found') != 0:
             if html_content.count('URL was not found') != 0:
                 go_ahead = False
-                os.remove(tp.name)
-            # elif driver.find_element_by_xpath("//*").text.replace('\\n', '').strip().count('Error 503') != 0:
             elif html_content.count('Error 503') != 0:
-                os.remove(tp.name)
-                if proxies:
-                    print('Closing driver for -', title_id, proxy)
-                    # proxy = proxies.pop()
-                    # driver.close()
-                    # driver = get_driver(proxy)
-                    print('Error 503, Sleeping for 5 sec...')
-                    time.sleep(5)
-                    driver = None
-                    session.close()
-                    session = get_session(proxy)
-                    # print('Remaining proxies -', len(proxies))
+                print('Closing driver for -', title_id)
+                driver.close()
+                driver = get_driver()
+                print('Error 503, Sleeping for 5 sec...')
+                time.sleep(5)
+                session.close()
+                session = get_session()
+                print('\n')
+                try:
+                    return should_go_ahead(title_id, driver, session)
+                except RecursionError:
+                    print('Error 503, enough of recursion.')
                     print('\n')
-                    try:
-                        return should_go_ahead(title_id, proxy, driver, session, proxies)
-                    except RecursionError:
-                        print('Error 503, enough of recursion.')
-                        print('\n')
-                        go_ahead = False
-                else:
                     go_ahead = False
-                    proxy = None
             else:
                 go_ahead = False
-                print('No reason found for -', title_id, '-', proxy, '-', tp.name)
+                print('No reason found for -', title_id)
                 print('\n')
     except requests.exceptions.Timeout:
-        if proxies:
-            print('Closing driver for -', title_id, proxy)
-            # proxy = proxies.pop()
-            # driver.close()
-            # driver = get_driver(proxy)
-            print('Timeout, Sleeping for 5 sec...')
-            time.sleep(5)
-            driver = None
-            session.close()
-            session = get_session(proxy)
-            # print('Remaining proxies -', len(proxies))
+        print('Closing driver for -', title_id)
+        driver.close()
+        driver = get_driver()
+        print('Timeout, Sleeping for 5 sec...')
+        time.sleep(5)
+        session.close()
+        session = get_session()
+        print('\n')
+        try:
+            return should_go_ahead(title_id, driver, session)
+        except RecursionError:
+            print('Timeout, enough of recursion.')
             print('\n')
-            try:
-                return should_go_ahead(title_id, proxy, driver, session, proxies)
-            except RecursionError:
-                print('Timeout, enough of recursion.')
-                print('\n')
-                go_ahead = False
-        else:
             go_ahead = False
-            proxy = None
     except requests.exceptions.ChunkedEncodingError:
         print('ChunkedEncodingError, sleeping for 5 sec...')
         time.sleep(5)
         session.close()
-        session = get_session(proxy)
+        session = get_session()
         try:
-            return should_go_ahead(title_id, proxy, driver, session, proxies)
+            return should_go_ahead(title_id, driver, session)
         except RecursionError:
             print('ChunkedEncodingError, enough of recursion.')
             print('\n')
@@ -106,23 +84,19 @@ def should_go_ahead(title_id, proxy, driver, session, proxies):
         print('ConnectionError, sleeping for 5 sec...')
         time.sleep(5)
         session.close()
-        session = get_session(proxy)
+        session = get_session()
         try:
-            return should_go_ahead(title_id, proxy, driver, session, proxies)
+            return should_go_ahead(title_id, driver, session)
         except RecursionError:
             print('ConnectionError, enough of recursion.')
             print('\n')
             go_ahead = False
 
-    return go_ahead, driver, session, proxy, proxies, title_wrapper
+    return go_ahead, driver, session, title_wrapper
 
 
 def movie_budget_n_metacritic_scrape(df_titles):
-    proxies = eval(list(df_titles['proxies'].unique())[0])
-    proxies = [1]
-    proxy = 'no_proxy'
     titles = list(df_titles['titles'])
-    print(len(titles), '-', len(proxies), '-', proxy)
     from datetime import datetime # this import was not working somehow when it was above so brought it here
 
     config = yaml.safe_load(open('./../config.yml'))
@@ -132,135 +106,128 @@ def movie_budget_n_metacritic_scrape(df_titles):
     i = 1
     j = 0
 
-    # driver = get_driver(proxy)
-    driver = None
-    session = get_session(proxy)
+    driver = get_driver()
+    session = get_session()
     df_main = pd.DataFrame()
 
     for title_id in titles:
-        if proxy:
-            try:
-                go_ahead, driver, session, proxy, proxies, title_wrapper = should_go_ahead(title_id, proxy, driver, session, proxies)
+        try:
+            go_ahead, driver, session, title_wrapper = should_go_ahead(title_id, driver, session)
 
-                if go_ahead:
-                    1
-                    # title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
-                    # title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
-                    #
-                    # subtext = title_wrapper.find_element_by_class_name('subtext')
-                    # try:
-                    #     release_date = subtext.text.replace('\\n', '').strip().split('|')[-1].strip()
-                    #     run_time = subtext.find_element_by_tag_name('time')
-                    #     if run_time:
-                    #         run_time = run_time.text.replace('\\n', '').strip()
-                    # except:
-                    #     release_date = None
-                    #     run_time = None
-                    # try:
-                    #     rating_element = driver.find_element_by_class_name('imdbRating')
-                    #     imdb_rating = rating_element.find_element_by_tag_name('strong').text.replace('\\n', '').strip()
-                    #     num_votes = rating_element.find_element_by_tag_name('a').text.replace('\\n', '').strip().replace(',', '')
-                    # except:
-                    #     imdb_rating = None
-                    #     num_votes = None
-                    #
-                    # try:
-                    #     summary_text = driver.find_element_by_class_name('summary_text').text.replace('\\n', '').strip()
-                    # except:
-                    #     summary_text = None
-                    #
-                    # try:
-                    #     metacritic_score = driver.find_element_by_class_name('titleReviewBarItem').text.replace('\\n', '').strip().split('\n')[0]
-                    # except:
-                    #     metacritic_score = None
-                    #
-                    # try:
-                    #     reviews = driver.find_element_by_css_selector('.titleReviewBarItem.titleReviewbarItemBorder').text.replace('\\n', '').strip()
-                    # except:
-                    #     reviews = None
-                    #
-                    # try:
-                    #     awards = driver.find_element_by_css_selector('.article.highlighted').text.replace('\\n', '').strip()
-                    # except:
-                    #     awards = None
-                    #
-                    # try:
-                    #     details = driver.find_element_by_id('titleDetails').text.replace('\\n', '').strip()
-                    # except:
-                    #     details = None
-                    #
-                    # try:
-                    #     genres = None
-                    #     elements = driver.find_elements_by_css_selector('.see-more.inline.canwrap')
-                    #     for element in elements:
-                    #         if element.text.replace('\\n', '').strip().count('Genres:') != 0:
-                    #             genres = [x.strip() for x in element.text.replace('\\n', '').strip().replace('Genres:', '').split('|')]
-                    # except:
-                    #     genres = None
-                    #
-                    # df = pd.DataFrame(
-                    #                   [
-                    #                     {
-                    #                     'title_id':title_id,
-                    #                     'title_name':title_name,
-                    #                     'imdb_rating': imdb_rating,
-                    #                     'num_votes': num_votes,
-                    #                     'release_date': release_date,
-                    #                     'run_time': run_time,
-                    #                     'title_year': title_year,
-                    #                     'genres': genres,
-                    #                     'summary_text':summary_text,
-                    #                     'metacritic_score':metacritic_score,
-                    #                     'reviews':reviews,
-                    #                     'awards':awards,
-                    #                     'details':details
-                    #                     }
-                    #                   ]
-                    #                   )
-                    #
-                    # if not df.empty:
-                    #     df_main = pd.concat([df_main,df], axis=0)
-                    #     del df
-                else:
-                    if proxy:
-                        print('Skipping', title_id, '- something wrong.')
-                    else:
-                        print('Skipping', title_id, 'as proxy ended.')
-                    print('\n')
-                    j += 1
-            except TimeoutException as ex:
-                titles.append(title_id)
-                print('\n')
-                print('Skipping '+title_id+' because of Selenium TimeoutException')
-                print('\n')
-                # driver.close()
-                # driver = get_driver(proxy)
-                driver = None
-            if i%25 == 0:
-                print('Movies scraped -',(i+j))
+            if go_ahead:
+                title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
+                title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
 
-                time_since_start = (datetime.now()-scrape_start_time).seconds
-                all_time_scraping_speed = (i/time_since_start)*3600
-                if time_since_start < 60:
-                    time_since_start = str(time_since_start)+' seconds'
-                elif time_since_start < 3600:
-                    time_since_start = str(time_since_start//60)+ ':'+str(time_since_start%60)+' minutes'
-                else:
-                    time_since_start = str(time_since_start//3600)+ ':'+str((time_since_start%3600)//60)+' hours'
-                print('Time since scraping started - '+time_since_start)
-                print('All time scraping speed - '+('%.0f'%(all_time_scraping_speed))+' movies/hour')
+                subtext = title_wrapper.find_element_by_class_name('subtext')
+                try:
+                    release_date = subtext.text.replace('\\n', '').strip().split('|')[-1].strip()
+                    run_time = subtext.find_element_by_tag_name('time')
+                    if run_time:
+                        run_time = run_time.text.replace('\\n', '').strip()
+                except:
+                    release_date = None
+                    run_time = None
+                try:
+                    rating_element = driver.find_element_by_class_name('imdbRating')
+                    imdb_rating = rating_element.find_element_by_tag_name('strong').text.replace('\\n', '').strip()
+                    num_votes = rating_element.find_element_by_tag_name('a').text.replace('\\n', '').strip().replace(',', '')
+                except:
+                    imdb_rating = None
+                    num_votes = None
 
                 try:
-                    time_since_last_checkpoint = (datetime.now()-time_checkpoint).seconds
+                    summary_text = driver.find_element_by_class_name('summary_text').text.replace('\\n', '').strip()
                 except:
-                    time_since_last_checkpoint = (datetime.now()-scrape_start_time).seconds
-                current_scraping_speed = (25/time_since_last_checkpoint)*3600
-                time_remaining = (time_since_last_checkpoint*((len(titles)-i-j)/25))/(3600*24)
-                print('Current scraping speed - '+('%.0f'%(current_scraping_speed))+' movies/hour')
-                print('Time remaining as per current speed - '+('%.1f'%(time_remaining))+' days')
+                    summary_text = None
+
+                try:
+                    metacritic_score = driver.find_element_by_class_name('titleReviewBarItem').text.replace('\\n', '').strip().split('\n')[0]
+                except:
+                    metacritic_score = None
+
+                try:
+                    reviews = driver.find_element_by_css_selector('.titleReviewBarItem.titleReviewbarItemBorder').text.replace('\\n', '').strip()
+                except:
+                    reviews = None
+
+                try:
+                    awards = driver.find_element_by_css_selector('.article.highlighted').text.replace('\\n', '').strip()
+                except:
+                    awards = None
+
+                try:
+                    details = driver.find_element_by_id('titleDetails').text.replace('\\n', '').strip()
+                except:
+                    details = None
+
+                try:
+                    genres = None
+                    elements = driver.find_elements_by_css_selector('.see-more.inline.canwrap')
+                    for element in elements:
+                        if element.text.replace('\\n', '').strip().count('Genres:') != 0:
+                            genres = [x.strip() for x in element.text.replace('\\n', '').strip().replace('Genres:', '').split('|')]
+                except:
+                    genres = None
+
+                df = pd.DataFrame(
+                                  [
+                                    {
+                                    'title_id':title_id,
+                                    'title_name':title_name,
+                                    'imdb_rating': imdb_rating,
+                                    'num_votes': num_votes,
+                                    'release_date': release_date,
+                                    'run_time': run_time,
+                                    'title_year': title_year,
+                                    'genres': genres,
+                                    'summary_text':summary_text,
+                                    'metacritic_score':metacritic_score,
+                                    'reviews':reviews,
+                                    'awards':awards,
+                                    'details':details
+                                    }
+                                  ]
+                                  )
+
+                if not df.empty:
+                    df_main = pd.concat([df_main,df], axis=0)
+                    del df
+            else:
+                print('Skipping', title_id, '- something wrong.')
                 print('\n')
-                time_checkpoint = datetime.now()
-            i += 1
+                j += 1
+        except TimeoutException as ex:
+            titles.append(title_id)
+            print('\n')
+            print('Skipping '+title_id+' because of Selenium TimeoutException')
+            print('\n')
+            driver.close()
+            driver = get_driver()
+        if i%25 == 0:
+            print('Movies scraped -',(i+j))
+
+            time_since_start = (datetime.now()-scrape_start_time).seconds
+            all_time_scraping_speed = (i/time_since_start)*3600
+            if time_since_start < 60:
+                time_since_start = str(time_since_start)+' seconds'
+            elif time_since_start < 3600:
+                time_since_start = str(time_since_start//60)+ ':'+str(time_since_start%60)+' minutes'
+            else:
+                time_since_start = str(time_since_start//3600)+ ':'+str((time_since_start%3600)//60)+' hours'
+            print('Time since scraping started - '+time_since_start)
+            print('All time scraping speed - '+('%.0f'%(all_time_scraping_speed))+' movies/hour')
+
+            try:
+                time_since_last_checkpoint = (datetime.now()-time_checkpoint).seconds
+            except:
+                time_since_last_checkpoint = (datetime.now()-scrape_start_time).seconds
+            current_scraping_speed = (25/time_since_last_checkpoint)*3600
+            time_remaining = (time_since_last_checkpoint*((len(titles)-i-j)/25))/(3600*24)
+            print('Current scraping speed - '+('%.0f'%(current_scraping_speed))+' movies/hour')
+            print('Time remaining as per current speed - '+('%.1f'%(time_remaining))+' days')
+            print('\n')
+            time_checkpoint = datetime.now()
+        i += 1
 
 
 

@@ -33,9 +33,6 @@ from utilities import *
 if __name__ == "__main__":
     config = yaml.safe_load(open('./../config.yml'))
 
-    print('Requesting proxies...')
-    proxies = get_proxies()
-
     if config['scrape_data']['collect_new_imdb_ids']:
         print('--------------------------------- collecting db imdb ids ---------------------------------')
         collect_db_imdb_ids(config)
@@ -59,7 +56,7 @@ if __name__ == "__main__":
     for scrape_function in config['scrape_data']['movies']:
         print('\n')
         print('----------- scraping data - ' + scrape_function + ' -----------')
-        df_temp = parallelize_scraping(movies_titles, proxies, eval(scrape_function))
+        df_temp = parallelize_scraping(movies_titles, eval(scrape_function))
         df_temp.to_csv('~/final_file.csv', index=False)
         print('\n')
     print('--------------------------------- finished scraping movies ---------------------------------\n\n')
