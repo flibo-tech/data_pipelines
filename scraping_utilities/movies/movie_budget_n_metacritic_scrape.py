@@ -102,6 +102,17 @@ def should_go_ahead(title_id, proxy, driver, session, proxies):
             print('ChunkedEncodingError, enough of recursion.')
             print('\n')
             go_ahead = False
+    except requests.exceptions.ConnectionError:
+        print('ConnectionError, sleeping for 5 sec...')
+        time.sleep(5)
+        session.close()
+        session = get_session(proxy)
+        try:
+            return should_go_ahead(title_id, proxy, driver, session, proxies)
+        except RecursionError:
+            print('ConnectionError, enough of recursion.')
+            print('\n')
+            go_ahead = False
 
     return go_ahead, driver, session, proxy, proxies, title_wrapper
 
