@@ -271,6 +271,19 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file):
         interact.send('sudo pip install --upgrade pip')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt)
 
+        interact.send('sudo yum install python36-devel')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('sudo yum  install libevent-devel')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('sudo yum -y install gcc')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
         interact.send('sudo yum install git')
         interact.expect('Is this ok \[y/d/N\]:\s+')
         interact.send('y')
