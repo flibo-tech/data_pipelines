@@ -1,4 +1,3 @@
-from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
 import requests
 import pandas as pd
 import numpy as np
@@ -226,11 +225,19 @@ def close_spot_fleet_request_and_instances(spot_fleet_request_id):
 
 
 def ssh_into_remote(hostname, username, key_file):
-    key = paramiko.RSAKey.from_private_key_file(key_file)
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client = None
+    while client is None:
+        try:
+            print('Trying to ssh...')
+            key = paramiko.RSAKey.from_private_key_file(key_file)
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    client.connect(hostname=hostname, username=username, pkey=key)
+            client.connect(hostname=hostname, username=username, pkey=key)
+        except:
+            print('Remote not completely up yet, sleeping for 10 sec...')
+            time.sleep(10)
+            client = None
     return client
 
 
@@ -335,7 +342,7 @@ def scrape_data_on_remote(public_dns, private_ip, username, key_file):
         interact.send('cd data_pipelines/scraping_utilities')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
-        interact.send('python scrape.py scrape_on_spot_instance')
+        interact.send('sudo python3.6 scrape.py scrape_on_spot_instance')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
         client.close()
