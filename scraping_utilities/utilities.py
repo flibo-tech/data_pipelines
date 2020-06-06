@@ -325,5 +325,9 @@ def scrape_data_on_remote(public_dns, private_ip, username, key_file):
         interact.send('sudo python3.6 scrape.py scrape_on_spot_instance')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
+        interact.send('sudo cp /root/final_file.csv /home/'+username+'/')
+        interact.send('sudo chmod 777 /home/' + username + '/final_file.csv')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+
         client.close()
         return True
