@@ -115,83 +115,88 @@ def movie_budget_n_metacritic_scrape(df_titles):
             go_ahead, driver, session, title_wrapper = should_go_ahead(title_id, driver, session)
 
             if go_ahead:
-                title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
-                title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
-
-                subtext = title_wrapper.find_element_by_class_name('subtext')
                 try:
-                    release_date = subtext.text.replace('\\n', '').strip().split('|')[-1].strip()
-                    run_time = subtext.find_element_by_tag_name('time')
-                    if run_time:
-                        run_time = run_time.text.replace('\\n', '').strip()
-                except:
-                    release_date = None
-                    run_time = None
-                try:
-                    rating_element = driver.find_element_by_class_name('imdbRating')
-                    imdb_rating = rating_element.find_element_by_tag_name('strong').text.replace('\\n', '').strip()
-                    num_votes = rating_element.find_element_by_tag_name('a').text.replace('\\n', '').strip().replace(',', '')
-                except:
-                    imdb_rating = None
-                    num_votes = None
+                    title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
+                    title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
 
-                try:
-                    summary_text = driver.find_element_by_class_name('summary_text').text.replace('\\n', '').strip()
-                except:
-                    summary_text = None
+                    subtext = title_wrapper.find_element_by_class_name('subtext')
+                    try:
+                        release_date = subtext.text.replace('\\n', '').strip().split('|')[-1].strip()
+                        run_time = subtext.find_element_by_tag_name('time')
+                        if run_time:
+                            run_time = run_time.text.replace('\\n', '').strip()
+                    except:
+                        release_date = None
+                        run_time = None
+                    try:
+                        rating_element = driver.find_element_by_class_name('imdbRating')
+                        imdb_rating = rating_element.find_element_by_tag_name('strong').text.replace('\\n', '').strip()
+                        num_votes = rating_element.find_element_by_tag_name('a').text.replace('\\n', '').strip().replace(',', '')
+                    except:
+                        imdb_rating = None
+                        num_votes = None
 
-                try:
-                    metacritic_score = driver.find_element_by_class_name('titleReviewBarItem').text.replace('\\n', '').strip().split('\n')[0]
-                except:
-                    metacritic_score = None
+                    try:
+                        summary_text = driver.find_element_by_class_name('summary_text').text.replace('\\n', '').strip()
+                    except:
+                        summary_text = None
 
-                try:
-                    reviews = driver.find_element_by_css_selector('.titleReviewBarItem.titleReviewbarItemBorder').text.replace('\\n', '').strip()
-                except:
-                    reviews = None
+                    try:
+                        metacritic_score = driver.find_element_by_class_name('titleReviewBarItem').text.replace('\\n', '').strip().split('\n')[0]
+                    except:
+                        metacritic_score = None
 
-                try:
-                    awards = driver.find_element_by_css_selector('.article.highlighted').text.replace('\\n', '').strip()
-                except:
-                    awards = None
+                    try:
+                        reviews = driver.find_element_by_css_selector('.titleReviewBarItem.titleReviewbarItemBorder').text.replace('\\n', '').strip()
+                    except:
+                        reviews = None
 
-                try:
-                    details = driver.find_element_by_id('titleDetails').text.replace('\\n', '').strip()
-                except:
-                    details = None
+                    try:
+                        awards = driver.find_element_by_css_selector('.article.highlighted').text.replace('\\n', '').strip()
+                    except:
+                        awards = None
 
-                try:
-                    genres = None
-                    elements = driver.find_elements_by_css_selector('.see-more.inline.canwrap')
-                    for element in elements:
-                        if element.text.replace('\\n', '').strip().count('Genres:') != 0:
-                            genres = [x.strip() for x in element.text.replace('\\n', '').strip().replace('Genres:', '').split('|')]
-                except:
-                    genres = None
+                    try:
+                        details = driver.find_element_by_id('titleDetails').text.replace('\\n', '').strip()
+                    except:
+                        details = None
 
-                df = pd.DataFrame(
-                                  [
-                                    {
-                                    'title_id':title_id,
-                                    'title_name':title_name,
-                                    'imdb_rating': imdb_rating,
-                                    'num_votes': num_votes,
-                                    'release_date': release_date,
-                                    'run_time': run_time,
-                                    'title_year': title_year,
-                                    'genres': genres,
-                                    'summary_text':summary_text,
-                                    'metacritic_score':metacritic_score,
-                                    'reviews':reviews,
-                                    'awards':awards,
-                                    'details':details
-                                    }
-                                  ]
-                                  )
+                    try:
+                        genres = None
+                        elements = driver.find_elements_by_css_selector('.see-more.inline.canwrap')
+                        for element in elements:
+                            if element.text.replace('\\n', '').strip().count('Genres:') != 0:
+                                genres = [x.strip() for x in element.text.replace('\\n', '').strip().replace('Genres:', '').split('|')]
+                    except:
+                        genres = None
 
-                if not df.empty:
-                    df_main = pd.concat([df_main,df], axis=0)
-                    del df
+                    df = pd.DataFrame(
+                                      [
+                                        {
+                                        'title_id':title_id,
+                                        'title_name':title_name,
+                                        'imdb_rating': imdb_rating,
+                                        'num_votes': num_votes,
+                                        'release_date': release_date,
+                                        'run_time': run_time,
+                                        'title_year': title_year,
+                                        'genres': genres,
+                                        'summary_text':summary_text,
+                                        'metacritic_score':metacritic_score,
+                                        'reviews':reviews,
+                                        'awards':awards,
+                                        'details':details
+                                        }
+                                      ]
+                                      )
+
+                    if not df.empty:
+                        df_main = pd.concat([df_main,df], axis=0)
+                        del df
+                except Exception as e:
+                    print('Skipping', title_id, '-', e)
+                    print('\n')
+                    j += 1
             else:
                 print('Skipping', title_id, '- something wrong.')
                 print('\n')

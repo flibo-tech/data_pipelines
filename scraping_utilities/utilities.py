@@ -18,10 +18,11 @@ config = yaml.safe_load(open('./../config.yml'))
 def get_driver(proxy=None):
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
-    options.add_argument('--window-size=800x800')
+    options.add_argument('--disable-extensions')
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
-    options.add_argument('log-level=3')
+    options.add_argument("--window-size=1920,1080")
+    options.add_argument('--disable-dev-shm-usage')
     if proxy:
         options.add_argument('--proxy-server=' + proxy)
 
@@ -245,7 +246,7 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file):
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
     client = ssh_into_remote(public_dns, username, key_file)
-    with SSHClientInteraction(client, timeout=5, display=True) as interact:
+    with SSHClientInteraction(client, timeout=60, display=True) as interact:
         interact.expect(default_prompt)
 
         interact.send('sudo yum install htop')
@@ -333,7 +334,7 @@ def scrape_data_on_remote(public_dns, private_ip, username, key_file):
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
     client = ssh_into_remote(public_dns, username, key_file)
-    with SSHClientInteraction(client, timeout=10, display=True) as interact:
+    with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
         interact.expect(default_prompt)
 
         interact.send('source ./venv_data_collection/bin/activate')
