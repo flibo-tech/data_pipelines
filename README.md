@@ -17,5 +17,5 @@ current_buffer_decoded = current_buffer.decode(self.encoding)
 to
 
 ```python
-current_buffer_decoded = current_buffer.decode(self.encoding, errors='ignore')
+current_buffer_decoded = current_buffer.decode(self.encoding, errors="ignore")
 ```
