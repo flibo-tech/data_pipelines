@@ -33,13 +33,16 @@ from utilities import *
 if __name__ == "__main__":
     config = yaml.safe_load(open('./../config.yml'))
 
-    if config['scrape_data']['scrape_using_spot_instance']:
-        # df_db_ids = pd.read_csv('db_ids.csv').head(10000)
-        # movies_titles = list(df_db_ids['imdb_content_id'].unique())
-        # for scrape_function in config['scrape_data']['movies']:
-        #     df_temp = parallelize_scraping(movies_titles, eval(scrape_function))
-        #     df_temp.to_csv('~/final_file.csv', index=False)
-        spot_fleet_request_id, public_dns = launch_spot_instance()
+    if 'scrape_on_spot_instance' in sys.argv:
+        df_db_ids = pd.read_csv('db_ids.csv').head(10000)
+        movies_titles = list(df_db_ids['imdb_content_id'].unique())
+        for scrape_function in config['scrape_data']['movies']:
+            df_temp = parallelize_scraping(movies_titles, eval(scrape_function))
+            df_temp.to_csv('~/final_file.csv', index=False)
+    elif config['scrape_data']['trigger_scrape_using_spot_instance']:
+        spot_fleet_request_id, public_dns, private_ip = launch_spot_instance()
+        install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
+        scrape_data_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
         close_spot_fleet_request_and_instances(spot_fleet_request_id)
     else:
         if config['scrape_data']['collect_new_imdb_ids']:

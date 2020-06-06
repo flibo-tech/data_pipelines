@@ -8,6 +8,8 @@ from selenium.webdriver.remote.remote_connection import LOGGER, logging
 from selenium import webdriver
 import boto3
 import time
+import paramiko
+from paramiko_expect import SSHClientInteraction
 
 
 LOGGER.setLevel(logging.WARNING)
@@ -201,8 +203,9 @@ def launch_spot_instance():
         InstanceIds=[instance_id]
     )
     public_dns = response['Reservations'][0]['Instances'][0]['PublicDnsName']
+    private_ip = response['Reservations'][0]['Instances'][0]['PrivateIpAddress']
     
-    return spot_fleet_request_id, public_dns
+    return spot_fleet_request_id, public_dns, private_ip
 
 
 def close_spot_fleet_request_and_instances(spot_fleet_request_id):
@@ -220,3 +223,120 @@ def close_spot_fleet_request_and_instances(spot_fleet_request_id):
     )
     
     return True
+
+
+def ssh_into_remote(hostname, username, key_file):
+    key = paramiko.RSAKey.from_private_key_file(key_file)
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    client.connect(hostname=hostname, username=username, pkey=key)
+    return client
+
+
+def install_requirements_on_remote(public_dns, private_ip, username, key_file):
+    default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+
+    client = ssh_into_remote(public_dns, username, key_file)
+    with SSHClientInteraction(client, timeout=5, display=True) as interact:
+        interact.expect(default_prompt)
+
+        interact.send('sudo yum install htop')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect(default_prompt)
+
+        interact.send('sudo yum install python36 python36-pip')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect(default_prompt)
+
+        interact.send('sudo pip-3.6 install virtualenv')
+        interact.expect(default_prompt)
+
+        interact.send('sudo python3.6 -m virtualenv venv_data_collection')
+        interact.expect(default_prompt)
+
+        interact.send('source ./venv_data_collection/bin/activate')
+        interact.expect('\(venv_data_collection\)\s+'+default_prompt)
+
+        interact.send('sudo pip install --upgrade pip')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('sudo yum install python36-devel')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('sudo yum  install libevent-devel')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('sudo yum -y install gcc')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('cd /tmp/')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
+
+        interact.send('wget https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
+
+        interact.send('unzip chromedriver_linux64.zip')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
+
+        interact.send('sudo mv chromedriver /usr/bin/chromedriver')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
+
+        interact.send('curl https://intoli.com/install-google-chrome.sh | bash')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
+
+        interact.send('sudo mv /usr/bin/google-chrome-stable /usr/bin/google-chrome')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
+
+        interact.send('sudo yum install git')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
+
+        interact.send('cd ~')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('git clone https://github.com/flibo-tech/data_pipelines.git')
+        interact.expect("Username for 'https://github.com':\s+")
+        interact.send(config['git']['username'])
+        interact.expect("Password for 'https://"+config['git']['username']+"@github.com':\s+")
+        interact.send(config['git']['password'])
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('cd data_pipelines')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'data_pipelines'))
+
+        interact.send('git checkout faster_imdb_scraping')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'data_pipelines'))
+
+        interact.send('sudo pip-3.6 install -r requirements.txt')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'data_pipelines'))
+
+        client.close()
+        return True
+
+
+def scrape_data_on_remote(public_dns, private_ip, username, key_file):
+    default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+
+    client = ssh_into_remote(public_dns, username, key_file)
+    with SSHClientInteraction(client, timeout=10, display=True) as interact:
+        interact.expect(default_prompt)
+
+        interact.send('source ./venv_data_collection/bin/activate')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('cd data_pipelines/scraping_utilities')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+
+        interact.send('python scrape.py scrape_on_spot_instance')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+
+        client.close()
+        return True
