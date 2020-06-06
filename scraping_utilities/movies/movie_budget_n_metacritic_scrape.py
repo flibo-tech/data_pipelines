@@ -77,7 +77,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
 
         if go_ahead:
             try:
-                soup = BeautifulSoup(html_content.text, 'html.parser')
+                soup = BeautifulSoup(html_content, 'html.parser')
 
                 title_wrapper = soup.find('div', class_='title_wrapper')
                 title_name = title_wrapper.text.replace('\xa0', ' ').strip('\n').split('\n')[0].split(' (')[0].strip()

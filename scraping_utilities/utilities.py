@@ -271,43 +271,9 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file):
         interact.send('sudo pip install --upgrade pip')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt)
 
-        interact.send('sudo yum install python36-devel')
-        interact.expect('Is this ok \[y/d/N\]:\s+')
-        interact.send('y')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
-
-        interact.send('sudo yum  install libevent-devel')
-        interact.expect('Is this ok \[y/d/N\]:\s+')
-        interact.send('y')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
-
-        interact.send('sudo yum -y install gcc')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
-
-        interact.send('cd /tmp/')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
-
-        interact.send('wget https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
-
-        interact.send('unzip chromedriver_linux64.zip')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
-
-        interact.send('sudo mv chromedriver /usr/bin/chromedriver')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
-
-        interact.send('curl https://intoli.com/install-google-chrome.sh | bash')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
-
-        interact.send('sudo mv /usr/bin/google-chrome-stable /usr/bin/google-chrome')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
-
         interact.send('sudo yum install git')
         interact.expect('Is this ok \[y/d/N\]:\s+')
         interact.send('y')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'tmp'))
-
-        interact.send('cd ~')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt)
 
         interact.send('git clone https://github.com/flibo-tech/data_pipelines.git')
