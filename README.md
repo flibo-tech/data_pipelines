@@ -16,6 +16,6 @@ current_buffer_decoded = current_buffer.decode(self.encoding)
 
 to
 
-```pytohn
-current_buffer_decoded = current_buffer.decode(self.encoding, errors="ignore")
+```python
+current_buffer_decoded = current_buffer.decode(self.encoding, errors='ignore')
 ```
