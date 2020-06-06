@@ -5,47 +5,34 @@ import sys
 sys.path.extend(['./..'])
 
 import pandas as pd
-from selenium.common.exceptions import TimeoutException
+from bs4 import BeautifulSoup
 import yaml
-import tempfile
-import os
-import requests
 import time
+from requests.exceptions import Timeout, ChunkedEncodingError, ConnectionError
 
-from utilities import get_driver, get_session
+from utilities import get_session
 
 
-def should_go_ahead(title_id, driver, session):
+def should_go_ahead(title_id, session):
     go_ahead = False
-    title_wrapper = None
+    html_content = None
 
     try:
         html_content = session.get("http://www.imdb.com/title/" + title_id, timeout=5).text
 
-        tp = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
-        tp.write(str.encode('data:text/html;charset=utf-8,' + html_content))
-        tp.close()
-
-        driver.get('file:///' + tp.name)
-        os.remove(tp.name)
-
         if html_content.count('title_wrapper') != 0:
-            title_wrapper = driver.find_element_by_class_name('title_wrapper')
             go_ahead = True
         else:
             if html_content.count('URL was not found') != 0:
                 go_ahead = False
             elif html_content.count('Error 503') != 0:
-                print('Closing driver for -', title_id)
-                driver.close()
-                driver = get_driver()
                 print('Error 503, Sleeping for 5 sec...')
+                print('\n')
                 time.sleep(5)
                 session.close()
                 session = get_session()
-                print('\n')
                 try:
-                    return should_go_ahead(title_id, driver, session)
+                    return should_go_ahead(title_id, session)
                 except RecursionError:
                     print('Error 503, enough of recursion.')
                     print('\n')
@@ -54,45 +41,21 @@ def should_go_ahead(title_id, driver, session):
                 go_ahead = False
                 print('No reason found for -', title_id)
                 print('\n')
-    except requests.exceptions.Timeout:
-        print('Closing driver for -', title_id)
-        driver.close()
-        driver = get_driver()
+    except (Timeout, ChunkedEncodingError, ConnectionError) as e:
+        print(e)
         print('Timeout, Sleeping for 5 sec...')
+        print('\n')
         time.sleep(5)
         session.close()
         session = get_session()
-        print('\n')
         try:
-            return should_go_ahead(title_id, driver, session)
+            return should_go_ahead(title_id, session)
         except RecursionError:
             print('Timeout, enough of recursion.')
             print('\n')
             go_ahead = False
-    except requests.exceptions.ChunkedEncodingError:
-        print('ChunkedEncodingError, sleeping for 5 sec...')
-        time.sleep(5)
-        session.close()
-        session = get_session()
-        try:
-            return should_go_ahead(title_id, driver, session)
-        except RecursionError:
-            print('ChunkedEncodingError, enough of recursion.')
-            print('\n')
-            go_ahead = False
-    except requests.exceptions.ConnectionError:
-        print('ConnectionError, sleeping for 5 sec...')
-        time.sleep(5)
-        session.close()
-        session = get_session()
-        try:
-            return should_go_ahead(title_id, driver, session)
-        except RecursionError:
-            print('ConnectionError, enough of recursion.')
-            print('\n')
-            go_ahead = False
 
-    return go_ahead, driver, session, title_wrapper
+    return go_ahead, session, html_content
 
 
 def movie_budget_n_metacritic_scrape(df_titles):
@@ -106,108 +69,102 @@ def movie_budget_n_metacritic_scrape(df_titles):
     i = 1
     j = 0
 
-    driver = get_driver()
     session = get_session()
     df_main = pd.DataFrame()
 
     for title_id in titles:
-        try:
-            go_ahead, driver, session, title_wrapper = should_go_ahead(title_id, driver, session)
+        go_ahead, session, html_content = should_go_ahead(title_id, session)
 
-            if go_ahead:
+        if go_ahead:
+            try:
+                soup = BeautifulSoup(html_content.text, 'html.parser')
+
+                title_wrapper = soup.find('div', class_='title_wrapper')
+                title_name = title_wrapper.text.replace('\xa0', ' ').strip('\n').split('\n')[0].split(' (')[0].strip()
+                title_year = title_wrapper.find('a').text.replace('\xa0', ' ').strip().strip('\n')
+
+                subtext = title_wrapper.find('div', class_='subtext')
                 try:
-                    title_name = title_wrapper.text.replace('\\n', '').strip().split('\n')[0].split(' (')[0].strip()
-                    title_year = int(title_wrapper.find_element_by_tag_name('a').text.replace('\\n', '').strip())
+                    release_date = subtext.text.replace('\xa0', ' ').strip().strip('\n').split('|')[-1].strip()
+                    run_time = subtext.find('time')
+                    if run_time:
+                        run_time = run_time.text.replace('\xa0', ' ').strip().strip('\n')
+                except:
+                    release_date = None
+                    run_time = None
+                try:
+                    rating_element = soup.find('div', class_='imdbRating')
+                    imdb_rating = rating_element.find('strong').text.replace('\xa0', ' ').strip().strip('\n')
+                    num_votes = rating_element.find('a').text.replace('\xa0', ' ').strip().strip('\n').strip().replace(',', '')
+                except:
+                    imdb_rating = None
+                    num_votes = None
 
-                    subtext = title_wrapper.find_element_by_class_name('subtext')
-                    try:
-                        release_date = subtext.text.replace('\\n', '').strip().split('|')[-1].strip()
-                        run_time = subtext.find_element_by_tag_name('time')
-                        if run_time:
-                            run_time = run_time.text.replace('\\n', '').strip()
-                    except:
-                        release_date = None
-                        run_time = None
-                    try:
-                        rating_element = driver.find_element_by_class_name('imdbRating')
-                        imdb_rating = rating_element.find_element_by_tag_name('strong').text.replace('\\n', '').strip()
-                        num_votes = rating_element.find_element_by_tag_name('a').text.replace('\\n', '').strip().replace(',', '')
-                    except:
-                        imdb_rating = None
-                        num_votes = None
+                try:
+                    summary_text = soup.find('div', class_='summary_text').text.replace('\xa0', ' ').strip().strip('\n').strip()
+                except:
+                    summary_text = None
 
-                    try:
-                        summary_text = driver.find_element_by_class_name('summary_text').text.replace('\\n', '').strip()
-                    except:
-                        summary_text = None
+                try:
+                    metacritic_score = soup.find('div', class_='titleReviewBarItem').text.replace('\xa0', ' ').strip().strip('\n').split('\n')[0]
+                except:
+                    metacritic_score = None
 
-                    try:
-                        metacritic_score = driver.find_element_by_class_name('titleReviewBarItem').text.replace('\\n', '').strip().split('\n')[0]
-                    except:
-                        metacritic_score = None
+                try:
+                    reviews = soup.find('div', class_='titleReviewBarItem titleReviewbarItemBorder').text.replace('\xa0', ' ').strip().strip('\n').strip()
+                except:
+                    reviews = None
 
-                    try:
-                        reviews = driver.find_element_by_css_selector('.titleReviewBarItem.titleReviewbarItemBorder').text.replace('\\n', '').strip()
-                    except:
-                        reviews = None
+                try:
+                    awards = soup.find('div', class_='article highlighted').text.replace('\xa0', ' ').strip().strip('\n').strip()
+                except:
+                    awards = None
 
-                    try:
-                        awards = driver.find_element_by_css_selector('.article.highlighted').text.replace('\\n', '').strip()
-                    except:
-                        awards = None
+                try:
+                    details = soup.find('div', id='titleDetails').text.replace('\xa0', ' ').strip().strip('\n').strip()
+                except:
+                    details = None
 
-                    try:
-                        details = driver.find_element_by_id('titleDetails').text.replace('\\n', '').strip()
-                    except:
-                        details = None
+                try:
+                    genres = None
+                    elements = soup.findAll('div', class_='see-more inline canwrap')
+                    for element in elements:
+                        if element.text.replace('\xa0', ' ').strip().strip('\n').count('Genres:') != 0:
+                            genres = [x.strip() for x in element.text.replace('\xa0', ' ').strip().strip('\n').replace('Genres:', '').split('|')]
+                except:
+                    genres = None
 
-                    try:
-                        genres = None
-                        elements = driver.find_elements_by_css_selector('.see-more.inline.canwrap')
-                        for element in elements:
-                            if element.text.replace('\\n', '').strip().count('Genres:') != 0:
-                                genres = [x.strip() for x in element.text.replace('\\n', '').strip().replace('Genres:', '').split('|')]
-                    except:
-                        genres = None
+                df = pd.DataFrame(
+                                  [
+                                    {
+                                    'title_id':title_id,
+                                    'title_name':title_name,
+                                    'imdb_rating': imdb_rating,
+                                    'num_votes': num_votes,
+                                    'release_date': release_date,
+                                    'run_time': run_time,
+                                    'title_year': title_year,
+                                    'genres': genres,
+                                    'summary_text':summary_text,
+                                    'metacritic_score':metacritic_score,
+                                    'reviews':reviews,
+                                    'awards':awards,
+                                    'details':details
+                                    }
+                                  ]
+                                  )
 
-                    df = pd.DataFrame(
-                                      [
-                                        {
-                                        'title_id':title_id,
-                                        'title_name':title_name,
-                                        'imdb_rating': imdb_rating,
-                                        'num_votes': num_votes,
-                                        'release_date': release_date,
-                                        'run_time': run_time,
-                                        'title_year': title_year,
-                                        'genres': genres,
-                                        'summary_text':summary_text,
-                                        'metacritic_score':metacritic_score,
-                                        'reviews':reviews,
-                                        'awards':awards,
-                                        'details':details
-                                        }
-                                      ]
-                                      )
-
-                    if not df.empty:
-                        df_main = pd.concat([df_main,df], axis=0)
-                        del df
-                except Exception as e:
-                    print('Skipping', title_id, '-', e)
-                    print('\n')
-                    j += 1
-            else:
-                print('Skipping', title_id, '- something wrong.')
+                if not df.empty:
+                    df_main = pd.concat([df_main,df], axis=0)
+                    del df
+            except Exception as e:
+                print('Skipping', title_id, '-', e)
                 print('\n')
                 j += 1
-        except TimeoutException as ex:
-            titles.append(title_id)
+        else:
+            print('Skipping', title_id, '- something wrong.')
             print('\n')
-            print('Skipping '+title_id+' because of Selenium TimeoutException')
-            print('\n')
-            driver.close()
-            driver = get_driver()
+            j += 1
         if i%25 == 0:
             print('Movies scraped -',(i+j))
 
@@ -248,25 +205,26 @@ def movie_budget_n_metacritic_scrape(df_titles):
     if not df.empty:
         def country(details):
             try:
-                return details.split('Country: ')[1].split('\r')[0].split('\n')[0].split(' | ')
+                return details.replace('\xa0', ' ').strip().strip('\n').split('Country:')[1].split('\n')[1].split(' | ')
             except:
                 return None
 
         def language(details):
             try:
-                return details.split('Language: ')[1].split('\r')[0].split('\n')[0].split(' | ')
+                return details.replace('\xa0', ' ').strip().strip('\n').split('Language:')[1].split('\n')[1].split(' | ')
             except:
                 return None
 
         def filming_location(details):
             try:
-                return details.split('Filming Locations: ')[1].split(' See more')[0].split('\r')[0].split('\n')[0]
+                return \
+                details.replace('\xa0', ' ').strip().strip('\n').split('Filming Locations:')[1].split('See more')[0].split('\n')[1]
             except:
                 return None
 
         def production_house(details):
             try:
-                return details.split('Production Co: ')[1].split(' See more')[0].split(',')
+                return details.replace('\xa0', ' ').strip().strip('\n').split('Production Co:')[1].split('See more')[0].split('\n')[1]
             except:
                 return None
 
@@ -296,7 +254,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
 
         def reviews_list(reviews):
             try:
-                return reviews.split('\n')[1].split(' | ')
+                return [x.strip('\n') for x in reviews.split('\n\n')[1].split('|')]
             except:
                 return None
 
@@ -372,7 +330,6 @@ def movie_budget_n_metacritic_scrape(df_titles):
         df['award_wins'], df['award_nominations'] = zip(*df['wins_n_nomintations'].apply(total_win_nominations))
         del df['wins_n_nomintations']
 
-
         def metacritic(score):
             try:
                 return int(score)
@@ -381,13 +338,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
         df['metacritic_score'] = df['metacritic_score'].apply(lambda x: metacritic(x))
         del df['summary_text']
 
-
-
-
         df.rename(columns={'title_year':'release_year'}, inplace=True)
-
-
-
 
         from currency_converter import CurrencyConverter
         from datetime import datetime
@@ -399,6 +350,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
             '€':'EUR',
             '$':'USD'
         }
+
         def normalize_budget(budget, year):
             last_date = None
             currency = None
@@ -435,8 +387,6 @@ def movie_budget_n_metacritic_scrape(df_titles):
                 'amount': budget,
                 'year': year
             }
-
-
 
         df['budget'] = df.apply(lambda row: normalize_budget(row['budget'], row['release_year']), axis=1)
         df['opening_weekend_USA'] = df.apply(lambda row: normalize_budget(row['opening_weekend_USA'], row['release_year']), axis=1)
