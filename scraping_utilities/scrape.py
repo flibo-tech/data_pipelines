@@ -34,7 +34,7 @@ if __name__ == "__main__":
     config = yaml.safe_load(open('./../config.yml'))
 
     if 'scrape_on_spot_instance' in sys.argv:
-        df_db_ids = pd.read_csv('db_ids.csv').head(10000)
+        df_db_ids = pd.read_csv('db_ids.csv').head(8000)
         movies_titles = list(df_db_ids['imdb_content_id'].unique())
         for scrape_function in config['scrape_data']['movies']:
             df_temp = parallelize_scraping(movies_titles, eval(scrape_function))
