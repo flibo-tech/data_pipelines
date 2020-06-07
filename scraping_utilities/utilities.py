@@ -309,7 +309,7 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file):
         return True
 
 
-def scrape_data_on_remote(public_dns, private_ip, username, key_file):
+def scrape_data_on_remote(public_dns, private_ip, username, key_file, index):
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
     client = ssh_into_remote(public_dns, username, key_file)
@@ -319,14 +319,16 @@ def scrape_data_on_remote(public_dns, private_ip, username, key_file):
         interact.send('source ./venv_data_collection/bin/activate')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt)
 
+        interact.send('mkdir /home/' + username + '/scraped')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
         interact.send('cd data_pipelines/scraping_utilities')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
-        interact.send('sudo python3.6 scrape.py scrape_on_spot_instance')
+        interact.send('sudo python3.6 scrape.py scrape_on_spot_instance '+index)
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
-        interact.send('sudo cp /root/final_file.csv /home/'+username+'/')
-        interact.send('sudo chmod 777 /home/' + username + '/final_file.csv')
+        interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
         client.close()

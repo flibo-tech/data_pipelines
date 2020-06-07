@@ -1,11 +1,12 @@
 chromedriver: '/home/ec2-user/data_pipelines/chromedriver'
 
-movies_data_folder: '~/'
-tv_series_data_folder: '~/'
-scraped_data_folder: '~/'
-streaming_sources: '~/'
-to_upload: '~/'
-upload_resources: '~/'
+movies_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\movies\'
+tv_series_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\tv_series\'
+scraped_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\'
+spot_instance_scraped_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2020\scraped_using_spot_instances\'
+streaming_sources: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\streaming_sources\'
+to_upload: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\to_upload\'
+upload_resources: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\to_upload\resources\'
 
 tmdb_api_key: '57b66bd8b82b9db257af4184ca3f5e8d'
 
@@ -27,7 +28,9 @@ ec2:
 scrape_data:
   collect_new_imdb_ids: False # to collect just the imdb ids for new content releases
   latest_release_date: '2020-05-15' # update this if collect_new_imdb_ids set as True
+  prepare_input_for_scrape_using_spot_instance: False # file prepared from this should be pushed to GOT before trigger_scrape_using_spot_instance
   trigger_scrape_using_spot_instance: False
+  crawls_per_spot_instance: 200
   movies: ['movie_budget_n_metacritic_scrape'] #'movie_budget_n_metacritic_scrape', 'movie_content_scrape', 'movie_crew_scrape', 'movie_keywords_scrape', 'movie_synopsys_scrape', 'movie_technical_specs_scrape', 'movie_tmdb_artist_data_collection', 'movie_tmdb_data_collection'
   tv_series: [] #'tv_series_content_scrape', 'tv_series_crew_scrape', 'tv_series_details_scrape', 'tv_series_keywords_scrape', 'tv_series_synopsys_scrape', 'tv_series_technical_specs_scrape', 'tv_series_tmdb_artist_data_collection', 'tv_series_tmdb_data_collection'
   awards: [] #'awards_scrape' -- Before running this remember to delete latest year's awards scraped from database & file awards_scraped.csv at scraped_data_folder

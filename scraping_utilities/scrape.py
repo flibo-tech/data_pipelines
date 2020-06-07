@@ -6,6 +6,7 @@ sys.path.extend(['./movies', './tv_series', './streaming_sources', './awards'])
 
 import yaml
 import pandas as pd
+import os
 
 from movie_budget_n_metacritic_scrape import *
 from movie_content_scrape import *
@@ -34,16 +35,47 @@ if __name__ == "__main__":
     config = yaml.safe_load(open('./../config.yml'))
 
     if 'scrape_on_spot_instance' in sys.argv:
-        df_db_ids = pd.read_csv('db_ids.csv').head(8000)
-        movies_titles = list(df_db_ids['imdb_content_id'].unique())
+        df_to_scrape = pd.read_csv('titles_to_scrape.csv')
+        indices = [int(x) for x in sys.argv[-1].split('-')]
+        df_to_scrape = df_to_scrape.iloc[indices[0]:indices[1], :]
+
+        functions = list(df_to_scrape['function'].unique())
+        for scrape_function in functions:
+            print('Scraping for -', scrape_function)
+            titles = list(df_to_scrape['imdb_content_id'][df_to_scrape['function'] == scrape_function].unique())
+            df_scraped = parallelize_scraping(titles, eval(scrape_function))
+            df_scraped.to_csv('/home/ec2-user/scraped/'+scrape_function+sys.argv[-1]+'.csv', index=False)
+
+    elif config['scrape_data']['prepare_input_for_scrape_using_spot_instance']:
+        df_db_ids = pd.read_csv('db_ids.csv')
+        df = pd.DataFrame()
         for scrape_function in config['scrape_data']['movies']:
-            df_temp = parallelize_scraping(movies_titles, eval(scrape_function))
-            df_temp.to_csv('~/final_file.csv', index=False)
+            df_temp = df_db_ids.copy()
+            df_temp['function'] = scrape_function
+            df = pd.concat([df, df_temp], axis=0)
+        df.sort_values('function', inplace=True)
+        df.to_csv('titles_to_scrape.csv', index=False)
+
     elif config['scrape_data']['trigger_scrape_using_spot_instance']:
-        spot_fleet_request_id, public_dns, private_ip = launch_spot_instance()
-        install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
-        scrape_data_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
-        close_spot_fleet_request_and_instances(spot_fleet_request_id)
+        if 'scrape_using_spot_instance' in sys.argv:
+            spot_fleet_request_id, public_dns, private_ip = launch_spot_instance()
+            install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
+
+            scrape_data_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'], sys.argv[-1])
+
+            cmd = 'scp -r -o StrictHostKeyChecking=no -i '+config['pem_key']+' ec2-user@'+public_dns+':/home/ec2-user/scraped '+config['spot_instance_scraped_data_folder']
+            os.system('start "Downloading scraped data for index '+sys.argv[-1]+'" /wait cmd /k ' + cmd)
+
+            # close_spot_fleet_request_and_instances(spot_fleet_request_id)
+        else:
+            count = pd.read_csv('titles_to_scrape.csv').head(200).shape
+            limit = config['scrape_data']['crawls_per_spot_instance']
+            for i in range((count//limit) + (1 if count%limit else 0)):
+                index = str(i*limit)+'-'+str(limit*i+limit)
+                print('Triggering scrape for index', index)
+                os.system('start "Scraping data for index '+index+'" cmd /k python scrape.py scrape_using_spot_instance '+index)
+            print('Triggered',i+1,'spot instances for scraping. Check progress in open terminals.')
+
     else:
         if config['scrape_data']['collect_new_imdb_ids']:
             print('--------------------------------- collecting db imdb ids ---------------------------------')
