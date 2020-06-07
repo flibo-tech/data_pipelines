@@ -1,4 +1,4 @@
-chromedriver: '/home/ec2-user/data_pipelines/chromedriver'
+chromedriver: 'C:\\Users\\bhask\\Downloads\\chromedriver'
 venv_path: 'C:\Users\bhask\Desktop\Garbage or Not\venv_data_collection\Scripts\'
 
 movies_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\movies\'
