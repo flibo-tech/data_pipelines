@@ -64,11 +64,11 @@ if __name__ == "__main__":
             scrape_data_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'], sys.argv[-1])
 
             cmd = 'scp -r -o StrictHostKeyChecking=no -i '+config['pem_key']+' ec2-user@'+public_dns+':/home/ec2-user/scraped '+config['spot_instance_scraped_data_folder']
-            os.system('start "Downloading scraped data for index '+sys.argv[-1]+'" /wait cmd /k ' + cmd)
+            os.system('start "Downloading scraped data for index '+sys.argv[-1]+'" /wait cmd /c ' + cmd)
 
             close_spot_fleet_request_and_instances(spot_fleet_request_id)
         else:
-            count = pd.read_csv('titles_to_scrape.csv').head(1000).shape[0]
+            count = pd.read_csv('titles_to_scrape.csv').head(8000).shape[0]
             limit = config['scrape_data']['crawls_per_spot_instance']
             for i in range((count//limit) + (1 if count%limit else 0)):
                 index = str(i*limit)+'-'+str(limit*i+limit)
