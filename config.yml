@@ -31,8 +31,9 @@ scrape_data:
   latest_release_date: '2020-05-15' # update this if collect_new_imdb_ids set as True
   prepare_input_for_scrape_using_spot_instance: False # file prepared from this should be pushed to GOT before trigger_scrape_using_spot_instance
   trigger_scrape_using_spot_instance: False
-  crawls_per_spot_instance: 200
-  movies: ['movie_budget_n_metacritic_scrape'] #'movie_budget_n_metacritic_scrape', 'movie_content_scrape', 'movie_crew_scrape', 'movie_keywords_scrape', 'movie_synopsys_scrape', 'movie_technical_specs_scrape', 'movie_tmdb_artist_data_collection', 'movie_tmdb_data_collection'
+  max_spot_instances: 10
+  crawls_per_spot_instance: 8000
+  movies: [] #'movie_budget_n_metacritic_scrape', 'movie_content_scrape', 'movie_crew_scrape', 'movie_keywords_scrape', 'movie_synopsys_scrape', 'movie_technical_specs_scrape', 'movie_tmdb_artist_data_collection', 'movie_tmdb_data_collection'
   tv_series: [] #'tv_series_content_scrape', 'tv_series_crew_scrape', 'tv_series_details_scrape', 'tv_series_keywords_scrape', 'tv_series_synopsys_scrape', 'tv_series_technical_specs_scrape', 'tv_series_tmdb_artist_data_collection', 'tv_series_tmdb_data_collection'
   awards: [] #'awards_scrape' -- Before running this remember to delete latest year's awards scraped from database & file awards_scraped.csv at scraped_data_folder
   countries: {

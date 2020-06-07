@@ -225,6 +225,26 @@ def close_spot_fleet_request_and_instances(spot_fleet_request_id):
     return True
 
 
+def get_active_spot_fleet_requests_count():
+    session = boto3.Session(
+        aws_access_key_id=config['s3']['aws_access_key_id'],
+        aws_secret_access_key=config['s3']['aws_secret_access_key'],
+        region_name=config['s3']['region_name']
+    )
+    client = session.client('ec2')
+
+    response = client.describe_spot_fleet_requests(
+        SpotFleetRequestIds=[]
+    )
+
+    counter = 0
+    for request in response['SpotFleetRequestConfigs']:
+        if request['SpotFleetRequestState'] in ['submitted', 'active']:
+            counter += 1
+
+    return counter
+
+
 def ssh_into_remote(hostname, username, key_file):
     client = None
     while client is None:

@@ -7,6 +7,7 @@ sys.path.extend(['./movies', './tv_series', './streaming_sources', './awards'])
 import yaml
 import pandas as pd
 import os
+import time
 
 from movie_budget_n_metacritic_scrape import *
 from movie_content_scrape import *
@@ -68,13 +69,29 @@ if __name__ == "__main__":
 
             close_spot_fleet_request_and_instances(spot_fleet_request_id)
         else:
-            count = pd.read_csv('titles_to_scrape.csv').head(8000).shape[0]
+            count = pd.read_csv('titles_to_scrape.csv').head(600).shape[0]
+            max_spot_instances = config['scrape_data']['max_spot_instances']
             limit = config['scrape_data']['crawls_per_spot_instance']
+            index_ranges = []
             for i in range((count//limit) + (1 if count%limit else 0)):
-                index = str(i*limit)+'-'+str(limit*i+limit)
-                print('Triggering scrape for index', index)
-                os.system('start "Scraping data for index '+index+'" cmd /k "'+config['venv_path']+'python" scrape.py scrape_using_spot_instance '+index)
-            print('\nTriggered',i+1,'spot instances for scraping. Check progress in open terminals.')
+                index_ranges.append(str(i*limit)+'-'+str(limit*i+limit))
+
+            while index_ranges:
+                to_scrape_on = index_ranges[:max_spot_instances]
+                for index_range in to_scrape_on:
+                    if get_active_spot_fleet_requests_count() < max_spot_instances:
+                        print('Triggering scrape for index', index_range)
+                        os.system('start "Scraping data for index ' + index_range + '" cmd /k "' + config['venv_path'] + 'python" scrape.py scrape_using_spot_instance ' + index_range)
+
+                        index_ranges.remove(index_range)
+                        time.sleep(15)
+                    else:
+                        break
+                print('\nRemaining instances to be triggered -', len(index_ranges))
+                if index_ranges:
+                    print('Sleeping for 5 minutes, will check then if we can launch more spot instances.\n')
+                    time.sleep(5*60)
+            print('\n\nRequired number of spot instances launched. Check progress in any open terminals.')
 
     else:
         if config['scrape_data']['collect_new_imdb_ids']:
