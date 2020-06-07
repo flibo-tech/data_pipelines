@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
             # close_spot_fleet_request_and_instances(spot_fleet_request_id)
         else:
-            count = pd.read_csv('titles_to_scrape.csv').head(200).shape
+            count = pd.read_csv('titles_to_scrape.csv').head(200).shape[0]
             limit = config['scrape_data']['crawls_per_spot_instance']
             for i in range((count//limit) + (1 if count%limit else 0)):
                 index = str(i*limit)+'-'+str(limit*i+limit)
