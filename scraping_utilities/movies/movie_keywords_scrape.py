@@ -3,7 +3,6 @@ warnings.filterwarnings("ignore")
 
 import pandas as pd
 from datetime import datetime
-import time
 import yaml
 from bs4 import BeautifulSoup
 
