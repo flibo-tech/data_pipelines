@@ -61,6 +61,8 @@ if __name__ == "__main__":
         df = pd.DataFrame()
         for scrape_function in config['scrape_data']['movies']:
             df_temp = df_db_ids.copy()
+            df_temp = df_temp[df_temp['type']=='movie']
+            del df_temp['type']
             df_temp['function'] = scrape_function
             df = pd.concat([df, df_temp], axis=0)
         df.sort_values('function', inplace=True)
@@ -78,7 +80,7 @@ if __name__ == "__main__":
 
             close_spot_fleet_request_and_instances(spot_fleet_request_id)
         else:
-            count = pd.read_csv('titles_to_scrape.csv').head(600).shape[0]
+            count = pd.read_csv('titles_to_scrape.csv').head(200).shape[0]
             max_spot_instances = config['scrape_data']['max_spot_instances']
             limit = config['scrape_data']['crawls_per_spot_instance']
             index_ranges = []
