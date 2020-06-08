@@ -48,13 +48,13 @@ if __name__ == "__main__":
             if scrape_function == 'movie_content_scrape':
                 df_movie_certis = df_scraped[df_scraped['df_type'] == 'certis']
                 df_movie_certis = df_movie_certis[['title_id', 'certificate_by', 'rating', 'rating_cleaned', 'age_limit', 'pg', 'banned']]
-                df_movie_certis.to_csv('/home/ec2-user/scraped/movie_cleaned_certificates_'+sys.argv[-1]+'.csv', index=False)
+                df_movie_certis.to_csv('/home/ec2-user/scraped/movie_cleaned_certificates_'+sys.argv[-1]+'.csv', index=False, encoding='utf-16')
 
                 df_movie_content = df_scraped[df_scraped['df_type'] == 'content']
                 df_movie_content = df_movie_content[['content','content_votes','level','no_of_scenes','text','title_id','title_name']]
-                df_movie_content.to_csv('/home/ec2-user/scraped/movie_content_' + sys.argv[-1] + '.csv', index=False)
+                df_movie_content.to_csv('/home/ec2-user/scraped/movie_content_' + sys.argv[-1] + '.csv', index=False, encoding='utf-16')
             else:
-                df_scraped.to_csv('/home/ec2-user/scraped/'+scrape_function+'_'+sys.argv[-1]+'.csv', index=False)
+                df_scraped.to_csv('/home/ec2-user/scraped/'+scrape_function+'_'+sys.argv[-1]+'.csv', index=False, encoding='utf-16')
 
     elif config['scrape_data']['prepare_input_for_scrape_using_spot_instance']:
         df_db_ids = pd.read_csv('db_ids.csv')
@@ -66,6 +66,7 @@ if __name__ == "__main__":
             df_temp['function'] = scrape_function
             df = pd.concat([df, df_temp], axis=0)
         df.sort_values('function', inplace=True)
+        df = df.sample(df.shape[0])
         df.to_csv('titles_to_scrape.csv', index=False)
 
     elif config['scrape_data']['trigger_scrape_using_spot_instance']:
