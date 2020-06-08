@@ -13,7 +13,9 @@ sys.path.extend(['./..'])
 from utilities import get_session, should_go_ahead
 
 
-def movie_crew_scrape(titles):
+def movie_crew_scrape(df_titles):
+    titles = list(df_titles['titles'])
+
     config = yaml.safe_load(open('./../config.yml'))
     data_folder = config['movies_data_folder']
 
