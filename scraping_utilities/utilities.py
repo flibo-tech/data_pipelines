@@ -9,11 +9,11 @@ import boto3
 import time
 import paramiko
 from paramiko_expect import SSHClientInteraction
+from requests.exceptions import Timeout, ChunkedEncodingError, ConnectionError
 
 
 LOGGER.setLevel(logging.WARNING)
 config = yaml.safe_load(open('./../config.yml'))
-
 
 def get_driver(proxy=None):
     options = webdriver.ChromeOptions()
@@ -51,6 +51,51 @@ def get_session(proxy=None):
             })
 
     return session
+
+
+def should_go_ahead(url, session, string_to_check):
+    go_ahead = False
+    html_content = None
+
+    try:
+        html_content = session.get(url, timeout=5).text
+
+        if html_content.count(string_to_check) != 0:
+            go_ahead = True
+        else:
+            if html_content.count('URL was not found') != 0:
+                go_ahead = False
+            elif html_content.count('Error 503') != 0:
+                print('Error 503, Sleeping for 5 sec...')
+                print('\n')
+                time.sleep(5)
+                session.close()
+                session = get_session()
+                try:
+                    return should_go_ahead(url, session, string_to_check)
+                except RecursionError:
+                    print('Error 503, enough of recursion.')
+                    print('\n')
+                    go_ahead = False
+            else:
+                go_ahead = False
+                print('No reason found for -', url)
+                print('\n')
+    except (Timeout, ChunkedEncodingError, ConnectionError) as e:
+        print(e)
+        print('Timeout, Sleeping for 5 sec...')
+        print('\n')
+        time.sleep(5)
+        session.close()
+        session = get_session()
+        try:
+            return should_go_ahead(url, session, string_to_check)
+        except RecursionError:
+            print('Timeout, enough of recursion.')
+            print('\n')
+            go_ahead = False
+
+    return go_ahead, session, html_content
 
 
 def parallelize_scraping(titles, func, n_cores=config['algo']['vCPU']):

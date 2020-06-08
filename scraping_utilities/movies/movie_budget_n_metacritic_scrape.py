@@ -7,55 +7,8 @@ sys.path.extend(['./..'])
 import pandas as pd
 from bs4 import BeautifulSoup
 import yaml
-import time
-from requests.exceptions import Timeout, ChunkedEncodingError, ConnectionError
 
-from utilities import get_session
-
-
-def should_go_ahead(title_id, session):
-    go_ahead = False
-    html_content = None
-
-    try:
-        html_content = session.get("http://www.imdb.com/title/" + title_id, timeout=5).text
-
-        if html_content.count('title_wrapper') != 0:
-            go_ahead = True
-        else:
-            if html_content.count('URL was not found') != 0:
-                go_ahead = False
-            elif html_content.count('Error 503') != 0:
-                print('Error 503, Sleeping for 5 sec...')
-                print('\n')
-                time.sleep(5)
-                session.close()
-                session = get_session()
-                try:
-                    return should_go_ahead(title_id, session)
-                except RecursionError:
-                    print('Error 503, enough of recursion.')
-                    print('\n')
-                    go_ahead = False
-            else:
-                go_ahead = False
-                print('No reason found for -', title_id)
-                print('\n')
-    except (Timeout, ChunkedEncodingError, ConnectionError) as e:
-        print(e)
-        print('Timeout, Sleeping for 5 sec...')
-        print('\n')
-        time.sleep(5)
-        session.close()
-        session = get_session()
-        try:
-            return should_go_ahead(title_id, session)
-        except RecursionError:
-            print('Timeout, enough of recursion.')
-            print('\n')
-            go_ahead = False
-
-    return go_ahead, session, html_content
+from utilities import get_session, should_go_ahead
 
 
 def movie_budget_n_metacritic_scrape(df_titles):
@@ -73,7 +26,8 @@ def movie_budget_n_metacritic_scrape(df_titles):
     df_main = pd.DataFrame()
 
     for title_id in titles:
-        go_ahead, session, html_content = should_go_ahead(title_id, session)
+        url = "http://www.imdb.com/title/" + title_id
+        go_ahead, session, html_content = should_go_ahead(url, session, 'title_wrapper')
 
         if go_ahead:
             try:
