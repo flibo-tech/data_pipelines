@@ -39,7 +39,7 @@ def movie_content_scrape(df_titles):
 
                 main_content = soup.find('section', class_='article listo content-advisories-index')
                 for section in main_content.findAll('section'):
-                    section_header = (section.find('h3') or section.find('h4')).text
+                    section_header = (section.find('h3') or section.find('h4')).text.strip()
                     if section_header == 'Certification':
                         try:
                             mpaa_rating = section.find('tr', id='mpaa-rating').text
