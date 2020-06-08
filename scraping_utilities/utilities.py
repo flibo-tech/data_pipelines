@@ -364,7 +364,7 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file):
         interact.send('cd data_pipelines')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'data_pipelines'))
 
-        interact.send('git checkout faster_imdb_scraping')
+        interact.send('git checkout develop')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'data_pipelines'))
 
         interact.send('sudo pip-3.6 install -r requirements.txt')
