@@ -1,13 +1,13 @@
 chromedriver: 'C:\\Users\\bhask\\Downloads\\chromedriver'
 venv_path: 'C:\Users\bhask\Desktop\Garbage or Not\venv_data_collection\Scripts\'
 
-movies_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\movies\'
-tv_series_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\tv_series\'
-scraped_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\'
+movies_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2020\scraped\movies\'
+tv_series_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2020\scraped\tv_series\'
+scraped_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2020\scraped\'
 spot_instance_scraped_data_folder: 'C:\Users\bhask\Desktop\Flibo\data_collected\2020\scraped_using_spot_instances\'
-streaming_sources: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\scraped\streaming_sources\'
-to_upload: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\to_upload\'
-upload_resources: 'C:\Users\bhask\Desktop\Flibo\data_collected\2019\to_upload\resources\'
+streaming_sources: 'C:\Users\bhask\Desktop\Flibo\data_collected\2020\scraped\streaming_sources\'
+to_upload: 'C:\Users\bhask\Desktop\Flibo\data_collected\2020\to_upload\'
+upload_resources: 'C:\Users\bhask\Desktop\Flibo\data_collected\2020\to_upload\resources\'
 
 tmdb_api_key: '57b66bd8b82b9db257af4184ca3f5e8d'
 
@@ -99,8 +99,10 @@ scrape_data:
     }
   }
 
-upload_data: [] # 'movies_details', 'tv_series_details', 'artists', 'content_crew', 'content_tags', 'awards_master', 'content_certificates', 'awards_distribution', 'live_search', 'upload_streaming_info'
-# Remember to remove or change names of files - artists_to_contents.csv & tags_to_contents.csv in upload_resources folder while running live_search for new data
+upload_data:
+  use_data_scraped_using_spot_instances: False
+  scripts: [] # 'movies_details', 'tv_series_details', 'artists', 'content_crew', 'content_tags', 'awards_master', 'content_certificates', 'awards_distribution', 'live_search', 'upload_streaming_info'
+  # Remember to remove or change names of files - artists_to_contents.csv & tags_to_contents.csv in upload_resources folder while running live_search for new data
 
 # similar movies algo
 algo:

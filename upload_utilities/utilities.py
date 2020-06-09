@@ -10,6 +10,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.feature_selection import VarianceThreshold
 import numpy as np
 from multiprocessing import Pool
+import os
 
 
 config = yaml.safe_load(open('./../config.yml'))
@@ -17,6 +18,9 @@ data_folder = config['movies_data_folder']
 streaming_sources_folder = config['streaming_sources']
 to_upload_folder = config['to_upload']
 upload_resources_folder = config['upload_resources']
+movies_data_folder = config['movies_data_folder']
+tv_series_data_folder = config['tv_series_data_folder']
+spot_instance_scraped_data_folder = config['spot_instance_scraped_data_folder']+'\\scraped\\'
 
 
 def parallelize_dataframe(df, func, n_cores=config['algo']['vCPU']):
@@ -527,3 +531,37 @@ def get_recommendations_recom(df_filtered, df_subject, neighbours, variances):
             return False, False
     else:
         return False, False
+
+
+def process_spot_instance_data():
+    files_name_mapping = {
+        'movie_budget_n_metacritic_scrape': movies_data_folder+'cleaned_movie_budget_n_metacritic',
+        'movie_cleaned_certificates': movies_data_folder+'cleaned_certificates',
+        'movie_content': movies_data_folder+'movie_content',
+        'movie_crew_scrape': movies_data_folder+'movie_crew',
+        'movie_keywords_scrape': movies_data_folder+'cleaned_movie_keywords',
+        'movie_synopsys_scrape': movies_data_folder+'movie_synopsys',
+        'movie_technical_specs_scrape': movies_data_folder+'movie_technical_specs',
+        'movie_tmdb_data_collection': movies_data_folder+'cleaned_movie_tmdb',
+        'tv_series_cleaned_certificates': tv_series_data_folder+'cleaned_certificates',
+        'tv_series_content': tv_series_data_folder+'tv_series_content',
+        'tv_series_crew_scrape': tv_series_data_folder+'cleaned_tv_series_crew',
+        'tv_series_details_scrape': tv_series_data_folder+'cleaned_tv_series_details',
+        'tv_series_keywords_scrape': tv_series_data_folder+'cleaned_tv_series_keywords',
+        'tv_series_synopsys_scrape': tv_series_data_folder+'tv_series_synopsys',
+        'tv_series_technical_specs_scrape': tv_series_data_folder+'tv_series_technical_specs',
+        'tv_series_tmdb_data_collection': tv_series_data_folder+'cleaned_tv_series_tmdb'
+    }
+    for key in files_name_mapping.keys():
+        print('Concatenating', key, 'files...')
+        df = pd.DataFrame()
+        for filename in os.listdir(spot_instance_scraped_data_folder):
+            if filename.startswith(key) and filename.endswith('.csv'):
+                print(filename)
+                df = pd.concat([df, pd.read_csv(spot_instance_scraped_data_folder+filename)], axis=0)
+        print('\nDumping into file', files_name_mapping[key]+'.csv')
+        df.drop_duplicates(inplace=True)
+        df.to_csv(files_name_mapping[key]+'.csv', index=False)
+        print('\n\n')
+
+    print('\nAll files read & processed.')
