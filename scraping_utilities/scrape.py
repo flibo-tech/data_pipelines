@@ -57,12 +57,12 @@ if __name__ == "__main__":
                     df_certis.to_csv('/home/ec2-user/scraped/movie_cleaned_certificates_' + sys.argv[-1] + '.csv',
                                            index=False, encoding='utf-16')
                     df_content.to_csv('/home/ec2-user/scraped/movie_content_' + sys.argv[-1] + '.csv',
-                                            index=False, encoding='utf-16')
+                                            index=False, encoding='utf-16', sep=',')
                 else:
                     df_certis.to_csv('/home/ec2-user/scraped/tv_series_cleaned_certificates_' + sys.argv[-1] + '.csv',
-                                     index=False, encoding='utf-16')
+                                     index=False, encoding='utf-16', sep=',')
                     df_content.to_csv('/home/ec2-user/scraped/tv_series_content_' + sys.argv[-1] + '.csv',
-                                      index=False, encoding='utf-16')
+                                      index=False, encoding='utf-16', sep=',')
             else:
                 df_scraped.to_csv('/home/ec2-user/scraped/'+scrape_function+'_'+sys.argv[-1]+'.csv', index=False, encoding='utf-16')
 
