@@ -54,17 +54,13 @@ if __name__ == "__main__":
                 df_content = df_content[['content','content_votes','level','no_of_scenes','text','title_id','title_name']]
 
                 if scrape_function == 'movie_content_scrape':
-                    df_certis.to_csv('/home/ec2-user/scraped/movie_cleaned_certificates_' + sys.argv[-1] + '.csv',
-                                           index=False, encoding='utf-16')
-                    df_content.to_csv('/home/ec2-user/scraped/movie_content_' + sys.argv[-1] + '.csv',
-                                            index=False, encoding='utf-16', sep=',')
+                    df_certis.to_csv('/home/ec2-user/scraped/movie_cleaned_certificates_' + sys.argv[-1] + '.csv', index=False)
+                    df_content.to_csv('/home/ec2-user/scraped/movie_content_' + sys.argv[-1] + '.csv', index=False)
                 else:
-                    df_certis.to_csv('/home/ec2-user/scraped/tv_series_cleaned_certificates_' + sys.argv[-1] + '.csv',
-                                     index=False, encoding='utf-16', sep=',')
-                    df_content.to_csv('/home/ec2-user/scraped/tv_series_content_' + sys.argv[-1] + '.csv',
-                                      index=False, encoding='utf-16', sep=',')
+                    df_certis.to_csv('/home/ec2-user/scraped/tv_series_cleaned_certificates_' + sys.argv[-1] + '.csv', index=False)
+                    df_content.to_csv('/home/ec2-user/scraped/tv_series_content_' + sys.argv[-1] + '.csv', index=False)
             else:
-                df_scraped.to_csv('/home/ec2-user/scraped/'+scrape_function+'_'+sys.argv[-1]+'.csv', index=False, encoding='utf-16')
+                df_scraped.to_csv('/home/ec2-user/scraped/'+scrape_function+'_'+sys.argv[-1]+'.csv', index=False)
 
     elif config['scrape_data']['prepare_input_for_scrape_using_spot_instance']:
         df_db_ids = pd.read_csv('db_ids.csv')
@@ -73,10 +69,17 @@ if __name__ == "__main__":
             df_temp = df_db_ids.copy()
             df_temp = df_temp[df_temp['type']=='movie']
             del df_temp['type']
+            df_temp = df_temp.head(100)
             df_temp['function'] = scrape_function
             df = pd.concat([df, df_temp], axis=0)
-        df.sort_values('function', inplace=True)
-        df = df.sample(df.shape[0])
+        for scrape_function in config['scrape_data']['tv_series']:
+            df_temp = df_db_ids.copy()
+            df_temp = df_temp[df_temp['type']=='tv']
+            del df_temp['type']
+            df_temp = df_temp.head(100)
+            df_temp['function'] = scrape_function
+            df = pd.concat([df, df_temp], axis=0)
+        df.sort_values(['function', 'imdb_content_id'], inplace=True)
         df.to_csv('titles_to_scrape.csv', index=False)
 
     elif config['scrape_data']['trigger_scrape_using_spot_instance']:
