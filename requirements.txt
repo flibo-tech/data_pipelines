@@ -8,6 +8,7 @@ chardet==3.0.4
 cryptography==2.9.2
 CurrencyConverter==0.13.9
 docutils==0.15.2
+html5lib==1.0.1
 httmock==1.3.0
 http-request-randomizer==1.2.3
 idna==2.8

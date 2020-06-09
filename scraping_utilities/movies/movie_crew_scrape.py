@@ -142,29 +142,30 @@ def movie_crew_scrape(df_titles):
 
     df = df_main.copy()
 
-    df['credit_category'] = df['credit_category'].apply(lambda x: x.strip())
+    if not df.empty:
+        df['credit_category'] = df['credit_category'].apply(lambda x: x.strip())
 
-    credit_rename = {'Cast (in credits order)':'Cast',
-                     'Cast (in credits order) complete, awaiting verification':'Cast',
-                     'Cast (in credits order) verified as complete':'Cast',
-                     'Cast complete, awaiting verification':'Cast',
-                     'Cast verified as complete':'Cast',
-                     'Series Animation Department':'Animation Department',
-                     'Series Camera and Electrical Department':'Camera and Electrical Department',
-                     'Series Cast':'Cast',
-                     'Series Cinematography by':'Cinematography by',
-                     'Series Directed by':'Directed by',
-                     'Series Editorial Department':'Editorial Department',
-                     'Series Film Editing by':'Film Editing by',
-                     'Series Music by':'Music by',
-                     'Series Music Department':'Music Department',
-                     'Series Produced by':'Produced by',
-                     'Series Sound Department':'Sound Department',
-                     'Series Thanks':'Thanks',
-                     'Writing Credits (in alphabetical order)':'Writing Credits',
-                     'Writing Credits (WGA)':'Writing Credits',
-                     'Writing Credits (WGA) (in alphabetical order)':'Writing Credits'}
+        credit_rename = {'Cast (in credits order)':'Cast',
+                         'Cast (in credits order) complete, awaiting verification':'Cast',
+                         'Cast (in credits order) verified as complete':'Cast',
+                         'Cast complete, awaiting verification':'Cast',
+                         'Cast verified as complete':'Cast',
+                         'Series Animation Department':'Animation Department',
+                         'Series Camera and Electrical Department':'Camera and Electrical Department',
+                         'Series Cast':'Cast',
+                         'Series Cinematography by':'Cinematography by',
+                         'Series Directed by':'Directed by',
+                         'Series Editorial Department':'Editorial Department',
+                         'Series Film Editing by':'Film Editing by',
+                         'Series Music by':'Music by',
+                         'Series Music Department':'Music Department',
+                         'Series Produced by':'Produced by',
+                         'Series Sound Department':'Sound Department',
+                         'Series Thanks':'Thanks',
+                         'Writing Credits (in alphabetical order)':'Writing Credits',
+                         'Writing Credits (WGA)':'Writing Credits',
+                         'Writing Credits (WGA) (in alphabetical order)':'Writing Credits'}
 
-    df['credit_category'] = df['credit_category'].apply(lambda x: credit_rename.get(x, x))
+        df['credit_category'] = df['credit_category'].apply(lambda x: credit_rename.get(x, x))
 
     return df

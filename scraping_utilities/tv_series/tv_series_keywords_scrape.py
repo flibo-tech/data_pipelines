@@ -95,18 +95,19 @@ def tv_series_keywords_scrape(df_titles):
 
     df = df_main.copy()
 
-    def votes(votes):
-        upvotes = None
-        total_votes = None
-        try:
-            grps = re.search('^([\d]+)[\D]*([\d]+)[\D]*', votes).groups()
-            upvotes = int(grps[0])
-            total_votes = int(grps[1])
-        except:
-            pass
-        return upvotes, total_votes
+    if not df.empty:
+        def votes(votes):
+            upvotes = None
+            total_votes = None
+            try:
+                grps = re.search('^([\d]+)[\D]*([\d]+)[\D]*', votes).groups()
+                upvotes = int(grps[0])
+                total_votes = int(grps[1])
+            except:
+                pass
+            return upvotes, total_votes
 
-    df['upvotes'], df['total_votes'] = zip(*df['votes'].apply(votes))
-    del df['votes']
+        df['upvotes'], df['total_votes'] = zip(*df['votes'].apply(votes))
+        del df['votes']
 
     return df

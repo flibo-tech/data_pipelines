@@ -142,50 +142,51 @@ def tv_series_crew_scrape(df_titles):
 
     df = df_main.copy()
 
-    df['credit_category'] = df['credit_category'].apply(lambda x: x.strip())
+    if not df.empty:
+        df['credit_category'] = df['credit_category'].apply(lambda x: x.strip())
 
-    credit_rename = {'Cast (in credits order)':'Cast',
-                     'Cast (in credits order) complete, awaiting verification':'Cast',
-                     'Cast (in credits order) verified as complete':'Cast',
-                     'Cast complete, awaiting verification':'Cast',
-                     'Cast verified as complete':'Cast',
-                     'Series Animation Department':'Animation Department',
-                     'Series Camera and Electrical Department':'Camera and Electrical Department',
-                     'Series Cast':'Cast',
-                     'Series Cinematography by':'Cinematography by',
-                     'Series Directed by':'Directed by',
-                     'Series Editorial Department':'Editorial Department',
-                     'Series Film Editing by':'Film Editing by',
-                     'Series Music by':'Music by',
-                     'Series Music Department':'Music Department',
-                     'Series Produced by':'Produced by',
-                     'Series Sound Department':'Sound Department',
-                     'Series Thanks':'Thanks',
-                     'Writing Credits (in alphabetical order)':'Writing Credits',
-                     'Writing Credits (WGA)':'Writing Credits',
-                     'Writing Credits (WGA) (in alphabetical order)':'Writing Credits'}
+        credit_rename = {'Cast (in credits order)':'Cast',
+                         'Cast (in credits order) complete, awaiting verification':'Cast',
+                         'Cast (in credits order) verified as complete':'Cast',
+                         'Cast complete, awaiting verification':'Cast',
+                         'Cast verified as complete':'Cast',
+                         'Series Animation Department':'Animation Department',
+                         'Series Camera and Electrical Department':'Camera and Electrical Department',
+                         'Series Cast':'Cast',
+                         'Series Cinematography by':'Cinematography by',
+                         'Series Directed by':'Directed by',
+                         'Series Editorial Department':'Editorial Department',
+                         'Series Film Editing by':'Film Editing by',
+                         'Series Music by':'Music by',
+                         'Series Music Department':'Music Department',
+                         'Series Produced by':'Produced by',
+                         'Series Sound Department':'Sound Department',
+                         'Series Thanks':'Thanks',
+                         'Writing Credits (in alphabetical order)':'Writing Credits',
+                         'Writing Credits (WGA)':'Writing Credits',
+                         'Writing Credits (WGA) (in alphabetical order)':'Writing Credits'}
 
-    df['credit_category'] = df['credit_category'].apply(lambda x: credit_rename.get(x, x))
+        df['credit_category'] = df['credit_category'].apply(lambda x: credit_rename.get(x, x))
 
-    def parse_credit_as(item):
-        try:
-            if re.search(r'(\d+) episode', item.lower()):
-                credit_episodes = re.search(r'(\d+) episode', item.lower()).group().split()[0]
-                credit_time_period = re.split(r'(\d+) episode', item.lower())[-1].replace(',', '').replace(')', '').replace('s', '').strip()
-            else:
-                credit_episodes = None
-                credit_time_period = None
+        def parse_credit_as(item):
+            try:
+                if re.search(r'(\d+) episode', item.lower()):
+                    credit_episodes = re.search(r'(\d+) episode', item.lower()).group().split()[0]
+                    credit_time_period = re.split(r'(\d+) episode', item.lower())[-1].replace(',', '').replace(')', '').replace('s', '').strip()
+                else:
+                    credit_episodes = None
+                    credit_time_period = None
 
-            credit_as = re.split(r'(\d+) episode', item)[0]
-            credit_as = re.split(r'(\d+) Episode', credit_as)[0]
-            credit_as = credit_as.strip().rstrip('(').strip()
-            credit_as = credit_as if credit_as else None
+                credit_as = re.split(r'(\d+) episode', item)[0]
+                credit_as = re.split(r'(\d+) Episode', credit_as)[0]
+                credit_as = credit_as.strip().rstrip('(').strip()
+                credit_as = credit_as if credit_as else None
 
-            return credit_as, credit_episodes, credit_time_period
-        except:
-            return None, None, None
+                return credit_as, credit_episodes, credit_time_period
+            except:
+                return None, None, None
 
 
-    df['credit_as'], df['credit_episodes'], df['credit_time_period'] = zip(*df['credit_as'].apply(parse_credit_as))
+        df['credit_as'], df['credit_episodes'], df['credit_time_period'] = zip(*df['credit_as'].apply(parse_credit_as))
 
     return df

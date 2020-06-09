@@ -79,55 +79,56 @@ def movie_tmdb_data_collection(df_titles):
             time_checkpoint = datetime.now()
 
     df = pd.DataFrame(details)
-    df['tmdb_details'] = df['tmdb_details'].astype(str)
-    df = df[['imdb_id', 'tmdb_id', 'tmdb_details']]
+    if not df.empty:
+        df['tmdb_details'] = df['tmdb_details'].astype(str)
+        df = df[['imdb_id', 'tmdb_id', 'tmdb_details']]
 
 
 
-    #######################################################################################################
-    # Cleaning above data
-    #######################################################################################################
+        #######################################################################################################
+        # Cleaning above data
+        #######################################################################################################
 
 
-    df['adult'] = df['tmdb_details'].apply(lambda x: eval(x).get('adult') if str(x) != 'nan' else None)
+        df['adult'] = df['tmdb_details'].apply(lambda x: eval(x).get('adult') if str(x) != 'nan' else None)
 
-    tmdb_image_base_url = 'https://image.tmdb.org/t/p/w500'
-    df['cover_photo'] = df['tmdb_details'].apply(lambda x: eval(x).get('backdrop_path') if str(x) != 'nan' else None)
-    df['cover_photo'] = df['cover_photo'].apply(lambda x: tmdb_image_base_url+x if x else x)
+        tmdb_image_base_url = 'https://image.tmdb.org/t/p/w500'
+        df['cover_photo'] = df['tmdb_details'].apply(lambda x: eval(x).get('backdrop_path') if str(x) != 'nan' else None)
+        df['cover_photo'] = df['cover_photo'].apply(lambda x: tmdb_image_base_url+x if x else x)
 
-    df['poster'] = df['tmdb_details'].apply(lambda x: eval(x).get('poster_path') if str(x) != 'nan' else None)
-    df['poster'] = df['poster'].apply(lambda x: tmdb_image_base_url+x if x else x)
+        df['poster'] = df['tmdb_details'].apply(lambda x: eval(x).get('poster_path') if str(x) != 'nan' else None)
+        df['poster'] = df['poster'].apply(lambda x: tmdb_image_base_url+x if x else x)
 
-    df['homepage'] = df['tmdb_details'].apply(lambda x: eval(x).get('homepage') if str(x) != 'nan' else None)
+        df['homepage'] = df['tmdb_details'].apply(lambda x: eval(x).get('homepage') if str(x) != 'nan' else None)
 
-    df['runtime'] = df['tmdb_details'].apply(lambda x: eval(x).get('runtime') if str(x) != 'nan' else None)
-    df['runtime'][pd.notnull(df['runtime'])] = df['runtime'][pd.notnull(df['runtime'])].apply(lambda x: int(x))
+        df['runtime'] = df['tmdb_details'].apply(lambda x: eval(x).get('runtime') if str(x) != 'nan' else None)
+        df['runtime'][pd.notnull(df['runtime'])] = df['runtime'][pd.notnull(df['runtime'])].apply(lambda x: int(x))
 
-    df['facebook'] = df['tmdb_details'].apply(lambda x: eval(x).get('social_ids', {}).get('facebook_id') if str(x) != 'nan' else None)
-    df['instagram'] = df['tmdb_details'].apply(lambda x: eval(x).get('social_ids', {}).get('instagram_id') if str(x) != 'nan' else None)
-    df['twitter'] = df['tmdb_details'].apply(lambda x: eval(x).get('social_ids', {}).get('twitter_id') if str(x) != 'nan' else None)
+        df['facebook'] = df['tmdb_details'].apply(lambda x: eval(x).get('social_ids', {}).get('facebook_id') if str(x) != 'nan' else None)
+        df['instagram'] = df['tmdb_details'].apply(lambda x: eval(x).get('social_ids', {}).get('instagram_id') if str(x) != 'nan' else None)
+        df['twitter'] = df['tmdb_details'].apply(lambda x: eval(x).get('social_ids', {}).get('twitter_id') if str(x) != 'nan' else None)
 
-    df['production_companies'] = df['tmdb_details'].apply(lambda x: [y.get('id') for y in eval(x).get('production_companies', [{}])] if str(x) != 'nan' else None)
+        df['production_companies'] = df['tmdb_details'].apply(lambda x: [y.get('id') for y in eval(x).get('production_companies', [{}])] if str(x) != 'nan' else None)
 
-    df['release_date'] = df['tmdb_details'].apply(lambda x: eval(x).get('release_date') if str(x) != 'nan' else None)
-    df['release_date'] = df['release_date'].apply(lambda x: datetime.strptime(x, "%Y-%m-%d").date() if x else None)
-
-
-    def trailer(items):
-        size = 0
-        youtube_trailer = None
-        if type(items) == list:
-            for item in items:
-                if (item.get('size', -1) > size) and (item.get('type') == 'Trailer') and (item.get('site') == 'YouTube'):
-                    size = item.get('size', 0)
-                    youtube_trailer = item.get('key')
-        return youtube_trailer
+        df['release_date'] = df['tmdb_details'].apply(lambda x: eval(x).get('release_date') if str(x) != 'nan' else None)
+        df['release_date'] = df['release_date'].apply(lambda x: datetime.strptime(x, "%Y-%m-%d").date() if x else None)
 
 
-    df['youtube_trailer'] = df['tmdb_details'].apply(lambda x: trailer(eval(x).get('tmdb_videos', [])) if str(x) != 'nan' else None)
+        def trailer(items):
+            size = 0
+            youtube_trailer = None
+            if type(items) == list:
+                for item in items:
+                    if (item.get('size', -1) > size) and (item.get('type') == 'Trailer') and (item.get('site') == 'YouTube'):
+                        size = item.get('size', 0)
+                        youtube_trailer = item.get('key')
+            return youtube_trailer
 
-    df = df.where((pd.notnull(df)), None)
 
-    del df['tmdb_details']
+        df['youtube_trailer'] = df['tmdb_details'].apply(lambda x: trailer(eval(x).get('tmdb_videos', [])) if str(x) != 'nan' else None)
+
+        df = df.where((pd.notnull(df)), None)
+
+        del df['tmdb_details']
 
     return df
