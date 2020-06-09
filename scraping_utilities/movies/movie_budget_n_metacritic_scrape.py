@@ -45,12 +45,15 @@ def movie_budget_n_metacritic_scrape(df_titles):
                 subtext = title_wrapper.find('div', class_='subtext')
                 try:
                     release_date = subtext.text.replace('\xa0', ' ').strip().strip('\n').split('|')[-1].strip()
+                except:
+                    release_date = None
+                try:
                     run_time = subtext.find('time')
                     if run_time:
                         run_time = run_time.text.replace('\xa0', ' ').strip().strip('\n')
                 except:
-                    release_date = None
                     run_time = None
+
                 try:
                     rating_element = soup.find('div', class_='imdbRating')
                     imdb_rating = rating_element.find('strong').text.replace('\xa0', ' ').strip().strip('\n')
@@ -94,24 +97,24 @@ def movie_budget_n_metacritic_scrape(df_titles):
                     genres = None
 
                 df = pd.DataFrame(
-                                  [
-                                      {
-                                          'title_id': title_id,
-                                          'title_name': title_name,
-                                          'title_poster': title_poster,
-                                          'imdb_rating': imdb_rating,
-                                          'num_votes': num_votes,
-                                          'release_date': release_date,
-                                          'run_time': run_time,
-                                          'title_year': title_year,
-                                          'genres': genres,
-                                          'summary_text': summary_text,
-                                          'metacritic_score': metacritic_score,
-                                          'reviews': reviews,
-                                          'awards': awards,
-                                          'details': details
-                                      }
-                                  ]
+                    [
+                        {
+                            'title_id': title_id,
+                            'title_name': title_name,
+                            'title_poster': title_poster,
+                            'imdb_rating': imdb_rating,
+                            'num_votes': num_votes,
+                            'release_date': release_date,
+                            'run_time': run_time,
+                            'title_year': title_year,
+                            'genres': genres,
+                            'summary_text': summary_text,
+                            'metacritic_score': metacritic_score,
+                            'reviews': reviews,
+                            'awards': awards,
+                            'details': details
+                        }
+                    ]
                                   )
 
                 if not df.empty:
@@ -177,8 +180,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
 
         def filming_location(details):
             try:
-                return \
-                details.replace('\xa0', ' ').strip().strip('\n').split('Filming Locations:')[1].split('See more')[0].split('\n')[1]
+                return details.replace('\xa0', ' ').strip().strip('\n').split('Filming Locations:')[1].split('See more')[0].split('\n')[1]
             except:
                 return None
 
