@@ -53,7 +53,7 @@ def movie_tmdb_data_collection(df_titles):
             details.append({'imdb_id': title})
             i += 1
 
-        if i%10 == 0:
+        if i%25 == 0:
             print('movies scraped -',(i+j))
 
             time_since_start = (datetime.now()-scrape_start_time).seconds
@@ -71,8 +71,8 @@ def movie_tmdb_data_collection(df_titles):
                 time_since_last_checkpoint = (datetime.now()-time_checkpoint).seconds
             except:
                 time_since_last_checkpoint = (datetime.now()-scrape_start_time).seconds
-            current_scraping_speed = (10/time_since_last_checkpoint)*3600
-            time_remaining = (time_since_last_checkpoint*((len(titles)-i-j)/10))/(3600*24)
+            current_scraping_speed = (25/time_since_last_checkpoint)*3600
+            time_remaining = (time_since_last_checkpoint*((len(titles)-i-j)/25))/(3600*24)
             print('Current scraping speed - '+('%.0f'%(current_scraping_speed))+' movies/hour')
             print('Time remaining as per current speed - '+('%.1f'%(time_remaining))+' days')
             print('\n')
