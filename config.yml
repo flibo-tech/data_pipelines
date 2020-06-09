@@ -39,7 +39,7 @@ scrape_data:
     }
   }
   prepare_input_for_scrape_using_spot_instance: False # file prepared from this should be pushed to GOT before trigger_scrape_using_spot_instance
-  trigger_scrape_using_spot_instance: False
+  trigger_scrape_using_spot_instance: False # Empty directory spot_instance_scraped_data_folder before running this
   max_spot_instances: 10
   crawls_per_spot_instance: 8000
   movies: ['movie_budget_n_metacritic_scrape', 'movie_content_scrape', 'movie_crew_scrape', 'movie_keywords_scrape', 'movie_synopsys_scrape', 'movie_technical_specs_scrape', 'movie_tmdb_data_collection'] #'movie_budget_n_metacritic_scrape', 'movie_content_scrape', 'movie_crew_scrape', 'movie_keywords_scrape', 'movie_synopsys_scrape', 'movie_technical_specs_scrape', 'movie_tmdb_artist_data_collection', 'movie_tmdb_data_collection'
@@ -110,7 +110,7 @@ scrape_data:
 
 upload_data:
   use_data_scraped_using_spot_instances: False
-  scripts: [] # 'movies_details', 'tv_series_details', 'artists', 'content_crew', 'content_tags', 'awards_master', 'content_certificates', 'awards_distribution', 'live_search', 'upload_streaming_info'
+  scripts: ['movies_details', 'tv_series_details', 'artists', 'content_crew', 'content_tags', 'content_certificates', 'live_search'] # 'movies_details', 'tv_series_details', 'artists', 'content_crew', 'content_tags', 'awards_master', 'content_certificates', 'awards_distribution', 'live_search', 'upload_streaming_info'
   # Remember to remove or change names of files - artists_to_contents.csv & tags_to_contents.csv in upload_resources folder while running live_search for new data
 
 # similar movies algo

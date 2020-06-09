@@ -186,7 +186,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
 
         def production_house(details):
             try:
-                return details.replace('\xa0', ' ').strip().strip('\n').split('Production Co:')[1].split('See more')[0].split('\n')[1]
+                return details.replace('\xa0', ' ').strip().strip('\n').split('Production Co:')[1].split('See more')[0].strip().split(',')
             except:
                 return None
 
