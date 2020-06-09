@@ -10,6 +10,9 @@ import time
 import paramiko
 from paramiko_expect import SSHClientInteraction
 from requests.exceptions import Timeout, ChunkedEncodingError, ConnectionError
+import sqlalchemy
+from datetime import datetime, date
+from bs4 import BeautifulSoup
 
 
 LOGGER.setLevel(logging.WARNING)
@@ -53,12 +56,12 @@ def get_session(proxy=None):
     return session
 
 
-def should_go_ahead(url, session, string_to_check):
+def should_go_ahead(url, session, string_to_check, timeout=5):
     go_ahead = False
     html_content = None
 
     try:
-        html_content = session.get(url, timeout=5).text
+        html_content = session.get(url, timeout=timeout).text
 
         if html_content.count(string_to_check) != 0:
             go_ahead = True
@@ -72,7 +75,7 @@ def should_go_ahead(url, session, string_to_check):
                 session.close()
                 session = get_session()
                 try:
-                    return should_go_ahead(url, session, string_to_check)
+                    return should_go_ahead(url, session, string_to_check, timeout)
                 except RecursionError:
                     print('Error 503, enough of recursion.')
                     print('\n')
@@ -89,7 +92,7 @@ def should_go_ahead(url, session, string_to_check):
         session.close()
         session = get_session()
         try:
-            return should_go_ahead(url, session, string_to_check)
+            return should_go_ahead(url, session, string_to_check, timeout)
         except RecursionError:
             print('Timeout, enough of recursion.')
             print('\n')
@@ -398,3 +401,145 @@ def scrape_data_on_remote(public_dns, private_ip, username, key_file, index):
 
         client.close()
         return True
+
+
+def get_imdb_titles(df_urls):
+    scrape_start_time = datetime.now()
+    i = 1
+    j = 0
+
+    session = get_session()
+    df_titles = pd.DataFrame()
+
+    for url_item in df_urls.to_dict(orient='records'):
+        go_ahead, session, html_content = should_go_ahead(url_item['url'], session, 'lister-item mode-advanced', timeout=15)
+
+        if go_ahead:
+            try:
+                soup = BeautifulSoup(html_content, 'html.parser')
+
+                items = soup.findAll('div', class_='lister-item mode-advanced')
+                details = []
+                for item in items:
+                    header = item.find('h3', class_='lister-item-header')
+                    title = header.find('a').text.strip()
+                    imdb_id = header.find('a')['href'].split('/')[2]
+
+                    try:
+                        imdb_score = eval(item.find('div', class_='inline-block ratings-imdb-rating').find('strong').text.strip())
+                    except:
+                        imdb_score = None
+
+                    try:
+                        metascore = eval(item.find('div', class_='inline-block ratings-metascore').find('span').text.strip())
+                    except:
+                        metascore = None
+
+                    try:
+                        block_items = item.find('p', class_='sort-num_votes-visible').findAll('span')
+                        for block_item in block_items:
+                            if block_item.get('name') == 'nv':
+                                votes = eval(block_item.text.replace(',', '').strip())
+                                break
+                    except:
+                        votes = None
+
+                    details.append({
+                        'imdb_content_id': imdb_id,
+                        'title': title,
+                        'imdb_score': imdb_score,
+                        'metascore': metascore,
+                        'votes': votes,
+                        'type': url_item['type']
+                    })
+
+                df_titles = pd.concat([df_titles, pd.DataFrame(details)], axis=0)
+            except Exception as e:
+                print('Skipping', url_item['url'], '-', e)
+                print('\n')
+                j += 1
+        else:
+            print('Skipping', url_item['url'], '- something wrong.')
+            print('\n')
+            j += 1
+        if i%5 == 0:
+            print('URLs scraped -',i)
+
+            time_since_start = (datetime.now()-scrape_start_time).seconds
+            all_time_scraping_speed = (i/time_since_start)*3600
+            if time_since_start < 60:
+                time_since_start = str(time_since_start)+' seconds'
+            elif time_since_start < 3600:
+                time_since_start = str(time_since_start//60)+ ':'+str(time_since_start%60)+' minutes'
+            else:
+                time_since_start = str(time_since_start//3600)+ ':'+str((time_since_start%3600)//60)+' hours'
+            print('Time since scraping started - '+time_since_start)
+            print('All time scraping speed - '+('%.0f'%(all_time_scraping_speed))+' urls/hour')
+
+            try:
+                time_since_last_checkpoint = (datetime.now()-time_checkpoint).seconds
+            except:
+                time_since_last_checkpoint = (datetime.now()-scrape_start_time).seconds
+            current_scraping_speed = (5/time_since_last_checkpoint)*3600
+            time_remaining = (time_since_last_checkpoint*((df_urls.shape[0]-i-j)/5))/(3600)
+            print('Current scraping speed - '+('%.0f'%(current_scraping_speed))+' urls/hour')
+            print('Time remaining as per current speed - '+('%.1f'%(time_remaining))+' hours')
+            print('\n')
+            time_checkpoint = datetime.now()
+        i += 1
+
+    return df_titles
+
+
+def collect_db_imdb_ids():
+    engine = sqlalchemy.create_engine(
+        'postgres://' + config['sql']['user'] + ':' + config['sql']['password'] + '@' + config['sql'][
+            'host'] + ':' + str(config['sql']['port']) + '/' + config['sql']['db'])
+    conn = engine.connect()
+
+    df_db_ids = pd.read_sql("""
+                                select distinct imdb_content_id
+                                from """ + config['sql']['schema'] + """.content_details
+                            """, con=conn)
+    df_db_ids.to_csv('db_ids.csv', index=False)
+
+    return True
+
+
+def collect_new_imdb_ids():
+    today = date.today()
+    today = str(today.year) + '-' + str(today.month) + '-' + str(today.day)
+    languages = config['scrape_data']['languages'].keys()
+
+    links = []
+    for content_type in ['feature', 'tv_series']:
+        for language in languages:
+            print('\nPreparing links for - ', content_type, '+', language)
+            short = config['scrape_data']['languages'][language]['short']
+            latest_release_date = config['scrape_data']['languages'][language]['latest_release_date']
+            url = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + short + '&release_date=' +\
+                  latest_release_date + ',' + today
+            session = get_session()
+            html_content = session.get(url, timeout=5).text
+            soup = BeautifulSoup(html_content, 'html.parser')
+            check = soup.find('div', class_='lister-item mode-advanced')
+            if check:
+                total = int(soup.find('div', class_='nav').find('div', class_='desc').find('span').text.split()[-2].replace(',', ''))
+                print(total, 'titles found.')
+                for i in range((total // 250) + (1 if total % 250 else 0)):
+                    link = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + short + '&release_date=' +\
+                           latest_release_date + ',' + today + '&count=250&start=' + str(i*250 + 1)
+                    links.append({'url': link, 'type': 'movie' if content_type=='feature' else 'tv'})
+            else:
+                print('No title found.')
+    if links:
+        df = pd.DataFrame(links).rename(columns={0:'url'})
+        df.to_csv('new_imdb_title_urls.csv', index=False)
+
+        print('\nStarting to scrape title ids...')
+        df_titles = get_imdb_titles(df)
+        df_titles.drop_duplicates(inplace=True)
+        df_titles.to_csv('new_imdb_titles.csv', index=False)
+        print('Title ids scraped.')
+    else:
+        print('\nNo new title found for any language.')

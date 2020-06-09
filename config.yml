@@ -28,7 +28,16 @@ ec2:
 
 scrape_data:
   collect_new_imdb_ids: False # to collect just the imdb ids for new content releases
-  latest_release_date: '2020-05-15' # update this if collect_new_imdb_ids set as True
+  languages: {
+    hindi: {
+      short: 'hi',
+      latest_release_date: '2020-01-01'
+    },
+    english: {
+      short: 'en',
+      latest_release_date: '2020-01-01'
+    }
+  }
   prepare_input_for_scrape_using_spot_instance: False # file prepared from this should be pushed to GOT before trigger_scrape_using_spot_instance
   trigger_scrape_using_spot_instance: False
   max_spot_instances: 10

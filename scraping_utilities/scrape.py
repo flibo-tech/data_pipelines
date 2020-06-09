@@ -18,7 +18,6 @@ from movie_technical_specs_scrape import *
 from movie_tmdb_artist_data_collection import *
 from movie_tmdb_data_collection import *
 
-from imdb_titles import *
 from tv_series_content_scrape import *
 from tv_series_crew_scrape import *
 from tv_series_details_scrape import *
@@ -63,22 +62,30 @@ if __name__ == "__main__":
                 df_scraped.to_csv('/home/ec2-user/scraped/'+scrape_function+'_'+sys.argv[-1]+'.csv', index=False)
 
     elif config['scrape_data']['prepare_input_for_scrape_using_spot_instance']:
+        print('Collecting db IDs')
+        collect_db_imdb_ids()
         df_db_ids = pd.read_csv('db_ids.csv')
+        db_ids = list(df_db_ids['imdb_content_id'])
+
+        if config['scrape_data']['collect_new_imdb_ids']:
+            collect_new_imdb_ids()
+
+        df_new_ids = pd.read_csv('new_imdb_titles.csv')
+        df_new_ids = df_new_ids[(~df_new_ids['imdb_content_id'].isin(db_ids)) & (pd.notnull(df_new_ids['imdb_score']))]
+
         df = pd.DataFrame()
         for scrape_function in config['scrape_data']['movies']:
-            df_temp = df_db_ids.copy()
-            df_temp = df_temp[df_temp['type']=='movie']
-            del df_temp['type']
-            df_temp = df_temp.head(100)
+            df_temp = df_new_ids[df_new_ids['type']=='movie']
+            df_temp = df_temp[['imdb_content_id']]
             df_temp['function'] = scrape_function
             df = pd.concat([df, df_temp], axis=0)
+
         for scrape_function in config['scrape_data']['tv_series']:
-            df_temp = df_db_ids.copy()
-            df_temp = df_temp[df_temp['type']=='tv']
-            del df_temp['type']
-            df_temp = df_temp.head(100)
+            df_temp = df_new_ids[df_new_ids['type'] == 'tv']
+            df_temp = df_temp[['imdb_content_id']]
             df_temp['function'] = scrape_function
             df = pd.concat([df, df_temp], axis=0)
+
         df.sort_values(['function', 'imdb_content_id'], inplace=True)
         df.to_csv('titles_to_scrape.csv', index=False)
 
