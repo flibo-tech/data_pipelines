@@ -52,8 +52,7 @@ def movie_content_scrape(df_titles):
                                        'rating': mpaa_rating})
 
                         try:
-                            certi_list = section.find('tr', id='certifications-list').findAll('li',
-                                                                                              class_='ipl-inline-list__item')
+                            certi_list = section.find('tr', id='certifications-list').findAll('li', class_='ipl-inline-list__item')
                         except:
                             certi_list = []
                         if len(certi_list) > 0:
@@ -90,7 +89,7 @@ def movie_content_scrape(df_titles):
             print('\n')
             j += 1
         if i%25 == 0:
-            print('Movies scraped -',i)
+            print('Movies scraped -', i)
 
             time_since_start = (datetime.now()-scrape_start_time).seconds
             all_time_scraping_speed = (i/time_since_start)*3600
