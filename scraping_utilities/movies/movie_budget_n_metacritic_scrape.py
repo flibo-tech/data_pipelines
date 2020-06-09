@@ -37,7 +37,7 @@ def movie_budget_n_metacritic_scrape(df_titles):
                 title_name = title_wrapper.text.replace('\xa0', ' ').strip('\n').split('\n')[0].split(' (')[0].strip()
                 try:
                     title_poster = soup.find('div', class_='poster').find('img')['src']
-                    title_poster = title_poster.split('@._V1_')[0]+'@._V1_QL50_.'+title_poster.split('__QL50.')[-1]
+                    title_poster = title_poster.split('@._V1_')[0] + '@._V1_.' + title_poster.split('.')[-1]
                 except:
                     title_poster = None
                 title_year = title_wrapper.find('a').text.replace('\xa0', ' ').strip().strip('\n')
