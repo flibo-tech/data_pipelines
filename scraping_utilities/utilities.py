@@ -294,6 +294,16 @@ def get_active_spot_fleet_requests_count():
         if request['SpotFleetRequestState'] in ['submitted', 'active']:
             counter += 1
 
+    next_token = response.get('NextToken')
+    while next_token:
+        response = client.describe_spot_fleet_requests(
+            NextToken=next_token
+        )
+        for request in response['SpotFleetRequestConfigs']:
+            if request['SpotFleetRequestState'] in ['submitted', 'active']:
+                counter += 1
+        next_token = response.get('NextToken')
+
     return counter
 
 
