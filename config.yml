@@ -34,6 +34,7 @@ scrape_data:
   scrape_title_ids_on: 'local' # local / remote
 
   trigger_data_scrape_using_spot_instance: False # Empty directory spot_instance_scraped_data_folder before running this
+
   max_spot_instances: 10
   crawls_per_spot_instance: 8000
 
@@ -106,7 +107,7 @@ scrape_data:
 
 upload_data:
   use_data_scraped_using_spot_instances: False
-  scripts: ['movies_details', 'tv_series_details', 'artists', 'content_crew', 'content_tags', 'content_certificates', 'live_search'] # 'movies_details', 'tv_series_details', 'artists', 'content_crew', 'content_tags', 'awards_master', 'content_certificates', 'awards_distribution', 'live_search', 'upload_streaming_info'
+  scripts: [] # 'movies_details', 'tv_series_details', 'artists', 'content_crew', 'content_tags', 'awards_master', 'content_certificates', 'awards_distribution', 'live_search', 'upload_streaming_info'
   # Remember to remove or change names of files - artists_to_contents.csv & tags_to_contents.csv in upload_resources folder while running live_search for new data
 
 # similar movies algo

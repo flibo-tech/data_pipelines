@@ -539,30 +539,76 @@ def collect_db_imdb_ids():
 
 
 def collect_new_imdb_ids():
-    today = date.today()
-    today = str(today.year) + '-' + str(today.month) + '-' + str(today.day)
     languages = config['scrape_data']['languages']
 
     links = []
     for content_type in ['feature', 'tv_series', 'tv_miniseries']:
         for language in languages:
-            print('\nPreparing links for - ', content_type, '+', language)
             latest_release_date = config['scrape_data']['latest_release_date']
-            url = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + language + '&release_date=' +\
-                  latest_release_date + ',' + today
-            session = get_session()
-            html_content = session.get(url, timeout=5).text
-            soup = BeautifulSoup(html_content, 'html.parser')
-            check = soup.find('div', class_='lister-item mode-advanced')
-            if check:
-                total = int(soup.find('div', class_='nav').find('div', class_='desc').find('span').text.split()[-2].replace(',', ''))
-                print(total, 'titles found.')
-                for i in range((total // 250) + (1 if total % 250 else 0)):
-                    link = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + language + '&release_date=' +\
-                           latest_release_date + ',' + today + '&count=250&start=' + str(i*250 + 1)
-                    links.append({'url': link, 'type': 'movie' if content_type=='feature' else 'tv'})
+            start_year = int(latest_release_date.split('-')[0])
+
+            today = date.today()
+            this_year = today.year
+            today = str(today.year) + '-' + str(today.month) + '-' + str(today.day)
+
+            if language not in ['en', 'ja', 'es', 'fr', 'de', 'it', 'hi']:
+                date_ranges = [{'start': latest_release_date, 'end': today}]
             else:
-                print('No title found.')
+                years = []
+                if language == 'en':
+                    if start_year < 1990:
+                        for i in range(int(np.ceil((1990 - start_year) / 10))):
+                            if start_year >= 1990:
+                                break
+                            end_year = start_year + 10
+                            end_year = end_year if end_year <= 1990 else 1990
+                            years.append([start_year, end_year])
+                            start_year = end_year
+                    gap = 1
+                else:
+                    gap = 10
+
+                for i in range(this_year - start_year):
+                    if start_year == this_year:
+                        break
+                    end_year = start_year + gap
+                    years.append([start_year, end_year])
+                    start_year = end_year
+
+                years.append([this_year, this_year])
+                date_ranges = []
+                for i in range(len(years)):
+                    start = str(years[i][0]) + '-01-01'
+                    end = str(years[i][1] - 1) + '-12-31'
+                    if i == 0:
+                        start = latest_release_date
+                    if i == len(years) - 1:
+                        end = today
+
+                    date_ranges.append({
+                        'start': start,
+                        'end': end
+                    })
+
+            for date_range in date_ranges:
+                print('\nPreparing links for - ', content_type, '+', language, '+', date_range['start'], '-', date_range['end'])
+                latest_release_date = config['scrape_data']['latest_release_date']
+                url = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + language + '&release_date=' + \
+                      date_range['start'] + ',' + date_range['end'] + '&sort=release_date,asc'
+                print(url)
+                session = get_session()
+                html_content = session.get(url, timeout=5).text
+                soup = BeautifulSoup(html_content, 'html.parser')
+                check = soup.find('div', class_='lister-item mode-advanced')
+                if check:
+                    total = int(soup.find('div', class_='nav').find('div', class_='desc').find('span').text.split()[-2].replace(',', ''))
+                    print(total, 'titles found.')
+                    for i in range((total // 250) + (1 if total % 250 else 0)):
+                        link = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + language + '&release_date=' +\
+                               latest_release_date + ',' + today + '&count=250&start=' + str(i*250 + 1) + '&sort=release_date,asc'
+                        links.append({'url': link, 'type': 'movie' if content_type=='feature' else 'tv'})
+                else:
+                    print('No title found.')
     if links:
         df = pd.DataFrame(links).rename(columns={0: 'url'})
         df.to_csv('new_imdb_title_urls.csv', index=False)
