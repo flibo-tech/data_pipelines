@@ -102,9 +102,12 @@ def should_go_ahead(url, session, string_to_check, timeout=5):
     return go_ahead, session, html_content
 
 
-def parallelize_scraping(titles, func, n_cores=config['algo']['vCPU']):
-    df_titles = pd.DataFrame(titles).rename(columns={0:'titles'})
-    df_split = np.array_split(df_titles, n_cores)
+def parallelize_scraping(items, func, n_cores=config['algo']['vCPU']):
+    if type(items) == list:
+        df_titles = pd.DataFrame(items).rename(columns={0:'titles'})
+        df_split = np.array_split(df_titles, n_cores)
+    else:
+        df_split = np.array_split(items, n_cores)
     pool = Pool(n_cores)
     df = pd.concat(pool.map(func, df_split))
     pool.close()
@@ -579,6 +582,7 @@ def collect_new_imdb_ids():
                 time.sleep(1)
                 check = input('Have you pushed it to GIT? (y/n)')
 
+            print('\nStarting...')
             count = pd.read_csv('new_imdb_title_urls.csv').shape[0]
             trigger_scrape_using_spot_instances(count, 'scrape_title_ids_using_spot_instance')
 

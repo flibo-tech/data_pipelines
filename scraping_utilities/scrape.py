@@ -67,8 +67,7 @@ if __name__ == "__main__":
         df_to_scrape = df_to_scrape.iloc[indices[0]:indices[1], :]
 
         print('Scraping for index -', indices[0], '-', indices[1])
-        urls = list(df_to_scrape['url'].unique())
-        df_scraped = parallelize_scraping(urls, get_imdb_titles)
+        df_scraped = parallelize_scraping(df_to_scrape, get_imdb_titles)
         df_scraped.to_csv('/home/ec2-user/scraped/'+'imdb_title_ids'+'_'+sys.argv[-1]+'.csv', index=False)
 
     elif config['scrape_data']['prepare_input_for_scrape_using_spot_instance']:
