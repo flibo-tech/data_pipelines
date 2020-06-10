@@ -592,10 +592,8 @@ def collect_new_imdb_ids():
 
             for date_range in date_ranges:
                 print('\nPreparing links for - ', content_type, '+', language, '+', date_range['start'], '-', date_range['end'])
-                latest_release_date = config['scrape_data']['latest_release_date']
                 url = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + language + '&release_date=' + \
                       date_range['start'] + ',' + date_range['end'] + '&sort=release_date,asc'
-                print(url)
                 session = get_session()
                 html_content = session.get(url, timeout=5).text
                 soup = BeautifulSoup(html_content, 'html.parser')
@@ -603,12 +601,15 @@ def collect_new_imdb_ids():
                 if check:
                     total = int(soup.find('div', class_='nav').find('div', class_='desc').find('span').text.split()[-2].replace(',', ''))
                     print(total, 'titles found.')
+                    if total>10000:
+                        print(url)
                     for i in range((total // 250) + (1 if total % 250 else 0)):
-                        link = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + language + '&release_date=' +\
-                               latest_release_date + ',' + today + '&count=250&start=' + str(i*250 + 1) + '&sort=release_date,asc'
+                        link = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + language + '&release_date=' + \
+                               date_range['start'] + ',' + date_range['end'] + '&count=250&start=' + str(i*250 + 1) + '&sort=release_date,asc'
                         links.append({'url': link, 'type': 'movie' if content_type=='feature' else 'tv'})
                 else:
                     print('No title found.')
+
     if links:
         df = pd.DataFrame(links).rename(columns={0: 'url'})
         df.to_csv('new_imdb_title_urls.csv', index=False)
@@ -631,6 +632,5 @@ def collect_new_imdb_ids():
             print('\nStarting...')
             count = pd.read_csv('new_imdb_title_urls.csv').shape[0]
             trigger_scrape_using_spot_instances(count, 'scrape_title_ids_using_spot_instance')
-
     else:
         print('\nNo new title found for any language.')
