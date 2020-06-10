@@ -13,6 +13,7 @@ from requests.exceptions import Timeout, ChunkedEncodingError, ConnectionError
 import sqlalchemy
 from datetime import datetime, date
 from bs4 import BeautifulSoup
+import os
 
 
 LOGGER.setLevel(logging.WARNING)
@@ -377,7 +378,7 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file):
         return True
 
 
-def scrape_data_on_remote(public_dns, private_ip, username, key_file, index):
+def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index):
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
     client = ssh_into_remote(public_dns, username, key_file)
@@ -393,7 +394,7 @@ def scrape_data_on_remote(public_dns, private_ip, username, key_file, index):
         interact.send('cd data_pipelines/scraping_utilities')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
-        interact.send('sudo python3.6 scrape.py scrape_on_spot_instance '+index)
+        interact.send('sudo python3.6 scrape.py '+arg+' '+index)
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
         interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
@@ -401,6 +402,34 @@ def scrape_data_on_remote(public_dns, private_ip, username, key_file, index):
 
         client.close()
         return True
+
+
+def trigger_scrape_using_spot_instances(count, arg):
+    max_spot_instances = config['scrape_data']['max_spot_instances']
+    limit = config['scrape_data']['crawls_per_spot_instance']
+    index_ranges = []
+    for i in range((count // limit) + (1 if count % limit else 0)):
+        index_ranges.append(str(i * limit) + '-' + str(limit * i + limit))
+
+    while index_ranges:
+        to_scrape_on = index_ranges[:max_spot_instances]
+        for index_range in to_scrape_on:
+            if get_active_spot_fleet_requests_count() < max_spot_instances:
+                print('Triggering scrape for index', index_range)
+                os.system('start "Scraping for index ' + index_range + '" cmd /k "' + config[
+                    'venv_path'] + 'python" scrape.py '+arg+' ' + index_range)
+
+                index_ranges.remove(index_range)
+                time.sleep(15)
+            else:
+                break
+        print('\nRemaining instances to be triggered -', len(index_ranges))
+        if index_ranges:
+            print('Sleeping for 5 minutes, will check then if we can launch more spot instances.\n')
+            time.sleep(5 * 60)
+    print('\n\nRequired number of spot instances launched. Check progress in any open terminals.')
+
+    return True
 
 
 def get_imdb_titles(df_urls):
@@ -509,15 +538,14 @@ def collect_db_imdb_ids():
 def collect_new_imdb_ids():
     today = date.today()
     today = str(today.year) + '-' + str(today.month) + '-' + str(today.day)
-    languages = config['scrape_data']['languages'].keys()
+    languages = config['scrape_data']['languages']
 
     links = []
-    for content_type in ['feature', 'tv_series']:
+    for content_type in ['feature', 'tv_series', 'tv_miniseries']:
         for language in languages:
             print('\nPreparing links for - ', content_type, '+', language)
-            short = config['scrape_data']['languages'][language]['short']
-            latest_release_date = config['scrape_data']['languages'][language]['latest_release_date']
-            url = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + short + '&release_date=' +\
+            latest_release_date = config['scrape_data']['latest_release_date']
+            url = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + language + '&release_date=' +\
                   latest_release_date + ',' + today
             session = get_session()
             html_content = session.get(url, timeout=5).text
@@ -527,19 +555,32 @@ def collect_new_imdb_ids():
                 total = int(soup.find('div', class_='nav').find('div', class_='desc').find('span').text.split()[-2].replace(',', ''))
                 print(total, 'titles found.')
                 for i in range((total // 250) + (1 if total % 250 else 0)):
-                    link = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + short + '&release_date=' +\
+                    link = 'https://www.imdb.com/search/title/?title_type=' + content_type + '&languages=' + language + '&release_date=' +\
                            latest_release_date + ',' + today + '&count=250&start=' + str(i*250 + 1)
                     links.append({'url': link, 'type': 'movie' if content_type=='feature' else 'tv'})
             else:
                 print('No title found.')
     if links:
-        df = pd.DataFrame(links).rename(columns={0:'url'})
+        df = pd.DataFrame(links).rename(columns={0: 'url'})
         df.to_csv('new_imdb_title_urls.csv', index=False)
 
-        print('\nStarting to scrape title ids...')
-        df_titles = get_imdb_titles(df)
-        df_titles.drop_duplicates(inplace=True)
-        df_titles.to_csv('new_imdb_titles.csv', index=False)
-        print('Title ids scraped.')
+        if config['scrape_data']['scrape_title_ids_on'] == 'local':
+            print('\nStarting to scrape title ids...')
+            df_titles = get_imdb_titles(df)
+            df_titles.drop_duplicates(inplace=True)
+            df_titles.to_csv('new_imdb_titles.csv', index=False)
+            print('Title ids scraped.')
+        elif config['scrape_data']['scrape_title_ids_on'] == 'remote':
+            print('\nFile new_imdb_title_urls.csv has been updated. Push it to GIT to proceed.')
+            time.sleep(1)
+            check = input('Have you pushed it to GIT? (y/n)')
+            while check != 'y':
+                print('\nYou have to push the file to GIT to proceed.')
+                time.sleep(1)
+                check = input('Have you pushed it to GIT? (y/n)')
+
+            count = pd.read_csv('new_imdb_title_urls.csv').shape[0]
+            trigger_scrape_using_spot_instances(count, 'scrape_title_ids_using_spot_instance')
+
     else:
         print('\nNo new title found for any language.')
