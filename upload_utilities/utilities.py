@@ -11,6 +11,10 @@ from sklearn.feature_selection import VarianceThreshold
 import numpy as np
 from multiprocessing import Pool
 import os
+import boto3
+import time
+import paramiko
+from paramiko_expect import SSHClientInteraction
 
 
 config = yaml.safe_load(open('./../config.yml'))
@@ -381,7 +385,7 @@ def synonyms_similar_contents():
     df_contents = df_tags.groupby('content_id')['synonym_tags'].apply(sum).reset_index()
     df_contents['synonym_tags'] = df_contents['synonym_tags'].apply(lambda x: list(set(x)))
 
-    df_full_data = pd.read_csv(upload_resources_folder + 'full_data.csv')
+    df_full_data = pd.read_csv('/home/ec2-user/calculated/full_data.csv')
     df_full_data = df_full_data[['content_id', 'genres', 'language']]
     df_full_data['genres'] = df_full_data['genres'].apply(lambda x: eval(x) if x else None)
     df_full_data['language'] = df_full_data['language'].apply(lambda x: eval(x) if x else None)
@@ -390,7 +394,7 @@ def synonyms_similar_contents():
 
     df_contents_final = parallelize_dataframe(df_contents.copy(), apply_common_contents)
 
-    df_contents_final.to_csv(upload_resources_folder + 'synonyms_similar_contents.csv', index=False)
+    df_contents_final.to_csv('/home/ec2-user/calculated/synonyms_similar_contents.csv', index=False)
 
 
 def get_full_data():
@@ -455,7 +459,7 @@ def get_full_data():
     df_contents['language'] = df_contents['language'].apply(clean_array)
     df_contents = df_contents[pd.notnull(df_contents['language'])]
 
-    df_contents.to_csv(upload_resources_folder + 'full_data.csv', index=False)
+    df_contents.to_csv('/home/ec2-user/calculated/full_data.csv', index=False)
 
 
 def get_features_recom(df_resp, weight_power):
@@ -565,3 +569,289 @@ def process_spot_instance_data():
         print('\n\n')
 
     print('\nAll files read & processed.')
+
+
+def ssh_into_remote(hostname, username, key_file):
+    client = None
+    while client is None:
+        try:
+            print('Trying to ssh...')
+            key = paramiko.RSAKey.from_private_key_file(key_file)
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+            client.connect(hostname=hostname, username=username, pkey=key)
+        except:
+            print('Remote not completely up yet, sleeping for 10 sec...')
+            time.sleep(10)
+            client = None
+    return client
+
+
+def launch_spot_instance():
+    session = boto3.Session(
+        aws_access_key_id=config['s3']['aws_access_key_id'],
+        aws_secret_access_key=config['s3']['aws_secret_access_key'],
+        region_name=config['s3']['region_name']
+    )
+    client = session.client('ec2')
+
+    print('Submitting fleet request...')
+    response = client.request_spot_fleet(
+        SpotFleetRequestConfig={
+            "IamFleetRole": "arn:aws:iam::772835535876:role/aws-ec2-spot-fleet-tagging-role",
+            "AllocationStrategy": "capacityOptimized",
+            "TargetCapacity": 1,
+            "TerminateInstancesWithExpiration": True,
+            "LaunchSpecifications": [],
+            "Type": "request",
+            "LaunchTemplateConfigs": [
+                {
+                    "LaunchTemplateSpecification": {
+                        "LaunchTemplateId": "lt-0801fa586840fa707",
+                        "Version": "4"
+                    },
+                    "Overrides": [
+                        {
+                            "InstanceType": "m5dn.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "m5d.metal",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "c5a.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "c5.metal",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "c5.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "m5.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "r5ad.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "r5a.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "c5d.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "r5d.metal",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "m5a.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "r5d.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "r5.metal",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "m5n.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "r5dn.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "r5n.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "c5d.metal",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "r5.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "m5ad.24xlarge",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        },
+                        {
+                            "InstanceType": "m5.metal",
+                            "WeightedCapacity": 1,
+                            "SubnetId": "subnet-6ec3c606"
+                        }
+                    ]
+                }
+            ]
+        }
+    )
+    spot_fleet_request_id = response['SpotFleetRequestId']
+    print('Fleet request id -', spot_fleet_request_id)
+
+    print('Fetching instances...')
+    response = client.describe_spot_fleet_instances(
+        SpotFleetRequestId=spot_fleet_request_id
+    )
+    while len(response['ActiveInstances']) == 0:
+        time.sleep(5)
+        print('Fetching instances again...')
+        response = client.describe_spot_fleet_instances(
+            SpotFleetRequestId=spot_fleet_request_id
+        )
+    instance_id = response['ActiveInstances'][0]['InstanceId']
+    print('Instance id -', instance_id)
+
+    print('Fetching instance public dns...')
+    response = client.describe_instances(
+        InstanceIds=[instance_id]
+    )
+    public_dns = response['Reservations'][0]['Instances'][0]['PublicDnsName']
+    private_ip = response['Reservations'][0]['Instances'][0]['PrivateIpAddress']
+
+    return spot_fleet_request_id, public_dns, private_ip
+
+
+def install_requirements_on_remote(public_dns, private_ip, username, key_file):
+    default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+
+    client = ssh_into_remote(public_dns, username, key_file)
+    with SSHClientInteraction(client, timeout=60, display=True) as interact:
+        interact.expect(default_prompt)
+
+        interact.send('sudo yum install htop')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect(default_prompt)
+
+        interact.send('sudo yum install python36 python36-pip')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect(default_prompt)
+
+        interact.send('sudo pip-3.6 install virtualenv')
+        interact.expect(default_prompt)
+
+        interact.send('sudo python3.6 -m virtualenv venv_similar_content')
+        interact.expect(default_prompt)
+
+        interact.send('source ./venv_similar_content/bin/activate')
+        interact.expect('\(venv_similar_content\)\s+'+default_prompt)
+
+        interact.send('sudo pip install --upgrade pip')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt)
+
+        interact.send('sudo yum install python36-devel')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt)
+
+        interact.send('sudo yum  install libevent-devel')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt)
+
+        interact.send('sudo yum -y install gcc')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt)
+
+        interact.send('sudo yum install git')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt)
+
+        interact.send('git clone https://github.com/flibo-tech/data_pipelines.git')
+        interact.expect("Username for 'https://github.com':\s+")
+        interact.send(config['git']['username'])
+        interact.expect("Password for 'https://"+config['git']['username']+"@github.com':\s+")
+        interact.send(config['git']['password'])
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt)
+
+        interact.send('cd data_pipelines')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'data_pipelines'))
+
+        interact.send('git checkout develop')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'data_pipelines'))
+
+        interact.send('sudo pip-3.6 install -r requirements.txt')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'data_pipelines'))
+
+        interact.send('sudo python3.6')
+        interact.expect('\>\>\>\s+')
+
+        interact.send('import nltk')
+        interact.expect('\>\>\>\s+')
+
+        interact.send("nltk.download('stopwords')")
+        interact.expect('\>\>\>\s+')
+
+        interact.send("nltk.download('wordnet')")
+        interact.expect('\>\>\>\s+')
+
+        interact.send('exit()')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'data_pipelines'))
+
+        client.close()
+        return True
+
+
+def calculate_on_remote(public_dns, private_ip, username, key_file, arg):
+    default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+
+    client = ssh_into_remote(public_dns, username, key_file)
+    with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
+        interact.expect(default_prompt)
+
+        interact.send('source ./venv_similar_content/bin/activate')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt)
+
+        interact.send('mkdir /home/' + username + '/calculated')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt)
+
+        interact.send('cd data_pipelines/upload_utilities')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+
+        interact.send('sudo python3.6 upload.py '+arg)
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+
+        interact.send('sudo chmod -R 777 /home/' + username + '/calculated/')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+
+        interact.send('sudo rm /home/' + username + '/calculated/full_data.csv')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+
+        interact.send('sudo rm /home/' + username + '/calculated/synonyms_similar_contents.csv')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+
+        client.close()
+        return True

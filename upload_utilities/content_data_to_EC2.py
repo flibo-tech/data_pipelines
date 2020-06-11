@@ -1018,21 +1018,21 @@ def apply_calculate_similar(df):
 
 def similar_contents():
     try:
-        df_contents_all_features = pd.read_csv(upload_resources_folder+'full_data.csv')
+        df_contents_all_features = pd.read_csv('/home/ec2-user/calculated/full_data.csv')
     except:
         print('Getting full data...')
         get_full_data()
-        df_contents_all_features = pd.read_csv(upload_resources_folder + 'full_data.csv')
+        df_contents_all_features = pd.read_csv('/home/ec2-user/calculated/full_data.csv')
     df_contents_all_features['genres'] = df_contents_all_features['genres'].apply(lambda x: eval(x) if x else None)
     df_contents_all_features['language'] = df_contents_all_features['language'].apply(lambda x: eval(x) if x else None)
 
     global df_clusters
     try:
-        df_clusters = pd.read_csv(upload_resources_folder+'synonyms_similar_contents.csv')
+        df_clusters = pd.read_csv('/home/ec2-user/calculated/synonyms_similar_contents.csv')
     except:
         print('Calculating synonyms similar contents...')
         synonyms_similar_contents()
-        df_clusters = pd.read_csv(upload_resources_folder + 'synonyms_similar_contents.csv')
+        df_clusters = pd.read_csv('/home/ec2-user/calculated/synonyms_similar_contents.csv')
     df_clusters['common_contents'] = df_clusters['common_contents'].apply(lambda x: eval(x))
 
     engine = sqlalchemy.create_engine('postgres://' + config['sql']['user'] + ':' +
@@ -1076,12 +1076,7 @@ def similar_contents():
 
     df_similar_contents['similar_contents'] = df_similar_contents['similar_contents'].apply(lambda x: str(x).replace("'", '').replace('[', '{').replace(']', '}'))
     df_similar_contents['filter_contents'] = df_similar_contents['filter_contents'].apply(lambda x: str(x).replace("'", '').replace('[', '{').replace(']', '}'))
-    df_similar_contents.to_csv(to_upload_folder + 'similar_contents.csv', sep='^', index=False)
-
-    # Uncomment the line below when running on local windows machine
-    # upload_command = 'scp -i ' + config['pem_key'] + ' ' + to_upload_folder + 'similar_contents.csv ' + config['ec2'][
-    #     'user'] + '@' + config['ec2']['public_dns'] + ':' + config['ec2']['file_upload_location']
-    # os.system(upload_command)
+    df_similar_contents.to_csv('/home/ec2-user/calculated/similar_contents.csv', sep='^', index=False)
 
     return True
 
