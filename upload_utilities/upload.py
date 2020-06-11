@@ -6,7 +6,7 @@ import sys
 import os
 
 from content_data_to_EC2 import *
-from utilities import process_spot_instance_data
+from utilities import process_spot_instance_data, launch_spot_instance, install_requirements_on_remote, calculate_on_remote, close_spot_fleet_request_and_instances
 
 
 config = yaml.safe_load(open('./../config.yml'))
