@@ -42,6 +42,7 @@ scrape_data:
   tv_series: ['tv_series_content_scrape', 'tv_series_crew_scrape', 'tv_series_details_scrape', 'tv_series_keywords_scrape', 'tv_series_synopsys_scrape', 'tv_series_technical_specs_scrape', 'tv_series_tmdb_data_collection'] #'tv_series_content_scrape', 'tv_series_crew_scrape', 'tv_series_details_scrape', 'tv_series_keywords_scrape', 'tv_series_synopsys_scrape', 'tv_series_technical_specs_scrape', 'tv_series_tmdb_artist_data_collection', 'tv_series_tmdb_data_collection'
   awards: [] #'awards_scrape' -- Before running this remember to delete latest year's awards scraped from database & file awards_scraped.csv at scraped_data_folder
 
+  trigger_streaming_info_scrape_using_spot_instance: False
   countries: {
     en_CA: {
       name: 'Canada',

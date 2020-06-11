@@ -124,6 +124,23 @@ if __name__ == "__main__":
             count = pd.read_csv('titles_to_scrape.csv').shape[0]
             trigger_scrape_using_spot_instances(count, 'scrape_data_using_spot_instance')
 
+    elif config['scrape_data']['trigger_streaming_info_scrape_using_spot_instance']:
+        if 'scrape_streaming_info_using_spot_instance':
+            spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('big')
+            install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
+
+            scrape_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'], None, None, scraping_streaming_info=True)
+
+            cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + config[
+                'pem_key'] + ' ec2-user@' + public_dns + ':/home/ec2-user/scraped/ ' + config['to_upload']
+            os.system('start "Downloading scraped streaming info" /wait cmd /c ' + cmd)
+
+            close_spot_fleet_request_and_instances(spot_fleet_request_id)
+        else:
+            os.system('start "Scraping streaming info" cmd /k "' + config[
+                'venv_path'] + 'python" scrape.py scrape_streaming_info_using_spot_instance')
+            print('Spot instance launched. Check progress in open terminal.')
+
     else:
         if config['scrape_data']['collect_new_imdb_ids']:
             print('--------------------------------- collecting db imdb ids ---------------------------------')

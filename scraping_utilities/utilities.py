@@ -115,7 +115,7 @@ def parallelize_scraping(items, func, n_cores=config['algo']['vCPU']):
     return df
 
 
-def launch_spot_instance():
+def launch_spot_instance(size='small'):
     session = boto3.Session(
         aws_access_key_id=config['s3']['aws_access_key_id'],
         aws_secret_access_key=config['s3']['aws_secret_access_key'],
@@ -124,116 +124,238 @@ def launch_spot_instance():
     client = session.client('ec2')
 
     print('Submitting fleet request...')
-    response = client.request_spot_fleet(
-        SpotFleetRequestConfig={
-            "IamFleetRole": "arn:aws:iam::772835535876:role/aws-ec2-spot-fleet-tagging-role",
-            "AllocationStrategy": "capacityOptimized",
-            "TargetCapacity": 1,
-            "TerminateInstancesWithExpiration": True,
-            "LaunchSpecifications": [],
-            "Type": "request",
-            "LaunchTemplateConfigs": [
-                {
-                    "LaunchTemplateSpecification": {
-                        "LaunchTemplateId": "lt-0801fa586840fa707",
-                        "Version": "4"
-                    },
-                    "Overrides": [
-                        {
-                            "InstanceType": "c5d.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-aff487d5"
+    if size == 'big':
+        response = client.request_spot_fleet(
+            SpotFleetRequestConfig={
+                "IamFleetRole": "arn:aws:iam::772835535876:role/aws-ec2-spot-fleet-tagging-role",
+                "AllocationStrategy": "capacityOptimized",
+                "TargetCapacity": 1,
+                "TerminateInstancesWithExpiration": True,
+                "LaunchSpecifications": [],
+                "Type": "request",
+                "LaunchTemplateConfigs": [
+                    {
+                        "LaunchTemplateSpecification": {
+                            "LaunchTemplateId": "lt-0801fa586840fa707",
+                            "Version": "4"
                         },
-                        {
-                            "InstanceType": "c5d.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-6ec3c606"
+                        "Overrides": [
+                            {
+                                "InstanceType": "m5dn.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "m5d.metal",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "c5a.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "c5.metal",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "c5.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "m5.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5ad.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5a.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "c5d.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5d.metal",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "m5a.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5d.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5.metal",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "m5n.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5dn.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5n.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "c5d.metal",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "m5ad.24xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "m5.metal",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
+    else:
+        response = client.request_spot_fleet(
+            SpotFleetRequestConfig={
+                "IamFleetRole": "arn:aws:iam::772835535876:role/aws-ec2-spot-fleet-tagging-role",
+                "AllocationStrategy": "capacityOptimized",
+                "TargetCapacity": 1,
+                "TerminateInstancesWithExpiration": True,
+                "LaunchSpecifications": [],
+                "Type": "request",
+                "LaunchTemplateConfigs": [
+                    {
+                        "LaunchTemplateSpecification": {
+                            "LaunchTemplateId": "lt-0801fa586840fa707",
+                            "Version": "4"
                         },
-                        {
-                            "InstanceType": "c5d.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-49ae7405"
-                        },
-                        {
-                            "InstanceType": "m4.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-aff487d5"
-                        },
-                        {
-                            "InstanceType": "m4.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-6ec3c606"
-                        },
-                        {
-                            "InstanceType": "m4.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-49ae7405"
-                        },
-                        {
-                            "InstanceType": "c5n.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-aff487d5"
-                        },
-                        {
-                            "InstanceType": "c5n.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-6ec3c606"
-                        },
-                        {
-                            "InstanceType": "c5n.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-49ae7405"
-                        },
-                        {
-                            "InstanceType": "r3.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-aff487d5"
-                        },
-                        {
-                            "InstanceType": "r3.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-6ec3c606"
-                        },
-                        {
-                            "InstanceType": "r3.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-49ae7405"
-                        },
-                        {
-                            "InstanceType": "c4.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-aff487d5"
-                        },
-                        {
-                            "InstanceType": "c4.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-6ec3c606"
-                        },
-                        {
-                            "InstanceType": "c4.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-49ae7405"
-                        },
-                        {
-                            "InstanceType": "a1.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-aff487d5"
-                        },
-                        {
-                            "InstanceType": "a1.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-6ec3c606"
-                        },
-                        {
-                            "InstanceType": "a1.xlarge",
-                            "WeightedCapacity": 1,
-                            "SubnetId": "subnet-49ae7405"
-                        }
-                    ]
-                }
-            ]
-        }
-    )
+                        "Overrides": [
+                            {
+                                "InstanceType": "c5d.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "c5d.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "c5d.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "m4.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "m4.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "m4.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "c5n.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "c5n.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "c5n.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "r3.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "r3.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r3.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "c4.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "c4.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "c4.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "a1.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "a1.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "a1.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
     spot_fleet_request_id = response['SpotFleetRequestId']
     print('Fleet request id -', spot_fleet_request_id)
 
@@ -391,7 +513,7 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file):
         return True
 
 
-def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index):
+def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index, scraping_streaming_info=False):
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
     client = ssh_into_remote(public_dns, username, key_file)
@@ -404,14 +526,24 @@ def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index):
         interact.send('mkdir /home/' + username + '/scraped')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt)
 
-        interact.send('cd data_pipelines/scraping_utilities')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+        if not scraping_streaming_info:
+            interact.send('cd data_pipelines/scraping_utilities')
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
-        interact.send('sudo python3.6 scrape.py '+arg+' '+index)
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+            interact.send('sudo python3.6 scrape.py '+arg+' '+index)
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
-        interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+            interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+        else:
+            interact.send('cd data_pipelines/scraping_utilities/streaming_sources')
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
+
+            interact.send('sudo python3.6 streaming_sources_scrape.py')
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
+
+            interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
 
         client.close()
         return True

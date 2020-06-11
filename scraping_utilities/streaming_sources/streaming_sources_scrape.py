@@ -397,4 +397,4 @@ df_streaming_info = df_streaming_info[[
     'where_to_watch_united_states'
 ]]
 
-df_streaming_info.to_csv('~/streaming_info.csv', sep='^', index=False)
+df_streaming_info.to_csv('/home/ec2-user/scraped/streaming_info.csv', sep='^', index=False)
