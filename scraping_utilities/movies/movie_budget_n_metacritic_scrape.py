@@ -14,6 +14,7 @@ from utilities import get_session, should_go_ahead
 def movie_budget_n_metacritic_scrape(df_titles):
     titles = list(df_titles['titles'])
     from datetime import datetime # this import was not working somehow when it was above so brought it here
+    import re
 
     config = yaml.safe_load(open('./../config.yml'))
     data_folder = config['movies_data_folder']
@@ -40,7 +41,16 @@ def movie_budget_n_metacritic_scrape(df_titles):
                     title_poster = title_poster.split('@._V1_')[0] + '@._V1_.' + title_poster.split('.')[-1]
                 except:
                     title_poster = None
-                title_year = title_wrapper.find('a').text.replace('\xa0', ' ').strip().strip('\n')
+
+                try:
+                    title_year = title_wrapper.find('a').text.replace('\xa0', ' ').strip().strip('\n')
+                    year = re.search(r'\d{4}', title_year)
+                    if year:
+                        title_year = str(year.group(0))
+                    else:
+                        title_year = None
+                except:
+                    title_year = None
 
                 subtext = title_wrapper.find('div', class_='subtext')
                 try:
