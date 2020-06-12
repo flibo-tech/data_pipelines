@@ -806,6 +806,23 @@ def launch_spot_instance(size='big'):
     return spot_fleet_request_id, public_dns, private_ip
 
 
+def close_spot_fleet_request_and_instances(spot_fleet_request_id):
+    session = boto3.Session(
+        aws_access_key_id=config['s3']['aws_access_key_id'],
+        aws_secret_access_key=config['s3']['aws_secret_access_key'],
+        region_name=config['s3']['region_name']
+    )
+    client = session.client('ec2')
+
+    print('Cancelling fleet request & terminating instances...')
+    client.cancel_spot_fleet_requests(
+        SpotFleetRequestIds=[spot_fleet_request_id],
+        TerminateInstances=True
+    )
+
+    return True
+
+
 def install_requirements_on_remote(public_dns, private_ip, username, key_file, postgres=False):
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
@@ -993,10 +1010,8 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
         interact.send('psql -U postgres')
         interact.send('create database flibo;')
         interact.send('\c flibo')
-        interact.expect('flibo\=\#\s+')
 
         interact.send('create schema app;')
-        interact.expect('flibo\=\#\s+')
 
         ddls = """
                 CREATE TABLE app.awards_distribution (
@@ -1116,7 +1131,6 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                     );
                 """
         interact.send(ddls)
-        interact.expect('flibo\=\#\s+')
 
         print('\nDumping CSV data into table content_details...')
         query = """copy app.content_details
@@ -1125,7 +1139,6 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
             WITH DELIMITER AS '^'
             CSV HEADER;"""
         interact.send(query)
-        interact.expect('flibo\=\#\s+')
 
         print('\nDumping CSV data into table awards_distribution...')
         query = """copy app.awards_distribution
@@ -1134,7 +1147,6 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
             WITH DELIMITER AS '^'
             CSV HEADER;"""
         interact.send(query)
-        interact.expect('flibo\=\#\s+')
 
         print('\nDumping CSV data into table content_crew...')
         query = """copy app.content_crew
@@ -1143,7 +1155,8 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
             WITH DELIMITER AS '^'
             CSV HEADER;"""
         interact.send(query)
-        interact.expect('flibo\=\#\s+')
+
+        interact.send("SET work_mem = '25000MB';")
 
         print('\nCalculating crew table...')
         query = """CREATE TABLE app.content_crew_temp
@@ -1294,7 +1307,6 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                   ) t21
             on t18.person_id = t21.person_id;"""
         interact.send(query)
-        interact.expect('flibo\=\#\s+')
 
         print('\nCorrecting credit order...')
         query = """
@@ -1307,12 +1319,10 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                     where app.content_crew.content_crew_id = t1.content_crew_id;
                 """
         interact.send(query)
-        interact.expect('flibo\=\#\s+')
 
         print('\nDumping final crew table into csv...')
         query = """Copy (Select person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations From app.content_crew) To '/tmp/final_content_crew.csv' WITH CSV DELIMITER '^' HEADER;"""
         interact.send(query)
-        interact.expect('flibo\=\#\s+')
 
         print('Getting out of psql...')
         interact.send('\q')
