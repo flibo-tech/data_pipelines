@@ -735,42 +735,62 @@ def launch_spot_instance(size='big'):
                         },
                         "Overrides": [
                             {
-                                "InstanceType": "r6g.12xlarge",
+                                "InstanceType": "m5d.2xlarge",
                                 "WeightedCapacity": 1,
                                 "SubnetId": "subnet-6ec3c606"
                             },
                             {
-                                "InstanceType": "r5d.8xlarge",
+                                "InstanceType": "m5dn.2xlarge",
                                 "WeightedCapacity": 1,
                                 "SubnetId": "subnet-6ec3c606"
                             },
                             {
-                                "InstanceType": "r5.8xlarge",
+                                "InstanceType": "m5n.2xlarge",
                                 "WeightedCapacity": 1,
                                 "SubnetId": "subnet-6ec3c606"
                             },
                             {
-                                "InstanceType": "r5n.8xlarge",
+                                "InstanceType": "a1.metal",
                                 "WeightedCapacity": 1,
                                 "SubnetId": "subnet-6ec3c606"
                             },
                             {
-                                "InstanceType": "r5dn.8xlarge",
+                                "InstanceType": "a1.4xlarge",
                                 "WeightedCapacity": 1,
                                 "SubnetId": "subnet-6ec3c606"
                             },
                             {
-                                "InstanceType": "r5a.8xlarge",
+                                "InstanceType": "r5ad.xlarge",
                                 "WeightedCapacity": 1,
                                 "SubnetId": "subnet-6ec3c606"
                             },
                             {
-                                "InstanceType": "r4.8xlarge",
+                                "InstanceType": "r5d.xlarge",
                                 "WeightedCapacity": 1,
                                 "SubnetId": "subnet-6ec3c606"
                             },
                             {
-                                "InstanceType": "r6g.8xlarge",
+                                "InstanceType": "r5.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r4.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5n.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5a.xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5dn.xlarge",
                                 "WeightedCapacity": 1,
                                 "SubnetId": "subnet-6ec3c606"
                             }
@@ -986,7 +1006,7 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
 
     print('\nStarting work on remote...')
     client = ssh_into_remote(public_dns, username, key_file)
-    with SSHClientInteraction(client, timeout=2*60*60, display=True) as interact:
+    with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
         default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
         interact.expect(default_prompt)
 
@@ -1004,8 +1024,10 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
         interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@ec2-13-59-44-163.us-east-2.compute.amazonaws.com:/tmp/content_crew.csv /tmp/content_crew.csv')
         interact.expect(default_prompt)
 
-        print('\nCreating SQL db...')
+        interact.send('sudo chmod -R 777 /tmp/')
+        interact.expect(default_prompt)
 
+        # Creating SQL db...
         interact.send('sudo su - postgres')
         interact.send('psql -U postgres')
         interact.send('create database flibo;')
@@ -1132,33 +1154,39 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                 """
         interact.send(ddls)
 
-        print('\nDumping CSV data into table content_details...')
+        # Dumping CSV data into table content_details...
         query = """copy app.content_details
             (content_id, imdb_content_id, title, original_title, type, is_adult, in_production, release_year, end_year, episodes, seasons, runtime, genres, imdb_score, num_votes, scripting, summary_text, country, language, filming_location, production_house, budget, opening_weekend_usa, gross_usa, gross_worldwide, critic_review, user_review, award_wins, award_nominations, youtube_trailer_id, cover, poster, metacritic_score, tmdb_id, tmdb_popularity, tmdb_score, tomato_id, tomato_meter, tomato_rating, tomato_score, tomato_userrating_meter, tomato_userrating_rating, tomato_userrating_score, nudity, violence, profanity, drugs, intense_scenes, avg_age_limit, mpaa_age_limit, tags, similar_content, filtered_content, justwatch_rating, website, facebook, instagram, twitter, where_to_watch_australia,where_to_watch_brazil,where_to_watch_canada,where_to_watch_france,where_to_watch_germany,where_to_watch_india,where_to_watch_indonesia,where_to_watch_italy,where_to_watch_japan,where_to_watch_mexico,where_to_watch_philippines,where_to_watch_russia,where_to_watch_spain,where_to_watch_united_kingdom,where_to_watch_united_states,main_artists,url_title)
             FROM '/tmp/db_backup_content_details.csv'
             WITH DELIMITER AS '^'
-            CSV HEADER;"""
+            CSV HEADER;
+            
+            Copy (Select 1 as count) To '/tmp/db_backup_content_details.csv' WITH CSV DELIMITER '^' HEADER;"""
         interact.send(query)
 
-        print('\nDumping CSV data into table awards_distribution...')
+        # Dumping CSV data into table awards_distribution...
         query = """copy app.awards_distribution
             (award_distribution_id, award_id, event_year, content_id, person_id, nomination_notes, won)
             FROM '/tmp/db_backup_awards_distribution.csv'
             WITH DELIMITER AS '^'
-            CSV HEADER;"""
+            CSV HEADER;
+            
+            Copy (Select 1 as count) To '/tmp/db_backup_awards_distribution.csv' WITH CSV DELIMITER '^' HEADER;"""
         interact.send(query)
 
-        print('\nDumping CSV data into table content_crew...')
+        # Dumping CSV data into table content_crew...
         query = """copy app.content_crew
             (content_crew_id, person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations)
             FROM '/tmp/db_backup_content_crew.csv'
             WITH DELIMITER AS '^'
-            CSV HEADER;"""
+            CSV HEADER;
+            
+            Copy (Select 1 as count) To '/tmp/db_backup_content_crew.csv' WITH CSV DELIMITER '^' HEADER;"""
         interact.send(query)
 
         interact.send("SET work_mem = '25000MB';")
 
-        print('\nCalculating crew table...')
+        # Calculating crew table...
         query = """CREATE TABLE app.content_crew_temp
             (
             content_crew_id serial,
@@ -1208,10 +1236,10 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
             
             
             insert into app.content_crew
-            (content_crew_id,person_id,content_id,credit_as,credit_category,credit_order,common_tags,cum_experience_content,
+            (person_id,content_id,credit_as,credit_category,credit_order,common_tags,cum_experience_content,
              cum_experience_years,credit_episodes,credit_start_year,credit_end_year,content_done_in_the_catg,
              years_in_the_catg,num_votes,imdb_score,metacritic_score,tmdb_score,tomato_meter,nominations,wins_to_nominations)
-            select 1, t18.*, nominations, wins_to_nominations
+            select t18.*, nominations, wins_to_nominations
             from (
                   select t13.*, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter
                   from (
@@ -1308,7 +1336,8 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
             on t18.person_id = t21.person_id;"""
         interact.send(query)
 
-        print('\nCorrecting credit order...')
+        interact.send("SET work_mem = '25000MB';")
+
         query = """
                     update app.content_crew
                     set credit_order = t1.new_rank
@@ -1320,11 +1349,11 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                 """
         interact.send(query)
 
-        print('\nDumping final crew table into csv...')
+        # Dumping final crew table into csv...
         query = """Copy (Select person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations From app.content_crew) To '/tmp/final_content_crew.csv' WITH CSV DELIMITER '^' HEADER;"""
         interact.send(query)
 
-        print('Getting out of psql...')
+        # 'Getting out of psql...
         interact.send('\q')
         interact.send('exit')
         interact.expect(default_prompt)
@@ -1332,8 +1361,11 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
         interact.send('sudo chmod -R 777 /tmp/')
         interact.expect(default_prompt)
 
-        print('\n Uploading file final_content_crew.csv to prod server...')
-        interact.send('scp -i /tmp/key.pem /tmp/final_content_crew.csv ec2-user@ec2-13-59-44-163.us-east-2.compute.amazonaws.com:/tmp/')
+        interact.send('sudo chmod 600 /tmp/key.pem')
+        interact.expect(default_prompt)
+
+        print('\nUploading file final_content_crew.csv to prod server...')
+        interact.send('scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /tmp/final_content_crew.csv ec2-user@ec2-13-59-44-163.us-east-2.compute.amazonaws.com:/tmp/')
         interact.expect(default_prompt)
 
         client.close()
@@ -1646,226 +1678,6 @@ def dump_content_crew(engine):
     con = engine.connect()
     trans = con.begin()
     sql = """
-            SET work_mem = '1000MB';
-
-
-            Copy (Select * From """ + config['sql']['schema'] + """.content_crew) To '/tmp/db_backup_content_crew.csv' WITH CSV DELIMITER '^' HEADER;
-
-
-            create table """ + config['sql']['schema'] + """.content_crew_copy (like """ + config['sql']['schema'] + """.content_crew);
-
-
-            copy """ + config['sql']['schema'] + """.content_crew_copy
-            (content_crew_id, person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations)
-            FROM '/tmp/db_backup_content_crew.csv'
-            WITH DELIMITER AS '^'
-            CSV HEADER;
-
-
-
-
-
-            Copy (Select * From """ + config['sql']['schema'] + """.content_details) To '/tmp/db_backup_content_details.csv' WITH CSV DELIMITER '^' HEADER;
-
-
-            create table """ + config['sql']['schema'] + """.content_details_copy (like """ + config['sql']['schema'] + """.content_details);
-
-
-            copy """ + config['sql']['schema'] + """.content_details_copy
-            (content_id, imdb_content_id, title, original_title, type, is_adult, in_production, release_year, end_year, episodes, seasons, runtime, genres, imdb_score, num_votes, scripting, summary_text, country, language, filming_location, production_house, budget, opening_weekend_usa, gross_usa, gross_worldwide, critic_review, user_review, award_wins, award_nominations, youtube_trailer_id, cover, poster, metacritic_score, tmdb_id, tmdb_popularity, tmdb_score, tomato_id, tomato_meter, tomato_rating, tomato_score, tomato_userrating_meter, tomato_userrating_rating, tomato_userrating_score, nudity, violence, profanity, drugs, intense_scenes, avg_age_limit, mpaa_age_limit, tags, similar_content, filtered_content, justwatch_rating, website, facebook, instagram, twitter, where_to_watch_australia,where_to_watch_brazil,where_to_watch_canada,where_to_watch_france,where_to_watch_germany,where_to_watch_india,where_to_watch_indonesia,where_to_watch_italy,where_to_watch_japan,where_to_watch_mexico,where_to_watch_philippines,where_to_watch_russia,where_to_watch_spain,where_to_watch_united_kingdom,where_to_watch_united_states,main_artists,url_title)
-            FROM '/tmp/db_backup_content_details.csv'
-            WITH DELIMITER AS '^'
-            CSV HEADER;
-
-
-
-
-            Copy (Select * From """ + config['sql']['schema'] + """.awards_distribution) To '/tmp/db_backup_awards_distribution.csv' WITH CSV DELIMITER '^' HEADER;
-
-
-            create table """ + config['sql']['schema'] + """.awards_distribution_copy (like """ + config['sql'][
-        'schema'] + """.awards_distribution);
-
-
-            copy """ + config['sql']['schema'] + """.awards_distribution_copy
-            (award_distribution_id, award_id, event_year, content_id, person_id, nomination_notes, won)
-            FROM '/tmp/db_backup_awards_distribution.csv'
-            WITH DELIMITER AS '^'
-            CSV HEADER;
-
-
-
-
-
-
-            CREATE TABLE """ + config['sql']['schema'] + """.content_crew_temp
-            (
-            content_crew_id serial,
-            person_id integer NULL,
-            content_id integer NULL,
-            credit_as varchar NULL,
-            credit_category varchar NULL,
-            credit_order int4 NULL,
-            credit_episodes int4 NULL,
-            credit_start_year int4 NULL,
-            credit_end_year int4 NULL,
-            common_tags varchar[] NULL,
-            CONSTRAINT content_crew_temp_pkey PRIMARY KEY (content_crew_id)
-            );
-
-
-            copy """ + config['sql']['schema'] + """.content_crew_temp
-            (person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year)
-            FROM '/tmp/content_crew.csv'
-            WITH DELIMITER AS '^'
-            CSV HEADER;
-
-
-            insert into """ + config['sql']['schema'] + """.content_crew_temp
-            (person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year)
-            select person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year
-            from """ + config['sql']['schema'] + """.content_crew_copy
-            except
-            select person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year
-            from """ + config['sql']['schema'] + """.content_crew_temp;
-
-
-            truncate table """ + config['sql']['schema'] + """.content_crew_copy;
-
-
-            update """ + config['sql']['schema'] + """.content_crew_temp
-            set credit_category = regexp_replace(credit_category, '^Series ', '')
-            where cast(content_id as varchar) like '2%%';
-
-
-            update """ + config['sql']['schema'] + """.content_crew_temp
-            set credit_category = case when credit_category = 'Cast complete, awaiting verification' then 'Cast'
-                                       when credit_category = 'Cast verified as complete' then 'Cast'
-                                       when credit_category = 'Writing Credits (WGA)' then 'Writing Credits'
-                                       else credit_category
-                                  end;
-
-
-            insert into """ + config['sql']['schema'] + """.content_crew_copy
-            (content_crew_id,person_id,content_id,credit_as,credit_category,credit_order,common_tags,cum_experience_content,
-             cum_experience_years,credit_episodes,credit_start_year,credit_end_year,content_done_in_the_catg,
-             years_in_the_catg,num_votes,imdb_score,metacritic_score,tmdb_score,tomato_meter,nominations,wins_to_nominations)
-            select 1, t18.*, nominations, wins_to_nominations
-            from (
-                  select t13.*, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter
-                  from (
-                        select t11.person_id, t11.content_id, t11.credit_as, t11.credit_category, t11.credit_order, t11.common_tags,
-                               experience_movies, experience_years, t11.credit_episodes, t11.credit_start_year, t11.credit_end_year
-                        from (
-                              select t9.person_id, t9.content_id, credit_as, credit_category, credit_order,
-                                     credit_episodes, credit_start_year, credit_end_year, common_tags, year
-                              from """ + config['sql']['schema'] + """.content_crew_temp t9
-                              left join (
-                                        select content_id, release_year as year
-                                        from """ + config['sql']['schema'] + """.content_details_copy
-                                        ) t10
-                              on t9.content_id = t10.content_id
-                              ) t11
-                        left join
-                             (
-                              select year, person_id, credit_category, sum(count(*)) over (PARTITION BY person_id, credit_category order by person_id, credit_category, year) experience_movies, (year-min(career_start)) as experience_years
-                              from (
-                                    select t3.content_id, t3.person_id, t3.credit_category, year, career_start
-                                    from (
-                                          select person_id, t1.content_id, credit_category, year
-                                          from """ + config['sql']['schema'] + """.content_crew_temp t1
-                                          left join (
-                                                    select content_id, release_year as year
-                                                    from """ + config['sql']['schema'] + """.content_details_copy
-                                                    ) t2
-                                          on t1.content_id = t2.content_id
-                                          ) t3
-                                    left join
-                                          (
-                                          select person_id, credit_category, min(year) career_start
-                                          from (
-                                                select *
-                                                from """ + config['sql']['schema'] + """.content_crew_temp t4
-                                                left join (
-                                                          select content_id, release_year as year
-                                                          from """ + config['sql']['schema'] + """.content_details_copy
-                                                          ) t5
-                                                on t4.content_id = t5.content_id
-                                                ) t6
-                                          group by person_id, credit_category
-                                          ) t7
-                                    on t3.person_id = t7.person_id
-                                    and t3.credit_category = t7.credit_category
-                                    ) t8
-                              group by person_id, credit_category, year
-                              order by person_id, credit_category, year
-                              ) t12
-                        on t11.year = t12.year
-                        and t11.person_id = t12.person_id
-                        and t11.credit_category = t12.credit_category
-                        ) t13
-                  left join
-                        (
-                        select person_id, credit_category, count(person_id) as content_done_in_the_catg,
-                               max(end_year)-min(release_year) as years_in_the_catg,
-                               avg(num_votes) as num_votes, avg(imdb_score) as imdb_score,
-                               avg(metacritic_score) as metacritic_score, avg(tmdb_score) as tmdb_score,
-                               avg(tomato_meter) as tomato_meter
-                        from (
-                              select person_id,credit_category,imdb_score,num_votes,metacritic_score,tmdb_score,
-                                     tomato_meter,release_year,case when end_year is not null then end_year
-                                                                    when in_production is true and type='tv' then date_part('year', CURRENT_DATE)
-                                                                    else release_year end as end_year
-                              from """ + config['sql']['schema'] + """.content_crew_temp t14
-                              left join """ + config['sql']['schema'] + """.content_details_copy t15
-                              on t14.content_id = t15.content_id
-                              ) t16
-                        group by person_id, credit_category
-                        ) t17
-                  on t13.person_id = t17.person_id
-                  and t13.credit_category = t17.credit_category
-                  ) t18
-            left join
-                  (
-                  select t19.person_id, nominations, cast(coalesce(wins, 0) as float)/cast(nominations as float) as wins_to_nominations
-                  from (
-                        select person_id, count(*) as nominations
-                        from """ + config['sql']['schema'] + """.awards_distribution_copy
-                        where person_id is not null
-                        group by person_id
-                        ) t19
-                  left join
-                       (
-                        select person_id, count(*) as wins
-                        from """ + config['sql']['schema'] + """.awards_distribution_copy
-                        where person_id is not null
-                        and won is true
-                        group by person_id
-                        ) t20
-                  on t19.person_id = t20.person_id
-                  ) t21
-            on t18.person_id = t21.person_id;
-
-
-            truncate table """ + config['sql']['schema'] + """.content_crew_temp;
-            drop table """ + config['sql']['schema'] + """.content_crew_temp;
-
-            truncate table """ + config['sql']['schema'] + """.awards_distribution_copy;
-            drop table """ + config['sql']['schema'] + """.awards_distribution_copy;
-
-            truncate table """ + config['sql']['schema'] + """.content_details_copy;
-            drop table """ + config['sql']['schema'] + """.content_details_copy;
-
-
-            Copy (Select person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations From """ + \
-          config['sql']['schema'] + """.content_crew_copy) To '/tmp/db_backup_content_crew_upload.csv' WITH CSV DELIMITER '^' HEADER;
-
-
-            truncate table """ + config['sql']['schema'] + """.content_crew_copy;
-            drop table """ + config['sql']['schema'] + """.content_crew_copy;
-
-
-
             SELECT setval('""" + config['sql'][
               'schema'] + """.content_crew_content_crew_id_seq', (select max(content_crew_id) from """ + config['sql'][
               'schema'] + """.content_crew), true);
@@ -1875,7 +1687,7 @@ def dump_content_crew(engine):
 
             copy """ + config['sql']['schema'] + """.content_crew
             (person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations)
-            FROM '/tmp/db_backup_content_crew_upload.csv'
+            FROM '/tmp/final_content_crew.csv'
             WITH DELIMITER AS '^'
             CSV HEADER;
 
@@ -1914,9 +1726,6 @@ def dump_content_crew(engine):
                     GROUP BY content_id
                  ) t5
             where """ + config['sql']['schema'] + """.content_details.content_id = t5.content_id;
-
-
-            RESET work_mem;
           """
     con.execute(sql)
     trans.commit()
