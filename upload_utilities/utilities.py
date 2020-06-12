@@ -1350,7 +1350,7 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
         interact.send(query)
 
         # Dumping final crew table into csv...
-        query = """Copy (Select person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations From app.content_crew) To '/tmp/final_content_crew.csv' WITH CSV DELIMITER '^' HEADER;"""
+        query = """\copy (Select person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations From app.content_crew) To '/tmp/final_content_crew.csv' WITH CSV DELIMITER '^' HEADER;"""
         interact.send(query)
 
         # 'Getting out of psql...
