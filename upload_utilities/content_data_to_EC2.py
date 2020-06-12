@@ -1016,7 +1016,7 @@ def apply_calculate_similar(df):
     return df
 
 
-def similar_contents():
+def calculate_similar_contents():
     try:
         df_contents_all_features = pd.read_csv('/home/ec2-user/calculated/full_data.csv')
     except:

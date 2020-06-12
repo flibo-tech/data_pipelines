@@ -111,6 +111,10 @@ upload_data:
   scripts: [] # 'movies_details', 'tv_series_details', 'artists', 'content_crew', 'content_tags', 'awards_master', 'content_certificates', 'awards_distribution', 'live_search', 'upload_streaming_info'
   # Remember to remove or change names of files - artists_to_contents.csv & tags_to_contents.csv in upload_resources folder while running live_search for new data
 
+dump_into_database:
+  calculate_crew_table: False
+  tables: [] # 'movies', 'tv_series', 'artists', 'content_tags', 'awards_master', 'awards_distribution', 'content_certificates', 'content_crew' (upload crew Only After all other uploads), 'live_search', 'similar_contents', 'streaming_info'
+
 # similar movies algo
 algo:
   weight_power: 0.65
