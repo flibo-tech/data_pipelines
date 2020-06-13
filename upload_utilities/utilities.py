@@ -1213,11 +1213,15 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
 
 
                 truncate table app.content_crew;
-
-
+                
+                
+                update app.content_crew_temp
+                set credit_category = trim(credit_category);
+                
+                
                 update app.content_crew_temp
                 set credit_category = regexp_replace(credit_category, '^Series ', '')
-                where cast(content_id as varchar) like '2%%';
+                where cast(content_id as varchar) like '2%';
 
 
                 update app.content_crew_temp
