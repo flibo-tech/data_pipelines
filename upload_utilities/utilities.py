@@ -15,6 +15,7 @@ import boto3
 import time
 import paramiko
 from paramiko_expect import SSHClientInteraction
+import re
 
 
 config = yaml.safe_load(open('./../config.yml'))
@@ -990,7 +991,9 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
         con.execute(script)
         print('\n')
 
-    trans.commit()
+    query = 'select count(*) from app.content_crew;'
+    current_crew_count = con.execute(query).first()[0]
+
     con.close()
     print('Dumping into CSVs finished.')
 
@@ -1032,7 +1035,7 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
         interact.send('\c flibo')
         interact.expect('flibo\=\#\s+')
 
-        queries = """
+        query = """
                 create schema app;
 
                 CREATE TABLE app.awards_distribution (
@@ -1325,22 +1328,53 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                       ) t21
                 on t18.person_id = t21.person_id;
 
-                SET work_mem = '25000MB';
-
-                update app.content_crew
-                set credit_order = t1.new_rank
-                from (
-                        select content_crew_id, rank() over (PARTITION BY content_id, credit_category order by credit_order asc) as new_rank
-                        from app.content_crew
-                    ) t1
-                where app.content_crew.content_crew_id = t1.content_crew_id;
-
-                \copy (Select person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations From app.content_crew) To '/tmp/final_content_crew.csv' WITH CSV DELIMITER '^' HEADER;
-
                 \q
                 """
-        interact.send(queries)
+        interact.send(query)
+        try:
+            interact.expect('\-bash\-4\.2\$\s+', timeout=15*60)
+        except:
+            print('Waiting for query to end (in next step)...')
+
+        client.close()
+
+    client = ssh_into_remote(public_dns, username, key_file)
+    with SSHClientInteraction(client, timeout=60 * 60, display=True) as interact:
+        default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+        interact.expect(default_prompt)
+
+        interact.send('sudo su - postgres')
         interact.expect('\-bash\-4\.2\$\s+')
+
+        interact.send('psql -U postgres')
+        interact.expect('postgres\=\#\s+')
+
+        interact.send('\c flibo')
+        interact.expect('flibo\=\#\s+')
+
+        new_crew_count = 0
+        while new_crew_count < current_crew_count:
+            print('Sleeping for 2 minutes...')
+            time.sleep(2*60)
+
+            interact.send('select count(*) from app.content_crew;')
+            interact.expect('flibo\=\#\s+')
+            output = interact.current_output_clean
+
+            match = re.findall(r'\d{8}', output)
+            if match:
+                new_crew_count = int(match[0])
+            print('New count -', new_crew_count)
+
+        query = """
+                SET work_mem = '25000MB';
+
+                \copy (Select person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations From app.content_crew) To '/tmp/final_content_crew.csv' WITH CSV DELIMITER '^' HEADER;
+                
+                \q
+                """
+        interact.send(query)
+        interact.expect('\-bash\-4\.2\$\s+', timeout=10*60)
 
         interact.send('exit')
         interact.expect(default_prompt)
