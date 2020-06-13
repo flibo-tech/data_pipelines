@@ -856,12 +856,6 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file, p
         interact.expect(default_prompt)
 
         if postgres:
-            interact.send('sudo yum update')
-            interact.expect('Is this ok \[y/d/N\]:\s+')
-            interact.send('y')
-            interact.expect(default_prompt)
-
-
             interact.send('sudo yum install postgresql postgresql-server postgresql-devel postgresql-contrib postgresql-docs')
             interact.expect('Is this ok \[y/d/N\]:\s+')
             interact.send('y')
@@ -1029,13 +1023,18 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
 
         # Creating SQL db...
         interact.send('sudo su - postgres')
+        interact.expect('\-bash\-4\.2\$\s+')
+
         interact.send('psql -U postgres')
+        interact.expect('postgres\=\#\s+')
+
         interact.send('create database flibo;')
         interact.send('\c flibo')
+        interact.expect('flibo\=\#\s+')
 
-        interact.send('create schema app;')
+        queries = """
+                create schema app;
 
-        ddls = """
                 CREATE TABLE app.awards_distribution (
                     award_distribution_id serial NOT NULL,
                     award_id int4 NULL,
@@ -1151,210 +1150,198 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                     url_title varchar NULL,
                     CONSTRAINT content_details_pkey PRIMARY KEY (content_id)
                     );
+
+                copy app.content_details
+                (content_id, imdb_content_id, title, original_title, type, is_adult, in_production, release_year, end_year, episodes, seasons, runtime, genres, imdb_score, num_votes, scripting, summary_text, country, language, filming_location, production_house, budget, opening_weekend_usa, gross_usa, gross_worldwide, critic_review, user_review, award_wins, award_nominations, youtube_trailer_id, cover, poster, metacritic_score, tmdb_id, tmdb_popularity, tmdb_score, tomato_id, tomato_meter, tomato_rating, tomato_score, tomato_userrating_meter, tomato_userrating_rating, tomato_userrating_score, nudity, violence, profanity, drugs, intense_scenes, avg_age_limit, mpaa_age_limit, tags, similar_content, filtered_content, justwatch_rating, website, facebook, instagram, twitter, where_to_watch_australia,where_to_watch_brazil,where_to_watch_canada,where_to_watch_france,where_to_watch_germany,where_to_watch_india,where_to_watch_indonesia,where_to_watch_italy,where_to_watch_japan,where_to_watch_mexico,where_to_watch_philippines,where_to_watch_russia,where_to_watch_spain,where_to_watch_united_kingdom,where_to_watch_united_states,main_artists,url_title)
+                FROM '/tmp/db_backup_content_details.csv'
+                WITH DELIMITER AS '^'
+                CSV HEADER;
+
+                Copy (Select 1 as count) To '/tmp/db_backup_content_details.csv' WITH CSV DELIMITER '^' HEADER;
+
+                copy app.awards_distribution
+                (award_distribution_id, award_id, event_year, content_id, person_id, nomination_notes, won)
+                FROM '/tmp/db_backup_awards_distribution.csv'
+                WITH DELIMITER AS '^'
+                CSV HEADER;
+
+                Copy (Select 1 as count) To '/tmp/db_backup_awards_distribution.csv' WITH CSV DELIMITER '^' HEADER;
+
+                copy app.content_crew
+                (content_crew_id, person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations)
+                FROM '/tmp/db_backup_content_crew.csv'
+                WITH DELIMITER AS '^'
+                CSV HEADER;
+
+                Copy (Select 1 as count) To '/tmp/db_backup_content_crew.csv' WITH CSV DELIMITER '^' HEADER;
+
+                SET work_mem = '25000MB';
+
+                CREATE TABLE app.content_crew_temp
+                (
+                content_crew_id serial,
+                person_id integer NULL,
+                content_id integer NULL,
+                credit_as varchar NULL,
+                credit_category varchar NULL,
+                credit_order int4 NULL,
+                credit_episodes int4 NULL,
+                credit_start_year int4 NULL,
+                credit_end_year int4 NULL,
+                common_tags varchar[] NULL,
+                CONSTRAINT content_crew_temp_pkey PRIMARY KEY (content_crew_id)
+                );
+
+
+                copy app.content_crew_temp
+                (person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year)
+                FROM '/tmp/content_crew.csv'
+                WITH DELIMITER AS '^'
+                CSV HEADER;
+
+
+                insert into app.content_crew_temp
+                (person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year)
+                select person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year
+                from app.content_crew
+                except
+                select person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year
+                from app.content_crew_temp;
+
+
+                truncate table app.content_crew;
+
+
+                update app.content_crew_temp
+                set credit_category = regexp_replace(credit_category, '^Series ', '')
+                where cast(content_id as varchar) like '2%%';
+
+
+                update app.content_crew_temp
+                set credit_category = case when credit_category = 'Cast complete, awaiting verification' then 'Cast'
+                                           when credit_category = 'Cast verified as complete' then 'Cast'
+                                           when credit_category = 'Writing Credits (WGA)' then 'Writing Credits'
+                                           else credit_category
+                                      end;
+
+
+                insert into app.content_crew
+                (person_id,content_id,credit_as,credit_category,credit_order,common_tags,cum_experience_content,
+                 cum_experience_years,credit_episodes,credit_start_year,credit_end_year,content_done_in_the_catg,
+                 years_in_the_catg,num_votes,imdb_score,metacritic_score,tmdb_score,tomato_meter,nominations,wins_to_nominations)
+                select t18.*, nominations, wins_to_nominations
+                from (
+                      select t13.*, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter
+                      from (
+                            select t11.person_id, t11.content_id, t11.credit_as, t11.credit_category, t11.credit_order, t11.common_tags,
+                                   experience_movies, experience_years, t11.credit_episodes, t11.credit_start_year, t11.credit_end_year
+                            from (
+                                  select t9.person_id, t9.content_id, credit_as, credit_category, credit_order,
+                                         credit_episodes, credit_start_year, credit_end_year, common_tags, year
+                                  from app.content_crew_temp t9
+                                  left join (
+                                            select content_id, release_year as year
+                                            from app.content_details
+                                            ) t10
+                                  on t9.content_id = t10.content_id
+                                  ) t11
+                            left join
+                                 (
+                                  select year, person_id, credit_category, sum(count(*)) over (PARTITION BY person_id, credit_category order by person_id, credit_category, year) experience_movies, (year-min(career_start)) as experience_years
+                                  from (
+                                        select t3.content_id, t3.person_id, t3.credit_category, year, career_start
+                                        from (
+                                              select person_id, t1.content_id, credit_category, year
+                                              from app.content_crew_temp t1
+                                              left join (
+                                                        select content_id, release_year as year
+                                                        from app.content_details
+                                                        ) t2
+                                              on t1.content_id = t2.content_id
+                                              ) t3
+                                        left join
+                                              (
+                                              select person_id, credit_category, min(year) career_start
+                                              from (
+                                                    select *
+                                                    from app.content_crew_temp t4
+                                                    left join (
+                                                              select content_id, release_year as year
+                                                              from app.content_details
+                                                              ) t5
+                                                    on t4.content_id = t5.content_id
+                                                    ) t6
+                                              group by person_id, credit_category
+                                              ) t7
+                                        on t3.person_id = t7.person_id
+                                        and t3.credit_category = t7.credit_category
+                                        ) t8
+                                  group by person_id, credit_category, year
+                                  order by person_id, credit_category, year
+                                  ) t12
+                            on t11.year = t12.year
+                            and t11.person_id = t12.person_id
+                            and t11.credit_category = t12.credit_category
+                            ) t13
+                      left join
+                            (
+                            select person_id, credit_category, count(person_id) as content_done_in_the_catg,
+                                   max(end_year)-min(release_year) as years_in_the_catg,
+                                   avg(num_votes) as num_votes, avg(imdb_score) as imdb_score,
+                                   avg(metacritic_score) as metacritic_score, avg(tmdb_score) as tmdb_score,
+                                   avg(tomato_meter) as tomato_meter
+                            from (
+                                  select person_id,credit_category,imdb_score,num_votes,metacritic_score,tmdb_score,
+                                         tomato_meter,release_year,case when end_year is not null then end_year
+                                                                        when in_production is true and type='tv' then date_part('year', CURRENT_DATE)
+                                                                        else release_year end as end_year
+                                  from app.content_crew_temp t14
+                                  left join app.content_details t15
+                                  on t14.content_id = t15.content_id
+                                  ) t16
+                            group by person_id, credit_category
+                            ) t17
+                      on t13.person_id = t17.person_id
+                      and t13.credit_category = t17.credit_category
+                      ) t18
+                left join
+                      (
+                      select t19.person_id, nominations, cast(coalesce(wins, 0) as float)/cast(nominations as float) as wins_to_nominations
+                      from (
+                            select person_id, count(*) as nominations
+                            from app.awards_distribution
+                            where person_id is not null
+                            group by person_id
+                            ) t19
+                      left join
+                           (
+                            select person_id, count(*) as wins
+                            from app.awards_distribution
+                            where person_id is not null
+                            and won is true
+                            group by person_id
+                            ) t20
+                      on t19.person_id = t20.person_id
+                      ) t21
+                on t18.person_id = t21.person_id;
+
+                SET work_mem = '25000MB';
+
+                update app.content_crew
+                set credit_order = t1.new_rank
+                from (
+                        select content_crew_id, rank() over (PARTITION BY content_id, credit_category order by credit_order asc) as new_rank
+                        from app.content_crew
+                    ) t1
+                where app.content_crew.content_crew_id = t1.content_crew_id;
+
+                \copy (Select person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations From app.content_crew) To '/tmp/final_content_crew.csv' WITH CSV DELIMITER '^' HEADER;
+
+                \q
                 """
-        interact.send(ddls)
+        interact.send(queries)
+        interact.expect('\-bash\-4\.2\$\s+')
 
-        # Dumping CSV data into table content_details...
-        query = """copy app.content_details
-            (content_id, imdb_content_id, title, original_title, type, is_adult, in_production, release_year, end_year, episodes, seasons, runtime, genres, imdb_score, num_votes, scripting, summary_text, country, language, filming_location, production_house, budget, opening_weekend_usa, gross_usa, gross_worldwide, critic_review, user_review, award_wins, award_nominations, youtube_trailer_id, cover, poster, metacritic_score, tmdb_id, tmdb_popularity, tmdb_score, tomato_id, tomato_meter, tomato_rating, tomato_score, tomato_userrating_meter, tomato_userrating_rating, tomato_userrating_score, nudity, violence, profanity, drugs, intense_scenes, avg_age_limit, mpaa_age_limit, tags, similar_content, filtered_content, justwatch_rating, website, facebook, instagram, twitter, where_to_watch_australia,where_to_watch_brazil,where_to_watch_canada,where_to_watch_france,where_to_watch_germany,where_to_watch_india,where_to_watch_indonesia,where_to_watch_italy,where_to_watch_japan,where_to_watch_mexico,where_to_watch_philippines,where_to_watch_russia,where_to_watch_spain,where_to_watch_united_kingdom,where_to_watch_united_states,main_artists,url_title)
-            FROM '/tmp/db_backup_content_details.csv'
-            WITH DELIMITER AS '^'
-            CSV HEADER;
-            
-            Copy (Select 1 as count) To '/tmp/db_backup_content_details.csv' WITH CSV DELIMITER '^' HEADER;"""
-        interact.send(query)
-
-        # Dumping CSV data into table awards_distribution...
-        query = """copy app.awards_distribution
-            (award_distribution_id, award_id, event_year, content_id, person_id, nomination_notes, won)
-            FROM '/tmp/db_backup_awards_distribution.csv'
-            WITH DELIMITER AS '^'
-            CSV HEADER;
-            
-            Copy (Select 1 as count) To '/tmp/db_backup_awards_distribution.csv' WITH CSV DELIMITER '^' HEADER;"""
-        interact.send(query)
-
-        # Dumping CSV data into table content_crew...
-        query = """copy app.content_crew
-            (content_crew_id, person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations)
-            FROM '/tmp/db_backup_content_crew.csv'
-            WITH DELIMITER AS '^'
-            CSV HEADER;
-            
-            Copy (Select 1 as count) To '/tmp/db_backup_content_crew.csv' WITH CSV DELIMITER '^' HEADER;"""
-        interact.send(query)
-
-        interact.send("SET work_mem = '25000MB';")
-
-        # Calculating crew table...
-        query = """CREATE TABLE app.content_crew_temp
-            (
-            content_crew_id serial,
-            person_id integer NULL,
-            content_id integer NULL,
-            credit_as varchar NULL,
-            credit_category varchar NULL,
-            credit_order int4 NULL,
-            credit_episodes int4 NULL,
-            credit_start_year int4 NULL,
-            credit_end_year int4 NULL,
-            common_tags varchar[] NULL,
-            CONSTRAINT content_crew_temp_pkey PRIMARY KEY (content_crew_id)
-            );
-              
-              
-            copy app.content_crew_temp
-            (person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year)
-            FROM '/tmp/content_crew.csv'
-            WITH DELIMITER AS '^'
-            CSV HEADER;
-            
-            
-            insert into app.content_crew_temp
-            (person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year)
-            select person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year
-            from app.content_crew
-            except
-            select person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year
-            from app.content_crew_temp;
-            
-            
-            truncate table app.content_crew;
-            
-            
-            update app.content_crew_temp
-            set credit_category = regexp_replace(credit_category, '^Series ', '')
-            where cast(content_id as varchar) like '2%%';
-            
-            
-            update app.content_crew_temp
-            set credit_category = case when credit_category = 'Cast complete, awaiting verification' then 'Cast'
-                                       when credit_category = 'Cast verified as complete' then 'Cast'
-                                       when credit_category = 'Writing Credits (WGA)' then 'Writing Credits'
-                                       else credit_category
-                                  end;
-            
-            
-            insert into app.content_crew
-            (person_id,content_id,credit_as,credit_category,credit_order,common_tags,cum_experience_content,
-             cum_experience_years,credit_episodes,credit_start_year,credit_end_year,content_done_in_the_catg,
-             years_in_the_catg,num_votes,imdb_score,metacritic_score,tmdb_score,tomato_meter,nominations,wins_to_nominations)
-            select t18.*, nominations, wins_to_nominations
-            from (
-                  select t13.*, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter
-                  from (
-                        select t11.person_id, t11.content_id, t11.credit_as, t11.credit_category, t11.credit_order, t11.common_tags,
-                               experience_movies, experience_years, t11.credit_episodes, t11.credit_start_year, t11.credit_end_year
-                        from (
-                              select t9.person_id, t9.content_id, credit_as, credit_category, credit_order,
-                                     credit_episodes, credit_start_year, credit_end_year, common_tags, year
-                              from app.content_crew_temp t9
-                              left join (
-                                        select content_id, release_year as year
-                                        from app.content_details
-                                        ) t10
-                              on t9.content_id = t10.content_id
-                              ) t11
-                        left join
-                             (
-                              select year, person_id, credit_category, sum(count(*)) over (PARTITION BY person_id, credit_category order by person_id, credit_category, year) experience_movies, (year-min(career_start)) as experience_years
-                              from (
-                                    select t3.content_id, t3.person_id, t3.credit_category, year, career_start
-                                    from (
-                                          select person_id, t1.content_id, credit_category, year
-                                          from app.content_crew_temp t1
-                                          left join (
-                                                    select content_id, release_year as year
-                                                    from app.content_details
-                                                    ) t2
-                                          on t1.content_id = t2.content_id
-                                          ) t3
-                                    left join
-                                          (
-                                          select person_id, credit_category, min(year) career_start
-                                          from (
-                                                select *
-                                                from app.content_crew_temp t4
-                                                left join (
-                                                          select content_id, release_year as year
-                                                          from app.content_details
-                                                          ) t5
-                                                on t4.content_id = t5.content_id
-                                                ) t6
-                                          group by person_id, credit_category
-                                          ) t7
-                                    on t3.person_id = t7.person_id
-                                    and t3.credit_category = t7.credit_category
-                                    ) t8
-                              group by person_id, credit_category, year
-                              order by person_id, credit_category, year
-                              ) t12
-                        on t11.year = t12.year
-                        and t11.person_id = t12.person_id
-                        and t11.credit_category = t12.credit_category
-                        ) t13
-                  left join
-                        (
-                        select person_id, credit_category, count(person_id) as content_done_in_the_catg,
-                               max(end_year)-min(release_year) as years_in_the_catg,
-                               avg(num_votes) as num_votes, avg(imdb_score) as imdb_score,
-                               avg(metacritic_score) as metacritic_score, avg(tmdb_score) as tmdb_score,
-                               avg(tomato_meter) as tomato_meter
-                        from (
-                              select person_id,credit_category,imdb_score,num_votes,metacritic_score,tmdb_score,
-                                     tomato_meter,release_year,case when end_year is not null then end_year
-                                                                    when in_production is true and type='tv' then date_part('year', CURRENT_DATE)
-                                                                    else release_year end as end_year
-                              from app.content_crew_temp t14
-                              left join app.content_details t15
-                              on t14.content_id = t15.content_id
-                              ) t16
-                        group by person_id, credit_category
-                        ) t17
-                  on t13.person_id = t17.person_id
-                  and t13.credit_category = t17.credit_category
-                  ) t18
-            left join
-                  (
-                  select t19.person_id, nominations, cast(coalesce(wins, 0) as float)/cast(nominations as float) as wins_to_nominations
-                  from (
-                        select person_id, count(*) as nominations
-                        from app.awards_distribution
-                        where person_id is not null
-                        group by person_id
-                        ) t19
-                  left join
-                       (
-                        select person_id, count(*) as wins
-                        from app.awards_distribution
-                        where person_id is not null
-                        and won is true
-                        group by person_id
-                        ) t20
-                  on t19.person_id = t20.person_id
-                  ) t21
-            on t18.person_id = t21.person_id;"""
-        interact.send(query)
-
-        interact.send("SET work_mem = '25000MB';")
-
-        query = """
-                    update app.content_crew
-                    set credit_order = t1.new_rank
-                    from (
-                            select content_crew_id, rank() over (PARTITION BY content_id, credit_category order by credit_order asc) as new_rank
-                            from app.content_crew
-                        ) t1
-                    where app.content_crew.content_crew_id = t1.content_crew_id;
-                """
-        interact.send(query)
-
-        # Dumping final crew table into csv...
-        query = """\copy (Select person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations From app.content_crew) To '/tmp/final_content_crew.csv' WITH CSV DELIMITER '^' HEADER;"""
-        interact.send(query)
-
-        # 'Getting out of psql...
-        interact.send('\q')
         interact.send('exit')
         interact.expect(default_prompt)
 
