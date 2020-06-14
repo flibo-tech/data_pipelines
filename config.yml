@@ -12,7 +12,7 @@ upload_resources: 'C:\Users\bhask\Desktop\Flibo\data_collected\2020\to_upload\re
 tmdb_api_key: '57b66bd8b82b9db257af4184ca3f5e8d'
 
 sql:
-  host: '13.59.44.163'
+  host: '18.190.101.9'
   port: 5432
   db: 'flibo'
   schema: 'app'
