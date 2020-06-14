@@ -990,7 +990,7 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
 
     print('\nStarting work on remote...')
     client = ssh_into_remote(public_dns, username, key_file)
-    with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
+    with SSHClientInteraction(client, timeout=2*60, display=True) as interact:
         default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
         interact.expect(default_prompt)
 
@@ -1342,14 +1342,14 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                 """
         interact.send(query)
         try:
-            interact.expect('\-bash\-4\.2\$\s+', timeout=15*60)
+            interact.expect('\-bash\-4\.2\$\s+')
         except:
             print('Waiting for query to end (in next step)...')
 
         client.close()
 
     client = ssh_into_remote(public_dns, username, key_file)
-    with SSHClientInteraction(client, timeout=60 * 60, display=True) as interact:
+    with SSHClientInteraction(client, timeout=90 * 60, display=True) as interact:
         default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
         interact.expect(default_prompt)
 
