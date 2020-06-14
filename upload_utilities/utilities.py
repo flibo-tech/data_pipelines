@@ -1702,7 +1702,6 @@ def dump_live_search(engine):
 def dump_content_crew(engine):
     con = engine.connect()
 
-    trans = con.begin()
     sql = """
                 CREATE TABLE """ + config['sql']['schema'] + """.content_crew_temp (
                     content_crew_id serial NOT NULL,
@@ -1739,21 +1738,14 @@ def dump_content_crew(engine):
                 FROM '/tmp/final_content_crew.csv'
                 WITH DELIMITER AS '^'
                 CSV HEADER;
-                """
-    con.execute(sql)
-    trans.commit()
 
-    sql = """
+
                 ALTER TABLE """ + config['sql']['schema'] + """.content_crew RENAME TO content_crew_old;
 
 
                 ALTER TABLE """ + config['sql']['schema'] + """.content_crew_temp RENAME TO content_crew;
-                """
-    trans = con.begin()
-    con.execute(sql)
-    trans.commit()
-
-    sql = """
+                
+                
                 truncate table """ + config['sql']['schema'] + """.content_crew_old;
 
 
@@ -1770,12 +1762,8 @@ def dump_content_crew(engine):
 
 
                 ALTER SEQUENCE """ + config['sql']['schema'] + """.content_crew_temp_content_crew_id_seq RENAME TO content_crew_content_crew_id_seq;
-                """
-    trans = con.begin()
-    con.execute(sql)
-    trans.commit()
-
-    sql = """
+                
+                
                 update """ + config['sql']['schema'] + """.content_details
                 set url_title = lower(regexp_replace(title, '[^a-zA-Z0-9]+', '-', 'g'));
 
@@ -1809,11 +1797,12 @@ def dump_content_crew(engine):
                         on t3.person_id = t4.person_id
                         GROUP BY content_id
                      ) t5
-                where """ + config['sql']['schema'] + """.content_details.content_id = t5.content_id;
+                where """ + config['sql']['schema'] + """.content_details.content_id = t5.content_id
               """
-    trans = con.begin()
-    con.execute(sql)
-    trans.commit()
+    for query in sql.split(';'):
+        trans = con.begin()
+        con.execute(query)
+        trans.commit()
 
     con.close()
 
