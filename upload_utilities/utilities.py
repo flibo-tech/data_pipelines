@@ -978,19 +978,6 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
     con = engine.connect()
     trans = con.begin()
 
-    scripts = [
-        """Copy (Select * From """ + config['sql'][
-            'schema'] + """.awards_distribution) To '/tmp/db_backup_awards_distribution.csv' WITH CSV DELIMITER '^' HEADER;""",
-        """Copy (Select * From """ + config['sql'][
-            'schema'] + """.content_details) To '/tmp/db_backup_content_details.csv' WITH CSV DELIMITER '^' HEADER;""",
-        """Copy (Select * From """ + config['sql'][
-            'schema'] + """.content_crew) To '/tmp/db_backup_content_crew.csv' WITH CSV DELIMITER '^' HEADER;""",
-    ]
-    for script in scripts:
-        print(script)
-        con.execute(script)
-        print('\n')
-
     query = 'select count(*) from app.content_crew;'
     current_crew_count = con.execute(query).first()[0]
 
@@ -1009,16 +996,28 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
 
         print('\nFetching prod table CSVs...')
 
-        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@ec2-13-59-44-163.us-east-2.compute.amazonaws.com:/tmp/db_backup_awards_distribution.csv /tmp/db_backup_awards_distribution.csv')
-        interact.expect(default_prompt)
-
-        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@ec2-13-59-44-163.us-east-2.compute.amazonaws.com:/tmp/db_backup_content_details.csv /tmp/db_backup_content_details.csv')
-        interact.expect(default_prompt)
-
-        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@ec2-13-59-44-163.us-east-2.compute.amazonaws.com:/tmp/db_backup_content_crew.csv /tmp/db_backup_content_crew.csv')
-        interact.expect(default_prompt)
-
         interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@ec2-13-59-44-163.us-east-2.compute.amazonaws.com:/tmp/content_crew.csv /tmp/content_crew.csv')
+        interact.expect(default_prompt)
+
+        interact.send('psql -h '+config['sql']['host']+' -U '+config['sql']['user']+' -p '+str(config['sql']['port']))
+        interact.expect('Password for user postgres\:\s*')
+
+        interact.send(config['sql']['password'])
+        interact.expect('postgres\=\#\s+')
+
+        interact.send('\c flibo')
+        interact.expect('flibo\=\#\s+')
+
+        interact.send("\copy (select * From app.awards_distribution) To '/tmp/db_backup_awards_distribution.csv' WITH CSV DELIMITER '^' HEADER;")
+        interact.expect('flibo\=\#\s+')
+
+        interact.send("\copy (select * From app.content_details) To '/tmp/db_backup_content_details.csv' WITH CSV DELIMITER '^' HEADER;")
+        interact.expect('flibo\=\#\s+')
+
+        interact.send("\copy (select * From app.content_crew) To '/tmp/db_backup_content_crew.csv' WITH CSV DELIMITER '^' HEADER;")
+        interact.expect('flibo\=\#\s+')
+
+        interact.send('\q')
         interact.expect(default_prompt)
 
         interact.send('sudo chmod -R 777 /tmp/')
@@ -1201,6 +1200,9 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                 FROM '/tmp/content_crew.csv'
                 WITH DELIMITER AS '^'
                 CSV HEADER;
+                
+                
+                Copy (Select 1 as count) To '/tmp/content_crew.csv' WITH CSV DELIMITER '^' HEADER;
 
 
                 insert into app.content_crew_temp
@@ -1222,6 +1224,10 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                 update app.content_crew_temp
                 set credit_category = regexp_replace(credit_category, '^Series ', '')
                 where cast(content_id as varchar) like '2%';
+                
+                
+                update app.content_crew_temp
+                set credit_category = trim(credit_category);
 
 
                 update app.content_crew_temp
