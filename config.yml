@@ -27,7 +27,7 @@ ec2:
   file_upload_location: '/tmp/'
 
 scrape_data:
-  prepare_input_for_scrape_using_spot_instance: False # file prepared from this should be pushed to GOT before trigger_data_scrape_using_spot_instance
+  prepare_input_for_scrape_using_spot_instance: False # file prepared from this should be pushed to GIT before trigger_data_scrape_using_spot_instance
   collect_new_imdb_ids: False # to collect just the imdb ids for new content releases
   languages: ['en', 'hi', 'as', 'eu', 'bn', 'bho', 'ca', 'nl', 'fil', 'fr', 'gd', 'gl', 'de', 'gu', 'id', 'it', 'ja', 'kn', 'ko', 'ml', 'mr', 'myn', 'nah', 'or', 'pt', 'pa', 'ru', 'sa', 'sd', 'es', 'tl', 'ta', 'te', 'ur', 'cy']
   latest_release_date: '2020-01-01'
