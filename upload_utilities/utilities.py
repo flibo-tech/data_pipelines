@@ -794,6 +794,56 @@ def launch_spot_instance(size='big'):
                                 "InstanceType": "r5dn.xlarge",
                                 "WeightedCapacity": 1,
                                 "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5d.2xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "t3.2xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r6g.2xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5n.2xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "m6g.2xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5.2xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5ad.2xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5dn.2xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r5a.2xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "r4.2xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
                             }
                         ]
                     }
