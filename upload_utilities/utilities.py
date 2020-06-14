@@ -1800,6 +1800,7 @@ def dump_content_crew(engine):
                 where """ + config['sql']['schema'] + """.content_details.content_id = t5.content_id
               """
     for query in sql.split(';'):
+        print(query, '\n')
         trans = con.begin()
         con.execute(query)
         trans.commit()
