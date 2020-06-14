@@ -143,7 +143,7 @@ def movie_crew_scrape(df_titles):
     df = df_main.copy()
 
     if not df.empty:
-        df['credit_category'] = df['credit_category'].apply(lambda x: x.strip())
+        df['credit_category'] = df['credit_category'].apply(lambda x: x.replace('  ', ' ').strip())
 
         credit_rename = {'Cast (in credits order)':'Cast',
                          'Cast (in credits order) complete, awaiting verification':'Cast',
