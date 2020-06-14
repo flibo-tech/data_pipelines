@@ -1272,8 +1272,7 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                 
                 
                 update app.content_crew_temp
-                set credit_category = regexp_replace(credit_category, '^Series ', '')
-                where cast(content_id as varchar) like '2%';
+                set credit_category = regexp_replace(credit_category, '^Series ', '');
                 
                 
                 update app.content_crew_temp
