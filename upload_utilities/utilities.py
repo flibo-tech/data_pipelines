@@ -1701,79 +1701,119 @@ def dump_live_search(engine):
 
 def dump_content_crew(engine):
     con = engine.connect()
+
     trans = con.begin()
     sql = """
-            SELECT setval('""" + config['sql'][
-              'schema'] + """.content_crew_content_crew_id_seq', (select max(content_crew_id) from """ + config['sql'][
-              'schema'] + """.content_crew), true);
+                CREATE TABLE """ + config['sql']['schema'] + """.content_crew_temp (
+                    content_crew_id serial NOT NULL,
+                    person_id int4 NULL,
+                    content_id int4 NULL,
+                    credit_as varchar NULL,
+                    credit_category varchar NULL,
+                    credit_order int4 NULL,
+                    credit_episodes int4 NULL,
+                    credit_start_year int4 NULL,
+                    credit_end_year int4 NULL,
+                    common_tags varchar[] NULL,
+                    cum_experience_content int4 NULL,
+                    cum_experience_years int4 NULL,
+                    content_done_in_the_catg int4 NULL,
+                    years_in_the_catg int4 NULL,
+                    num_votes float8 NULL,
+                    imdb_score float8 NULL,
+                    metacritic_score float8 NULL,
+                    tmdb_score float8 NULL,
+                    tomato_meter float8 NULL,
+                    nominations int4 NULL,
+                    wins_to_nominations float8 NULL,
+                    CONSTRAINT content_crew_temp_pkey PRIMARY KEY (content_crew_id),
+                    CONSTRAINT content_crew_content_id_fkey FOREIGN KEY (content_id) REFERENCES """ + config['sql'][
+        'schema'] + """.content_details(content_id),
+                    CONSTRAINT content_crew_person_id_fkey FOREIGN KEY (person_id) REFERENCES """ + config['sql'][
+              'schema'] + """.artists(person_id)
+                );
 
-            truncate table """ + config['sql']['schema'] + """.content_crew;
 
-
-            copy """ + config['sql']['schema'] + """.content_crew
-            (person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations)
-            FROM '/tmp/final_content_crew.csv'
-            WITH DELIMITER AS '^'
-            CSV HEADER;
-
-
-            update """ + config['sql']['schema'] + """.content_details
-            set url_title = lower(regexp_replace(title, '[^a-zA-Z0-9]+', '-', 'g'));
-
-
-            update """ + config['sql']['schema'] + """.content_details
-            set main_artists = t5.main_artists
-            from (
-                    select content_id, array_agg(name order by credit_category desc, credit_order asc) as main_artists
-                    from (
-                            select *
-                            from (
-                                    select content_id, person_id, credit_category, credit_order, row_number() over (partition by content_id, credit_category order by credit_order) as my_rank
-                                    from """ + config['sql']['schema'] + """.content_crew
-                                    where credit_category in ('Directed by')
-                                    and credit_order <= 2
-                                    order by credit_order
-                                ) t1
-                            where t1.my_rank = 1
-                            union all
-                            select *
-                            from (
-                                    select content_id, person_id, credit_category, credit_order, row_number() over (partition by content_id, credit_category order by credit_order) as my_rank
-                                    from """ + config['sql']['schema'] + """.content_crew
-                                    where credit_category in ('Cast')
-                                    and credit_order <= 5
-                                    order by credit_order
-                                ) t2
-                            where t2.my_rank <= 2
-                        ) t3
-                    left join """ + config['sql']['schema'] + """.artists t4
-                    on t3.person_id = t4.person_id
-                    GROUP BY content_id
-                 ) t5
-            where """ + config['sql']['schema'] + """.content_details.content_id = t5.content_id;
-          """
+                copy """ + config['sql']['schema'] + """.content_crew_temp
+                (person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations)
+                FROM '/tmp/final_content_crew.csv'
+                WITH DELIMITER AS '^'
+                CSV HEADER;
+                """
     con.execute(sql)
     trans.commit()
 
-    try:
-        trans = con.begin()
-        con.execute('REINDEX INDEX ' + config['sql']['schema'] + '.content_crew_content_id_idx;')
-    except:
-        trans.commit()
-        trans = con.begin()
-        con.execute(
-            'CREATE INDEX content_crew_content_id_idx ON ' + config['sql']['schema'] + '.content_crew(content_id);')
-        trans.commit()
+    sql = """
+                ALTER TABLE """ + config['sql']['schema'] + """.content_crew RENAME TO content_crew_old;
 
-    try:
-        trans = con.begin()
-        con.execute('REINDEX INDEX ' + config['sql']['schema'] + '.content_crew_person_id_idx;')
-    except:
-        trans.commit()
-        trans = con.begin()
-        con.execute(
-            'CREATE INDEX content_crew_person_id_idx ON ' + config['sql']['schema'] + '.content_crew(person_id);')
-        trans.commit()
+
+                ALTER TABLE """ + config['sql']['schema'] + """.content_crew_temp RENAME TO content_crew;
+                """
+    trans = con.begin()
+    con.execute(sql)
+    trans.commit()
+
+    sql = """
+                truncate table """ + config['sql']['schema'] + """.content_crew_old;
+
+
+                drop table """ + config['sql']['schema'] + """.content_crew_old;
+
+
+                ALTER INDEX """ + config['sql']['schema'] + """.content_crew_temp_pkey RENAME TO content_crew_pkey;
+
+
+                CREATE INDEX content_crew_content_id_idx ON """ + config['sql']['schema'] + """.content_crew(content_id);
+
+
+                CREATE INDEX content_crew_person_id_idx ON """ + config['sql']['schema'] + """.content_crew(person_id);
+
+
+                ALTER SEQUENCE """ + config['sql']['schema'] + """.content_crew_temp_content_crew_id_seq RENAME TO content_crew_content_crew_id_seq;
+                """
+    trans = con.begin()
+    con.execute(sql)
+    trans.commit()
+
+    sql = """
+                update """ + config['sql']['schema'] + """.content_details
+                set url_title = lower(regexp_replace(title, '[^a-zA-Z0-9]+', '-', 'g'));
+
+
+                update """ + config['sql']['schema'] + """.content_details
+                set main_artists = t5.main_artists
+                from (
+                        select content_id, array_agg(name order by credit_category desc, credit_order asc) as main_artists
+                        from (
+                                select *
+                                from (
+                                        select content_id, person_id, credit_category, credit_order, row_number() over (partition by content_id, credit_category order by credit_order) as my_rank
+                                        from """ + config['sql']['schema'] + """.content_crew
+                                        where credit_category in ('Directed by')
+                                        and credit_order <= 2
+                                        order by credit_order
+                                    ) t1
+                                where t1.my_rank = 1
+                                union all
+                                select *
+                                from (
+                                        select content_id, person_id, credit_category, credit_order, row_number() over (partition by content_id, credit_category order by credit_order) as my_rank
+                                        from """ + config['sql']['schema'] + """.content_crew
+                                        where credit_category in ('Cast')
+                                        and credit_order <= 5
+                                        order by credit_order
+                                    ) t2
+                                where t2.my_rank <= 2
+                            ) t3
+                        left join """ + config['sql']['schema'] + """.artists t4
+                        on t3.person_id = t4.person_id
+                        GROUP BY content_id
+                     ) t5
+                where """ + config['sql']['schema'] + """.content_details.content_id = t5.content_id;
+              """
+    trans = con.begin()
+    con.execute(sql)
+    trans.commit()
 
     con.close()
 
