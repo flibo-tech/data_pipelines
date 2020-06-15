@@ -1080,7 +1080,7 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
 
     print('\nStarting work on remote...')
     client = ssh_into_remote(public_dns, username, key_file)
-    with SSHClientInteraction(client, timeout=2*60, display=True) as interact:
+    with SSHClientInteraction(client, timeout=10*60, display=True) as interact:
         default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
         interact.expect(default_prompt)
 
