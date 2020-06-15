@@ -1086,7 +1086,7 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
 
         print('\nDumping prod tables into CSVs...')
 
-        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem '+config['ec2']['public_dns']+':/tmp/content_crew.csv /tmp/content_crew.csv')
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@'+config['ec2']['public_dns']+':/tmp/content_crew.csv /tmp/content_crew.csv')
         interact.expect(default_prompt)
 
         interact.send('psql -h '+config['sql']['host']+' -U '+config['sql']['user']+' -p '+str(config['sql']['port']))
@@ -1422,7 +1422,7 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
             interact.expect('flibo\=\#\s+')
             output = interact.current_output_clean
 
-            match = re.findall(r'\d{8}', output)
+            match = re.findall(r'\d{7,}', output)
             if match:
                 new_crew_count = int(match[0])
             print('New count -', new_crew_count)
@@ -1456,11 +1456,11 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
         interact.expect(default_prompt)
 
         print('\nUploading file final_content_crew.csv to prod server...')
-        interact.send('scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /tmp/final_content_crew.csv '+config['ec2']['public_dns']+':/tmp/')
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /tmp/final_content_crew.csv ec2-user@'+config['ec2']['public_dns']+':/tmp/')
         interact.expect(default_prompt)
 
         print('\nUploading file full_data.csv to prod server...')
-        interact.send('scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /tmp/full_data.csv '+config['ec2']['public_dns']+':/tmp/')
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /tmp/full_data.csv ec2-user@'+config['ec2']['public_dns']+':/tmp/')
         interact.expect(default_prompt)
 
         client.close()
