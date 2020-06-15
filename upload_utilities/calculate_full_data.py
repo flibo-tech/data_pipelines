@@ -64,4 +64,4 @@ df_contents = df_contents[pd.notnull(df_contents['genres'])]
 df_contents['language'] = df_contents['language'].apply(clean_array)
 df_contents = df_contents[pd.notnull(df_contents['language'])]
 
-df_contents.to_csv('/tmp/full_data.csv', index=False)
+df_contents.to_csv('/tmp/full_data.csv', index=False, sep='^')
