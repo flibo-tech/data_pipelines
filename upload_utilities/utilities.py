@@ -906,6 +906,11 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file, p
         interact.send('y')
         interact.expect(default_prompt)
 
+        interact.send('sudo yum install python36 python36-pip')
+        interact.expect('Is this ok \[y/d/N\]:\s+')
+        interact.send('y')
+        interact.expect(default_prompt)
+
         if postgres:
             interact.send('sudo yum install postgresql postgresql-server postgresql-devel postgresql-contrib postgresql-docs')
             interact.expect('Is this ok \[y/d/N\]:\s+')
@@ -917,12 +922,48 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file, p
 
             interact.send('sudo service postgresql start')
             interact.expect(default_prompt)
-        else:
-            interact.send('sudo yum install python36 python36-pip')
+
+            interact.send('sudo su - postgres')
+            interact.expect('\-bash\-4\.2\$\s+')
+
+            interact.send('psql -U postgres')
+            interact.expect('postgres\=\#\s+')
+
+            interact.send("ALTER USER postgres WITH PASSWORD 'openit123';")
+            interact.expect('postgres\=\#\s+')
+
+            interact.send('\q')
+            interact.send('exit')
+            interact.expect(default_prompt)
+
+            interact.send("sudo sed -i -e 's/host    all             all             127.0.0.1\/32            ident/host    all             postgres      0.0.0.0\/0               md5/g' /var/lib/pgsql9/data/pg_hba.conf")
+            interact.expect(default_prompt)
+
+            interact.send('sudo service postgresql restart')
+            interact.expect(default_prompt)
+
+            interact.send('sudo yum install python36-devel')
             interact.expect('Is this ok \[y/d/N\]:\s+')
             interact.send('y')
             interact.expect(default_prompt)
 
+            interact.send('sudo yum  install libevent-devel')
+            interact.expect('Is this ok \[y/d/N\]:\s+')
+            interact.send('y')
+            interact.expect(default_prompt)
+
+            interact.send('sudo yum -y install gcc')
+            interact.expect(default_prompt)
+
+            interact.send('sudo pip-3.6 install pandas')
+            interact.expect(default_prompt)
+
+            interact.send('sudo pip-3.6 install SQLAlchemy')
+            interact.expect(default_prompt)
+
+            interact.send('sudo pip-3.6 install psycopg2')
+            interact.expect(default_prompt)
+        else:
             interact.send('sudo pip-3.6 install virtualenv')
             interact.expect(default_prompt)
 
@@ -1021,7 +1062,7 @@ def calculate_on_remote(public_dns, private_ip, username, key_file, arg):
 
 
 def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
-    print('Dumping prod tables into CSVs...')
+    print('\nFetching current crew count...')
     engine = sqlalchemy.create_engine(
         'postgres://' + config['sql']['user'] + ':' + config['sql']['password'] + '@' + config['sql'][
             'host'] + ':' + str(config['sql']['port']) + '/' + config['sql']['db'])
@@ -1032,7 +1073,6 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
     current_crew_count = con.execute(query).first()[0]
 
     con.close()
-    print('Dumping into CSVs finished.')
 
     print('\nTransferring RSA key to spot instance...')
     cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
@@ -1044,9 +1084,9 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
         default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
         interact.expect(default_prompt)
 
-        print('\nFetching prod table CSVs...')
+        print('\nDumping prod tables into CSVs...')
 
-        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@ec2-13-59-44-163.us-east-2.compute.amazonaws.com:/tmp/content_crew.csv /tmp/content_crew.csv')
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem '+config['ec2']['public_dns']+':/tmp/content_crew.csv /tmp/content_crew.csv')
         interact.expect(default_prompt)
 
         interact.send('psql -h '+config['sql']['host']+' -U '+config['sql']['user']+' -p '+str(config['sql']['port']))
@@ -1069,6 +1109,8 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
 
         interact.send('\q')
         interact.expect(default_prompt)
+
+        print('Dumping into CSVs finished.')
 
         interact.send('sudo chmod -R 777 /tmp/')
         interact.expect(default_prompt)
@@ -1105,22 +1147,12 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                     credit_as varchar NULL,
                     credit_category varchar NULL,
                     credit_order int4 NULL,
-                    credit_episodes int4 NULL,
-                    credit_start_year int4 NULL,
-                    credit_end_year int4 NULL,
-                    common_tags varchar[] NULL,
                     cum_experience_content int4 NULL,
                     cum_experience_years int4 NULL,
                     content_done_in_the_catg int4 NULL,
                     years_in_the_catg int4 NULL,
                     num_votes float8 NULL,
-                    imdb_score float8 NULL,
-                    metacritic_score float8 NULL,
-                    tmdb_score float8 NULL,
-                    tomato_meter float8 NULL,
-                    nominations int4 NULL,
-                    wins_to_nominations float8 NULL,
-                    CONSTRAINT content_crew_pkey PRIMARY KEY (content_crew_id)
+                    imdb_score float8 NULL
                 );
 
 
@@ -1220,7 +1252,7 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                 Copy (Select 1 as count) To '/tmp/db_backup_awards_distribution.csv' WITH CSV DELIMITER '^' HEADER;
 
                 copy app.content_crew
-                (content_crew_id, person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations)
+                (content_crew_id, person_id, content_id, credit_as, credit_category, credit_order)
                 FROM '/tmp/db_backup_content_crew.csv'
                 WITH DELIMITER AS '^'
                 CSV HEADER;
@@ -1237,16 +1269,12 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
                 credit_as varchar NULL,
                 credit_category varchar NULL,
                 credit_order int4 NULL,
-                credit_episodes int4 NULL,
-                credit_start_year int4 NULL,
-                credit_end_year int4 NULL,
-                common_tags varchar[] NULL,
                 CONSTRAINT content_crew_temp_pkey PRIMARY KEY (content_crew_id)
                 );
 
 
                 copy app.content_crew_temp
-                (person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year)
+                (person_id,content_id,credit_as,credit_category,credit_order)
                 FROM '/tmp/content_crew.csv'
                 WITH DELIMITER AS '^'
                 CSV HEADER;
@@ -1256,11 +1284,11 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
 
 
                 insert into app.content_crew_temp
-                (person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year)
-                select person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year
+                (person_id,content_id,credit_as,credit_category,credit_order)
+                select person_id,content_id,credit_as,credit_category,credit_order
                 from app.content_crew
                 except
-                select person_id,content_id,credit_as,credit_category,credit_order,credit_episodes,credit_start_year,credit_end_year
+                select person_id,content_id,credit_as,credit_category,credit_order
                 from app.content_crew_temp;
 
 
@@ -1288,104 +1316,78 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
 
 
                 insert into app.content_crew
-                (person_id,content_id,credit_as,credit_category,credit_order,common_tags,cum_experience_content,
-                 cum_experience_years,credit_episodes,credit_start_year,credit_end_year,content_done_in_the_catg,
-                 years_in_the_catg,num_votes,imdb_score,metacritic_score,tmdb_score,tomato_meter,nominations,wins_to_nominations)
-                select t18.*, nominations, wins_to_nominations
-                from (
-                      select t13.*, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter
-                      from (
-                            select t11.person_id, t11.content_id, t11.credit_as, t11.credit_category, t11.credit_order, t11.common_tags,
-                                   experience_movies, experience_years, t11.credit_episodes, t11.credit_start_year, t11.credit_end_year
-                            from (
-                                  select t9.person_id, t9.content_id, credit_as, credit_category, credit_order,
-                                         credit_episodes, credit_start_year, credit_end_year, common_tags, year
-                                  from app.content_crew_temp t9
-                                  left join (
-                                            select content_id, release_year as year
-                                            from app.content_details
-                                            ) t10
-                                  on t9.content_id = t10.content_id
-                                  ) t11
-                            left join
-                                 (
-                                  select year, person_id, credit_category, sum(count(*)) over (PARTITION BY person_id, credit_category order by person_id, credit_category, year) experience_movies, (year-min(career_start)) as experience_years
-                                  from (
-                                        select t3.content_id, t3.person_id, t3.credit_category, year, career_start
-                                        from (
-                                              select person_id, t1.content_id, credit_category, year
-                                              from app.content_crew_temp t1
-                                              left join (
-                                                        select content_id, release_year as year
-                                                        from app.content_details
-                                                        ) t2
-                                              on t1.content_id = t2.content_id
-                                              ) t3
-                                        left join
-                                              (
-                                              select person_id, credit_category, min(year) career_start
-                                              from (
-                                                    select *
-                                                    from app.content_crew_temp t4
-                                                    left join (
-                                                              select content_id, release_year as year
-                                                              from app.content_details
-                                                              ) t5
-                                                    on t4.content_id = t5.content_id
-                                                    ) t6
-                                              group by person_id, credit_category
-                                              ) t7
-                                        on t3.person_id = t7.person_id
-                                        and t3.credit_category = t7.credit_category
-                                        ) t8
-                                  group by person_id, credit_category, year
-                                  order by person_id, credit_category, year
-                                  ) t12
-                            on t11.year = t12.year
-                            and t11.person_id = t12.person_id
-                            and t11.credit_category = t12.credit_category
-                            ) t13
-                      left join
-                            (
-                            select person_id, credit_category, count(person_id) as content_done_in_the_catg,
-                                   max(end_year)-min(release_year) as years_in_the_catg,
-                                   avg(num_votes) as num_votes, avg(imdb_score) as imdb_score,
-                                   avg(metacritic_score) as metacritic_score, avg(tmdb_score) as tmdb_score,
-                                   avg(tomato_meter) as tomato_meter
-                            from (
-                                  select person_id,credit_category,imdb_score,num_votes,metacritic_score,tmdb_score,
-                                         tomato_meter,release_year,case when end_year is not null then end_year
-                                                                        when in_production is true and type='tv' then date_part('year', CURRENT_DATE)
-                                                                        else release_year end as end_year
-                                  from app.content_crew_temp t14
-                                  left join app.content_details t15
-                                  on t14.content_id = t15.content_id
-                                  ) t16
-                            group by person_id, credit_category
-                            ) t17
-                      on t13.person_id = t17.person_id
-                      and t13.credit_category = t17.credit_category
-                      ) t18
-                left join
-                      (
-                      select t19.person_id, nominations, cast(coalesce(wins, 0) as float)/cast(nominations as float) as wins_to_nominations
-                      from (
-                            select person_id, count(*) as nominations
-                            from app.awards_distribution
-                            where person_id is not null
-                            group by person_id
-                            ) t19
-                      left join
-                           (
-                            select person_id, count(*) as wins
-                            from app.awards_distribution
-                            where person_id is not null
-                            and won is true
-                            group by person_id
-                            ) t20
-                      on t19.person_id = t20.person_id
-                      ) t21
-                on t18.person_id = t21.person_id;
+                (person_id,content_id,credit_as,credit_category,credit_order,cum_experience_content,
+                 cum_experience_years,content_done_in_the_catg,years_in_the_catg,num_votes,imdb_score)
+
+                  select t13.*, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score
+                  from (
+                        select t11.person_id, t11.content_id, t11.credit_as, t11.credit_category, t11.credit_order,
+                               experience_movies, experience_years
+                        from (
+                              select t9.person_id, t9.content_id, credit_as, credit_category, credit_order, year
+                              from app.content_crew_temp t9
+                              left join (
+                                        select content_id, release_year as year
+                                        from app.content_details
+                                        ) t10
+                              on t9.content_id = t10.content_id
+                              ) t11
+                        left join
+                             (
+                              select year, person_id, credit_category, sum(count(*)) over (PARTITION BY person_id, credit_category order by person_id, credit_category, year) experience_movies, (year-min(career_start)) as experience_years
+                              from (
+                                    select t3.content_id, t3.person_id, t3.credit_category, year, career_start
+                                    from (
+                                          select person_id, t1.content_id, credit_category, year
+                                          from app.content_crew_temp t1
+                                          left join (
+                                                    select content_id, release_year as year
+                                                    from app.content_details
+                                                    ) t2
+                                          on t1.content_id = t2.content_id
+                                          ) t3
+                                    left join
+                                          (
+                                          select person_id, credit_category, min(year) career_start
+                                          from (
+                                                select *
+                                                from app.content_crew_temp t4
+                                                left join (
+                                                          select content_id, release_year as year
+                                                          from app.content_details
+                                                          ) t5
+                                                on t4.content_id = t5.content_id
+                                                ) t6
+                                          group by person_id, credit_category
+                                          ) t7
+                                    on t3.person_id = t7.person_id
+                                    and t3.credit_category = t7.credit_category
+                                    ) t8
+                              group by person_id, credit_category, year
+                              order by person_id, credit_category, year
+                              ) t12
+                        on t11.year = t12.year
+                        and t11.person_id = t12.person_id
+                        and t11.credit_category = t12.credit_category
+                        ) t13
+                  left join
+                        (
+                        select person_id, credit_category, count(person_id) as content_done_in_the_catg,
+                               max(end_year)-min(release_year) as years_in_the_catg,
+                               avg(num_votes) as num_votes, avg(imdb_score) as imdb_score
+                        from (
+                              select person_id,credit_category,imdb_score,num_votes,
+                                     release_year,case when end_year is not null then end_year
+                                                                    when in_production is true and type='tv' then date_part('year', CURRENT_DATE)
+                                                                    else release_year end as end_year
+                              from app.content_crew_temp t14
+                              left join app.content_details t15
+                              on t14.content_id = t15.content_id
+                              ) t16
+                        group by person_id, credit_category
+                        ) t17
+                  on t13.person_id = t17.person_id
+                  and t13.credit_category = t17.credit_category;
 
                 \q
                 """
@@ -1428,7 +1430,7 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
         query = """
                 SET work_mem = '25000MB';
 
-                \copy (Select person_id, content_id, credit_as, credit_category, credit_order, credit_episodes, credit_start_year, credit_end_year, common_tags, cum_experience_content, cum_experience_years, content_done_in_the_catg, years_in_the_catg, num_votes, imdb_score, metacritic_score, tmdb_score, tomato_meter, nominations, wins_to_nominations From app.content_crew) To '/tmp/final_content_crew.csv' WITH CSV DELIMITER '^' HEADER;
+                \copy (Select person_id, content_id, credit_as, credit_category, credit_order From app.content_crew) To '/tmp/final_content_crew.csv' WITH CSV DELIMITER '^' HEADER;
                 
                 \q
                 """
@@ -1438,6 +1440,15 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
         interact.send('exit')
         interact.expect(default_prompt)
 
+        print('\nCalculating full_data.csv...')
+
+        script = os.getcwd()+r'\calculate_full_data.py'
+        cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + script + ' ec2-user@' + public_dns + ':/tmp/'
+        os.system(cmd)
+
+        interact.send('sudo python3.6 /tmp/calculate_full_data.py')
+        interact.expect(default_prompt)
+
         interact.send('sudo chmod -R 777 /tmp/')
         interact.expect(default_prompt)
 
@@ -1445,7 +1456,11 @@ def calculate_crew_table_on_remote(public_dns, private_ip, username, key_file):
         interact.expect(default_prompt)
 
         print('\nUploading file final_content_crew.csv to prod server...')
-        interact.send('scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /tmp/final_content_crew.csv ec2-user@ec2-13-59-44-163.us-east-2.compute.amazonaws.com:/tmp/')
+        interact.send('scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /tmp/final_content_crew.csv '+config['ec2']['public_dns']+':/tmp/')
+        interact.expect(default_prompt)
+
+        print('\nUploading file full_data.csv to prod server...')
+        interact.send('scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /tmp/full_data.csv '+config['ec2']['public_dns']+':/tmp/')
         interact.expect(default_prompt)
 
         client.close()
