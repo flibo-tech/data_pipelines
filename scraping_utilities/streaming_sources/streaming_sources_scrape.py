@@ -107,6 +107,7 @@ except:
 
 
     def apply_get_contents(df):
+        print(df.shape)
         df['contents'] = df.apply(lambda row: get_contents(row), axis=1)
         return df
 
