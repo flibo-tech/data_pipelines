@@ -386,7 +386,7 @@ def synonyms_similar_contents():
     df_contents = df_tags.groupby('content_id')['synonym_tags'].apply(sum).reset_index()
     df_contents['synonym_tags'] = df_contents['synonym_tags'].apply(lambda x: list(set(x)))
 
-    df_full_data = pd.read_csv('/tmp/full_data.csv')
+    df_full_data = pd.read_csv('/tmp/full_data.csv', sep='^')
     df_full_data = df_full_data[['content_id', 'genres', 'language']]
     df_full_data['genres'] = df_full_data['genres'].apply(lambda x: eval(x) if x else None)
     df_full_data['language'] = df_full_data['language'].apply(lambda x: eval(x) if x else None)
