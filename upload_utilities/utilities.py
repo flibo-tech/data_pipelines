@@ -16,6 +16,7 @@ import time
 import paramiko
 from paramiko_expect import SSHClientInteraction
 import re
+from datetime import datetime
 
 
 config = yaml.safe_load(open('./../config.yml'))
@@ -1027,6 +1028,31 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file, p
 
         client.close()
         return True
+
+
+def keep_alive_connection_for_similar_contents():
+    start_time = datetime.now()
+    keep_alive = True
+    while keep_alive:
+        time_since_start = (datetime.now() - start_time).seconds
+        if time_since_start < 60:
+            time_since_start = str(time_since_start) + ' seconds'
+        elif time_since_start < 3600:
+            time_since_start = str(time_since_start // 60) + ':' + str(time_since_start % 60) + ' minutes'
+        else:
+            time_since_start = str(time_since_start // 3600) + ':' + str((time_since_start % 3600) // 60) + ' hours'
+
+        print('Keeping connection alive after '+time_since_start+'...')
+
+        time.sleep(30)
+        try:
+            files = os.listdir('/home/ec2-user/calculated/')
+        except FileNotFoundError:
+            files = []
+        if 'similar_contents.csv' in files:
+            keep_alive = False
+
+    return True
 
 
 def calculate_on_remote(public_dns, private_ip, username, key_file, arg):

@@ -10,6 +10,7 @@ import sqlalchemy
 import sys
 import time
 from datetime import datetime
+from threading import Thread
 
 from utilities import *
 
@@ -1017,6 +1018,9 @@ def apply_calculate_similar(df):
 
 
 def calculate_similar_contents():
+    thread = Thread(target=keep_alive_connection_for_similar_contents)
+    thread.start()
+
     df_contents_all_features = pd.read_csv('/tmp/full_data.csv', sep='^')
     df_contents_all_features['genres'] = df_contents_all_features['genres'].apply(lambda x: eval(x) if x else None)
     df_contents_all_features['language'] = df_contents_all_features['language'].apply(lambda x: eval(x) if x else None)
