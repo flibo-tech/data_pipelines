@@ -103,7 +103,7 @@ except:
             else:
                 collect_more_urls = False
 
-        return str(response_items)
+        return []
 
 
     def apply_get_contents(df):
@@ -113,7 +113,6 @@ except:
 
     print('Collecting justwatch IDs...')
     df_justwatch_contents = parallelize_dataframe(df_justwatch_contents, apply_get_contents)
-    df_justwatch_contents['contents'] = df_justwatch_contents['contents'].apply(lambda x: eval(x) if x else x)
 
 
     def add_country_code(row):
