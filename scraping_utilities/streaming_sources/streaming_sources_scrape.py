@@ -100,6 +100,8 @@ except:
                 current_page += 1
             else:
                 collect_more_urls = False
+                if len(response_items)==0:
+                    print(url)
 
         return response_items
 
