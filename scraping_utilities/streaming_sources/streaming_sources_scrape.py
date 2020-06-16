@@ -103,12 +103,13 @@ except:
             else:
                 collect_more_urls = False
 
-        return []
+        return response_items
 
 
     def apply_get_contents(df):
-        print(df.shape)
+        print(1)
         df['contents'] = df.apply(lambda row: get_contents(row), axis=1)
+        print(2)
         return df
 
 
