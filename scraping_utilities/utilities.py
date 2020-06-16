@@ -623,6 +623,12 @@ def get_imdb_titles(df_urls):
                     imdb_id = header.find('a')['href'].split('/')[2]
 
                     try:
+                        title_poster = item.find('img')['src']
+                        title_poster = title_poster.split('@._V1_')[0] + '@._V1_.' + title_poster.split('.')[-1]
+                    except:
+                        title_poster = None
+
+                    try:
                         imdb_score = eval(item.find('div', class_='inline-block ratings-imdb-rating').find('strong').text.strip())
                     except:
                         imdb_score = None
@@ -644,6 +650,7 @@ def get_imdb_titles(df_urls):
                     details.append({
                         'imdb_content_id': imdb_id,
                         'title': title,
+                        'poster': title_poster,
                         'imdb_score': imdb_score,
                         'metascore': metascore,
                         'votes': votes,
