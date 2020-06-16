@@ -14,8 +14,7 @@ import time
 from multiprocessing import Pool
 import sqlalchemy
 import re
-import string
-import random
+import requests
 
 
 config = yaml.safe_load(open('./../../config.yml'))
@@ -92,9 +91,9 @@ except:
         collect_more_urls = True
         while collect_more_urls:
             url = url_part_1+row['country_code']+url_part_2+urllib.parse.urlencode({'body': base_url+str(current_page)+url_part_8})
-            try:
-                response = request.urlopen(url)
-                response = eval(response.read().decode('utf8').replace('true', 'True').replace('false', 'False').replace('null', 'None'))
+            response = requests.get(url)
+            if response.status_code == 200:
+                response = response.json()
                 if response['items']:
                     response_items = response_items + [{
                         'justwatch_id': x.get('id'),
@@ -103,8 +102,8 @@ except:
                     current_page += 1
                 else:
                     collect_more_urls = False
-            except Exception as e:
-                print(url, '-----------------------------', e)
+            else:
+                collect_more_urls = False
 
         return response_items
 
