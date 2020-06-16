@@ -54,10 +54,6 @@ if __name__ == "__main__":
 
             calculate_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'], 'calculate_on_spot_instance')
 
-            cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + config[
-                'pem_key'] + ' ec2-user@' + public_dns + ':/home/ec2-user/calculated/ ' + config['to_upload']
-            os.system('start "Downloading calculated similar contents" /wait cmd /c ' + cmd)
-
             close_spot_fleet_request_and_instances(spot_fleet_request_id)
         else:
             os.system('start "Calculating similar contents" cmd /k "' + config['venv_path'] + 'python" upload.py operate_spot_instance_to_calculate')
