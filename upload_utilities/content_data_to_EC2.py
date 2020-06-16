@@ -145,6 +145,9 @@ def movies_details():
     # Summary
     df_movies['synopsis__summaries'] = df_movies['synopsis__summaries'].apply(lambda x: eval(x)[0] if x else x)
 
+    # Poster
+    df_movies['tmdb__poster'][pd.isnull(df_movies['tmdb__poster'])] = df_movies['imdb__title_poster'][pd.isnull(df_movies['tmdb__poster'])]
+
     # shaping df_movies
     df_movies.rename(columns={
         'main_imdb_id': 'imdb_content_id',
@@ -388,6 +391,9 @@ def tv_series_details():
 
     # Summary
     df_tv_series['synopsis__summaries'] = df_tv_series['synopsis__summaries'].apply(lambda x: eval(x)[0] if x else x)
+
+    # Poster
+    df_tv_series['tmdb__poster'][pd.isnull(df_tv_series['tmdb__poster'])] = df_tv_series['imdb__title_poster'][pd.isnull(df_tv_series['tmdb__poster'])]
 
     # shaping df_tv_series
     df_tv_series.rename(columns={
