@@ -386,7 +386,7 @@ def synonyms_similar_contents():
     df_contents = df_tags.groupby('content_id')['synonym_tags'].apply(sum).reset_index()
     df_contents['synonym_tags'] = df_contents['synonym_tags'].apply(lambda x: list(set(x)))
 
-    df_full_data = pd.read_csv('/home/ec2-user/calculated/full_data.csv')
+    df_full_data = pd.read_csv('/tmp/full_data.csv')
     df_full_data = df_full_data[['content_id', 'genres', 'language']]
     df_full_data['genres'] = df_full_data['genres'].apply(lambda x: eval(x) if x else None)
     df_full_data['language'] = df_full_data['language'].apply(lambda x: eval(x) if x else None)
@@ -395,7 +395,7 @@ def synonyms_similar_contents():
 
     df_contents_final = parallelize_dataframe(df_contents.copy(), apply_common_contents)
 
-    df_contents_final.to_csv('/home/ec2-user/calculated/synonyms_similar_contents.csv', index=False)
+    df_contents_final.to_csv('/tmp/synonyms_similar_contents.csv', index=False)
 
 
 def get_full_data():
@@ -460,7 +460,7 @@ def get_full_data():
     df_contents['language'] = df_contents['language'].apply(clean_array)
     df_contents = df_contents[pd.notnull(df_contents['language'])]
 
-    df_contents.to_csv('/home/ec2-user/calculated/full_data.csv', index=False)
+    df_contents.to_csv('/tmp/full_data.csv', index=False)
 
 
 def get_features_recom(df_resp, weight_power):
@@ -1032,8 +1032,15 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file, p
 def calculate_on_remote(public_dns, private_ip, username, key_file, arg):
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
+    print('\nTransferring RSA key to spot instance...')
+    cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
+    os.system(cmd)
+
     client = ssh_into_remote(public_dns, username, key_file)
-    with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
+    with SSHClientInteraction(client, timeout=5*60*60, display=True) as interact:
+        interact.expect(default_prompt)
+
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2']['public_dns'] + ':/tmp/full_data.csv /tmp/full_data.csv')
         interact.expect(default_prompt)
 
         interact.send('source ./venv_similar_content/bin/activate')
@@ -1049,12 +1056,6 @@ def calculate_on_remote(public_dns, private_ip, username, key_file, arg):
         interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
         interact.send('sudo chmod -R 777 /home/' + username + '/calculated/')
-        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
-
-        interact.send('sudo rm /home/' + username + '/calculated/full_data.csv')
-        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
-
-        interact.send('sudo rm /home/' + username + '/calculated/synonyms_similar_contents.csv')
         interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
         client.close()
