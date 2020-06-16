@@ -1017,7 +1017,7 @@ def apply_calculate_similar(df):
 
 
 def calculate_similar_contents():
-    df_contents_all_features = pd.read_csv('/tmp/full_data.csv')
+    df_contents_all_features = pd.read_csv('/tmp/full_data.csv', sep='^')
     df_contents_all_features['genres'] = df_contents_all_features['genres'].apply(lambda x: eval(x) if x else None)
     df_contents_all_features['language'] = df_contents_all_features['language'].apply(lambda x: eval(x) if x else None)
 
