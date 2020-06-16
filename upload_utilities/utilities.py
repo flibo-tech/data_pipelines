@@ -1050,13 +1050,13 @@ def calculate_on_remote(public_dns, private_ip, username, key_file, arg):
         interact.expect('\(venv_similar_content\)\s+' + default_prompt)
 
         interact.send('cd data_pipelines/upload_utilities')
-        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'upload_utilities'))
 
         interact.send('sudo python3.6 upload.py '+arg)
-        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'upload_utilities'))
 
         interact.send('sudo chmod -R 777 /home/' + username + '/calculated/')
-        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'upload_utilities'))
 
         client.close()
         return True
