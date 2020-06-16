@@ -103,20 +103,17 @@ except:
             else:
                 collect_more_urls = False
 
-        return response_items
+        return str(response_items)
 
 
     def apply_get_contents(df):
         df['contents'] = df.apply(lambda row: get_contents(row), axis=1)
-        random_name = datetime.utcnow().strftime('%s') + ''.join(
-            random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
-            for _ in range(16))
-        df.to_csv('/tmp/'+random_name+'.csv', index=False)
         return df
 
 
     print('Collecting justwatch IDs...')
     df_justwatch_contents = parallelize_dataframe(df_justwatch_contents, apply_get_contents)
+    df_justwatch_contents['contents'] = df_justwatch_contents['contents'].apply(lambda x: eval(x) if x else x)
 
 
     def add_country_code(row):
