@@ -92,24 +92,25 @@ except:
         collect_more_urls = True
         while collect_more_urls:
             url = url_part_1+row['country_code']+url_part_2+urllib.parse.urlencode({'body': base_url+str(current_page)+url_part_8})
-            response = request.urlopen(url)
-            response = eval(response.read().decode('utf8').replace('true', 'True').replace('false', 'False').replace('null', 'None'))
-            if response['items']:
-                response_items = response_items + [{
-                    'justwatch_id': x.get('id'),
-                    'item_type': x.get('object_type')
-                } for x in response['items']]
-                current_page += 1
-            else:
-                collect_more_urls = False
+            try:
+                response = request.urlopen(url)
+                response = eval(response.read().decode('utf8').replace('true', 'True').replace('false', 'False').replace('null', 'None'))
+                if response['items']:
+                    response_items = response_items + [{
+                        'justwatch_id': x.get('id'),
+                        'item_type': x.get('object_type')
+                    } for x in response['items']]
+                    current_page += 1
+                else:
+                    collect_more_urls = False
+            except Exception as e:
+                print(url, '-----------------------------', e)
 
         return response_items
 
 
     def apply_get_contents(df):
-        print(1)
         df['contents'] = df.apply(lambda row: get_contents(row), axis=1)
-        print(2)
         return df
 
 
