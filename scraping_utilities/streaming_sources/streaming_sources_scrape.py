@@ -100,14 +100,13 @@ except:
                 current_page += 1
             else:
                 collect_more_urls = False
-                if len(response_items)==0:
-                    print(url)
 
         return response_items
 
 
     def apply_get_contents(df):
         df['contents'] = df.apply(lambda row: get_contents(row), axis=1)
+        df = df[df['contents']!=[]]
         return df
 
 
