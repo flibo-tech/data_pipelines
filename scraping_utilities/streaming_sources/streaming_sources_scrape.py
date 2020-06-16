@@ -14,6 +14,8 @@ import time
 from multiprocessing import Pool
 import sqlalchemy
 import re
+import string
+import random
 
 
 config = yaml.safe_load(open('./../../config.yml'))
@@ -106,7 +108,10 @@ except:
 
     def apply_get_contents(df):
         df['contents'] = df.apply(lambda row: get_contents(row), axis=1)
-        df = df[df['contents']!=[]]
+        random_name = datetime.utcnow().strftime('%s') + ''.join(
+            random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
+            for _ in range(16))
+        df.to_csv('/tmp/'+random_name+'.csv', index=False)
         return df
 
 
