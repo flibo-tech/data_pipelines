@@ -125,7 +125,7 @@ if __name__ == "__main__":
             trigger_scrape_using_spot_instances(count, 'scrape_data_using_spot_instance')
 
     elif config['scrape_data']['trigger_streaming_info_scrape_using_spot_instance']:
-        if 'scrape_streaming_info_using_spot_instance':
+        if 'scrape_streaming_info_using_spot_instance' in sys.argv:
             spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('big')
             install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
 
