@@ -540,10 +540,33 @@ def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index, scr
             interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
 
             interact.send('sudo python3.6 streaming_sources_scrape.py')
-            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
+            try:
+                interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=15*60)
+            except:
+                print('Waiting for query to end (in next step)...')
 
-            interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
-            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
+            client.close()
+
+            client = ssh_into_remote(public_dns, username, key_file)
+            with SSHClientInteraction(client, timeout=10 * 60, display=True) as interact:
+                default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+                interact.expect(default_prompt)
+
+                interact.send('cd /home/ec2-user/scraped/')
+                interact.expect(default_prompt.replace('~', 'scraped'))
+
+                keep_checking = True
+                while keep_checking:
+                    interact.send('ls')
+                    interact.expect(default_prompt.replace('~', 'scraped'))
+                    output = interact.current_output_clean
+                    if output.count('streaming_info.csv') != 0:
+                        keep_checking = False
+                    print('Sleeping for 5 min...')
+                    time.sleep(5*60)
+
+                interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
+                interact.expect(default_prompt.replace('~', 'scraped'))
 
         client.close()
         return True
