@@ -9,6 +9,7 @@ import numpy as np
 import requests
 import time
 from random import shuffle
+from json.decoder import JSONDecodeError
 
 
 config = yaml.safe_load(open('./../config.yml'))
@@ -36,10 +37,15 @@ def get_images(imdb_person_id):
         try:
             response = requests.get(external_id_url)
             response = response.json().get('person_results')
-        except:
+        except Exception as ex:
+            print(ex)
             return 'Error', 'Error', 'Error', 'Error'
     else:
-        response = response.json().get('person_results')
+        try:
+            response = response.json().get('person_results')
+        except JSONDecodeError:
+            print('JSONDecodeError')
+            return 'Error', 'Error', 'Error', 'Error'
 
     if response:
         response = response[0]
