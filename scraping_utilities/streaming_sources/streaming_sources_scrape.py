@@ -30,7 +30,7 @@ def parallelize_dataframe(df, func, n_cores=config['algo']['vCPU']):
 
 
 try:
-    df_justwatch_contents = pd.read_csv('~/justwatch_countries_contents.csv')
+    df_justwatch_contents = pd.read_csv('/tmp/justwatch_countries_contents.csv')
 except:
     countries = config['scrape_data']['countries'].copy()
 
@@ -156,9 +156,9 @@ except:
 
     print('Collecting content streaming info...')
     df_justwatch_contents = parallelize_dataframe(df_justwatch_contents, apply_get_content_data)
-    df_justwatch_contents.to_csv('~/justwatch_countries_contents.csv', index=False)
+    df_justwatch_contents.to_csv('/tmp/justwatch_countries_contents.csv', index=False)
 
-    df_justwatch_contents = pd.read_csv('~/justwatch_countries_contents.csv')
+    df_justwatch_contents = pd.read_csv('/tmp/justwatch_countries_contents.csv')
 
 df_justwatch_contents['external_ids'][pd.notnull(df_justwatch_contents['external_ids'])] = df_justwatch_contents['external_ids'][pd.notnull(df_justwatch_contents['external_ids'])].apply(eval)
 df_justwatch_contents['clips'][pd.notnull(df_justwatch_contents['clips'])] = df_justwatch_contents['clips'][pd.notnull(df_justwatch_contents['clips'])].apply(eval)
