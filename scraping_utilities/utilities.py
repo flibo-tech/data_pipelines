@@ -623,8 +623,11 @@ def get_imdb_titles(df_urls):
                     imdb_id = header.find('a')['href'].split('/')[2]
 
                     try:
-                        title_poster = item.find('img')['src']
-                        title_poster = title_poster.split('@._V1_')[0] + '@._V1_.' + title_poster.split('.')[-1]
+                        title_poster = item.find('img')['loadlate']
+                        if title_poster.count('images/nopicture') == 0:
+                            title_poster = title_poster.split('._V1_')[0] + '._V1_.' + title_poster.split('.')[-1]
+                        else:
+                            title_poster = None
                     except:
                         title_poster = None
 
@@ -790,7 +793,10 @@ def collect_new_imdb_ids():
             print('\nStarting to scrape title ids...')
             df_titles = get_imdb_titles(df)
             df_titles.drop_duplicates(inplace=True)
-            df_titles.to_csv('new_imdb_titles.csv', index=False)
+            if config['scrape_data']['refresh_imdb_meta_info']:
+                df_titles.to_csv(config['to_upload']+ 'content_meta_info.csv', index=False, sep='^')
+            else:
+                df_titles.to_csv('new_imdb_titles.csv', index=False)
             print('Title ids scraped.')
         elif config['scrape_data']['scrape_title_ids_on'] == 'remote':
             print('\nFile new_imdb_title_urls.csv has been updated. Push it to GIT to proceed.')
@@ -806,3 +812,5 @@ def collect_new_imdb_ids():
             trigger_scrape_using_spot_instances(count, 'scrape_title_ids_using_spot_instance')
     else:
         print('\nNo new title found for any language.')
+
+    return True

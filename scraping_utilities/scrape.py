@@ -141,6 +141,27 @@ if __name__ == "__main__":
                 'venv_path'] + 'python" scrape.py scrape_streaming_info_using_spot_instance')
             print('Spot instance launched. Check progress in open terminal.')
 
+    elif config['scrape_data']['refresh_imdb_meta_info']:
+        collect_new_imdb_ids()
+
+        if config['scrape_data']['scrape_title_ids_on'] == 'remote':
+            check = input('Scrape completed? (y/n)')
+            while check != 'y':
+                check = input('Scrape completed? (y/n)')
+
+            spot_instance_scraped_data_folder = config['spot_instance_scraped_data_folder'] + '\\scraped\\'
+            key = 'imdb_title_ids'
+
+            df = pd.DataFrame()
+            for filename in os.listdir(spot_instance_scraped_data_folder):
+                if filename.startswith(key) and filename.endswith('.csv'):
+                    print(filename)
+                    print(spot_instance_scraped_data_folder + filename)
+                    df = pd.concat([df, pd.read_csv(spot_instance_scraped_data_folder + filename)], axis=0)
+
+            df.drop_duplicates('imdb_content_id', inplace=True)
+            df.to_csv(config['to_upload']+ 'content_meta_info.csv', index=False, sep='^')
+
     else:
         if config['scrape_data']['collect_new_imdb_ids']:
             print('--------------------------------- collecting db imdb ids ---------------------------------')
