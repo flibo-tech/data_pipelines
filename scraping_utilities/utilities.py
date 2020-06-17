@@ -625,7 +625,7 @@ def get_imdb_titles(df_urls):
                     try:
                         title_poster = item.find('img')['loadlate']
                         if title_poster.count('images/nopicture') == 0:
-                            title_poster = title_poster.split('._V1_')[0] + '._V1_.' + title_poster.split('.')[-1]
+                            title_poster = title_poster.split('._V1_')[0] + '._V1_UY450.' + title_poster.split('.')[-1]
                         else:
                             title_poster = None
                     except:
