@@ -8,6 +8,7 @@ import yaml
 import pandas as pd
 import os
 import time
+from threading import Thread
 
 from movie_budget_n_metacritic_scrape import *
 from movie_content_scrape import *
@@ -35,6 +36,9 @@ if __name__ == "__main__":
     config = yaml.safe_load(open('./../config.yml'))
 
     if 'scrape_data_on_spot_instance' in sys.argv:
+        thread = Thread(target=keep_connection_alive_for_scraping)
+        thread.start()
+
         df_to_scrape = pd.read_csv('titles_to_scrape.csv')
         indices = [int(x) for x in sys.argv[-1].split('-')]
         df_to_scrape = df_to_scrape.iloc[indices[0]:indices[1], :]
@@ -62,6 +66,9 @@ if __name__ == "__main__":
                 df_scraped.to_csv('/home/ec2-user/scraped/'+scrape_function+'_'+sys.argv[-1]+'.csv', index=False)
 
     elif 'scrape_title_ids_on_spot_instance' in sys.argv:
+        thread = Thread(target=keep_connection_alive_for_scraping)
+        thread.start()
+
         df_to_scrape = pd.read_csv('new_imdb_title_urls.csv')
         indices = [int(x) for x in sys.argv[-1].split('-')]
         df_to_scrape = df_to_scrape.iloc[indices[0]:indices[1], :]

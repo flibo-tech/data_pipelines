@@ -19,6 +19,7 @@ import os
 LOGGER.setLevel(logging.WARNING)
 config = yaml.safe_load(open('./../config.yml'))
 
+
 def get_driver(proxy=None):
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
@@ -113,6 +114,31 @@ def parallelize_scraping(items, func, n_cores=config['algo']['vCPU']):
     pool.close()
     pool.join()
     return df
+
+
+def keep_connection_alive_for_scraping():
+    start_time = datetime.now()
+    keep_alive = True
+    while keep_alive:
+        time_since_start = (datetime.now() - start_time).seconds
+        if time_since_start < 60:
+            time_since_start = str(time_since_start) + ' seconds'
+        elif time_since_start < 3600:
+            time_since_start = str(time_since_start // 60) + ':' + str(time_since_start % 60) + ' minutes'
+        else:
+            time_since_start = str(time_since_start // 3600) + ':' + str((time_since_start % 3600) // 60) + ' hours'
+
+        print('Keeping connection alive after '+time_since_start+'...')
+
+        time.sleep(30)
+        try:
+            files = os.listdir('/home/ec2-user/scraped/')
+        except FileNotFoundError:
+            files = []
+        if files:
+            keep_alive = False
+
+    return True
 
 
 def launch_spot_instance(size='small'):
