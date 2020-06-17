@@ -70,44 +70,47 @@ if __name__ == "__main__":
         df_scraped = parallelize_scraping(df_to_scrape, get_imdb_titles)
         df_scraped.to_csv('/home/ec2-user/scraped/'+'imdb_title_ids'+'_'+sys.argv[-1]+'.csv', index=False)
 
+    elif 'operate_spot_instance_to_scrape_title_ids' in sys.argv:
+        spot_fleet_request_id, public_dns, private_ip = launch_spot_instance()
+        install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
+
+        scrape_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'], 'scrape_title_ids_on_spot_instance',
+                         sys.argv[-1])
+
+        cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + config[
+            'pem_key'] + ' ec2-user@' + public_dns + ':/home/ec2-user/scraped/ ' + config[
+                  'spot_instance_scraped_data_folder']
+        os.system('start "Downloading scraped data for index ' + sys.argv[-1] + '" /wait cmd /c ' + cmd)
+
+        close_spot_fleet_request_and_instances(spot_fleet_request_id)
+
     elif config['scrape_data']['prepare_input_for_scrape_using_spot_instance']:
-        if 'scrape_title_ids_using_spot_instance' in sys.argv:
-            spot_fleet_request_id, public_dns, private_ip = launch_spot_instance()
-            install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
+        print('Collecting db IDs')
+        collect_db_imdb_ids()
+        df_db_ids = pd.read_csv('db_ids.csv')
+        db_ids = list(df_db_ids['imdb_content_id'])
 
-            scrape_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'], 'scrape_title_ids_on_spot_instance', sys.argv[-1])
+        if config['scrape_data']['collect_new_imdb_ids']:
+            collect_new_imdb_ids()
 
-            cmd = 'scp -r -o StrictHostKeyChecking=no -i '+config['pem_key']+' ec2-user@'+public_dns+':/home/ec2-user/scraped/ '+config['spot_instance_scraped_data_folder']
-            os.system('start "Downloading scraped data for index '+sys.argv[-1]+'" /wait cmd /c ' + cmd)
+        df_new_ids = pd.read_csv('new_imdb_titles.csv')
+        df_new_ids = df_new_ids[(~df_new_ids['imdb_content_id'].isin(db_ids)) & (pd.notnull(df_new_ids['imdb_score']))]
 
-            close_spot_fleet_request_and_instances(spot_fleet_request_id)
-        else:
-            print('Collecting db IDs')
-            collect_db_imdb_ids()
-            df_db_ids = pd.read_csv('db_ids.csv')
-            db_ids = list(df_db_ids['imdb_content_id'])
+        df = pd.DataFrame()
+        for scrape_function in config['scrape_data']['movies']:
+            df_temp = df_new_ids[df_new_ids['type']=='movie']
+            df_temp = df_temp[['imdb_content_id']]
+            df_temp['function'] = scrape_function
+            df = pd.concat([df, df_temp], axis=0)
 
-            if config['scrape_data']['collect_new_imdb_ids']:
-                collect_new_imdb_ids()
+        for scrape_function in config['scrape_data']['tv_series']:
+            df_temp = df_new_ids[df_new_ids['type'] == 'tv']
+            df_temp = df_temp[['imdb_content_id']]
+            df_temp['function'] = scrape_function
+            df = pd.concat([df, df_temp], axis=0)
 
-            df_new_ids = pd.read_csv('new_imdb_titles.csv')
-            df_new_ids = df_new_ids[(~df_new_ids['imdb_content_id'].isin(db_ids)) & (pd.notnull(df_new_ids['imdb_score']))]
-
-            df = pd.DataFrame()
-            for scrape_function in config['scrape_data']['movies']:
-                df_temp = df_new_ids[df_new_ids['type']=='movie']
-                df_temp = df_temp[['imdb_content_id']]
-                df_temp['function'] = scrape_function
-                df = pd.concat([df, df_temp], axis=0)
-
-            for scrape_function in config['scrape_data']['tv_series']:
-                df_temp = df_new_ids[df_new_ids['type'] == 'tv']
-                df_temp = df_temp[['imdb_content_id']]
-                df_temp['function'] = scrape_function
-                df = pd.concat([df, df_temp], axis=0)
-
-            df.sort_values(['function', 'imdb_content_id'], inplace=True)
-            df.to_csv('titles_to_scrape.csv', index=False)
+        df.sort_values(['function', 'imdb_content_id'], inplace=True)
+        df.to_csv('titles_to_scrape.csv', index=False)
 
     elif config['scrape_data']['trigger_data_scrape_using_spot_instance']:
         if 'scrape_data_using_spot_instance' in sys.argv:

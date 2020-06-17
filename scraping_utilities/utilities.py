@@ -809,7 +809,7 @@ def collect_new_imdb_ids():
 
             print('\nStarting...')
             count = pd.read_csv('new_imdb_title_urls.csv').shape[0]
-            trigger_scrape_using_spot_instances(count, 'scrape_title_ids_using_spot_instance')
+            trigger_scrape_using_spot_instances(count, 'operate_spot_instance_to_scrape_title_ids')
     else:
         print('\nNo new title found for any language.')
 
