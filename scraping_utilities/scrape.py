@@ -159,7 +159,6 @@ if __name__ == "__main__":
             for filename in os.listdir(spot_instance_scraped_data_folder):
                 if filename.startswith(key) and filename.endswith('.csv'):
                     print(filename)
-                    print(spot_instance_scraped_data_folder + filename)
                     df = pd.concat([df, pd.read_csv(spot_instance_scraped_data_folder + filename)], axis=0)
 
             df.drop_duplicates('imdb_content_id', inplace=True)
@@ -169,6 +168,10 @@ if __name__ == "__main__":
                 df[col][pd.notnull(df[col])] = df[col][pd.notnull(df[col])].apply(lambda x: '{:.0f}'.format(x))
 
             df.to_csv(config['to_upload']+ 'content_meta_info.csv', index=False, sep='^')
+
+        print('\nUploading meta info file to server...')
+        cmd = 'scp -i ' + config['pem_key'] + ' ' + config['to_upload'] + 'content_meta_info.csv ec2-user@' + config['ec2']['public_dns'] + ':/tmp/'
+        os.system('start "Uploading meta info file to server" /wait cmd /c ' + cmd)
 
     else:
         if config['scrape_data']['collect_new_imdb_ids']:
