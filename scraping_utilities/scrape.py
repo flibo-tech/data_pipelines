@@ -163,6 +163,11 @@ if __name__ == "__main__":
                     df = pd.concat([df, pd.read_csv(spot_instance_scraped_data_folder + filename)], axis=0)
 
             df.drop_duplicates('imdb_content_id', inplace=True)
+
+            for col in ['metascore', 'votes']:
+                df[col][pd.notnull(df[col])] = df[col][pd.notnull(df[col])].apply(lambda x: eval(str(x).replace(',', '')))
+                df[col][pd.notnull(df[col])] = df[col][pd.notnull(df[col])].apply(lambda x: '{:.0f}'.format(x))
+
             df.to_csv(config['to_upload']+ 'content_meta_info.csv', index=False, sep='^')
 
     else:

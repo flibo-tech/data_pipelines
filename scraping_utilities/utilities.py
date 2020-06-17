@@ -794,6 +794,12 @@ def collect_new_imdb_ids():
             df_titles = get_imdb_titles(df)
             df_titles.drop_duplicates(inplace=True)
             if config['scrape_data']['refresh_imdb_meta_info']:
+                for col in ['metascore', 'votes']:
+                    df_titles[col][pd.notnull(df_titles[col])] = df_titles[col][
+                        pd.notnull(df_titles[col])].apply(lambda x: eval(str(x).replace(',', '')))
+                    df_titles[col][pd.notnull(df_titles[col])] = df_titles[col][
+                        pd.notnull(df_titles[col])].apply(lambda x: '{:.0f}'.format(x))
+
                 df_titles.to_csv(config['to_upload']+ 'content_meta_info.csv', index=False, sep='^')
             else:
                 df_titles.to_csv('new_imdb_titles.csv', index=False)
