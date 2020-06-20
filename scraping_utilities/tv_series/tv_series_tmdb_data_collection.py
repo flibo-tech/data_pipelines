@@ -89,6 +89,26 @@ def tv_series_tmdb_data_collection(df_titles):
         # Cleaning above data
         #######################################################################################################
 
+        language_mapping = {
+            'bn': 'Bengali',
+            'de': 'German',
+            'en': 'English',
+            'es': 'Spanish',
+            'fr': 'French',
+            'hi': 'Hindi',
+            'id': 'Indonesian',
+            'it': 'Italian',
+            'ja': 'Japanese',
+            'kn': 'Kannada',
+            'ml': 'Malayalam',
+            'mr': 'Marathi',
+            'pa': 'Punjabi',
+            'pt': 'Portuguese',
+            'ru': 'Russian',
+            'ta': 'Tamil',
+            'te': 'Telugu',
+            'tl': 'Tagalog'
+        }
 
         tmdb_image_base_url = 'https://image.tmdb.org/t/p/w500'
         df['cover_photo'] = df['tmdb_details'].apply(lambda x: eval(x).get('backdrop_path') if str(x) != 'nan' else None)
@@ -96,6 +116,8 @@ def tv_series_tmdb_data_collection(df_titles):
 
         df['poster'] = df['tmdb_details'].apply(lambda x: eval(x).get('poster_path') if str(x) != 'nan' else None)
         df['poster'] = df['poster'].apply(lambda x: tmdb_image_base_url+x if x else x)
+
+        df['original_language'] = df['tmdb_details'].apply(lambda x: language_mapping.get(eval(x).get('original_language')) if str(x) != 'nan' else None)
 
         df['homepage'] = df['tmdb_details'].apply(lambda x: eval(x).get('homepage') if str(x) != 'nan' else None)
 
