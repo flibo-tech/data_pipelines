@@ -43,13 +43,13 @@ def get_images(imdb_content_id, content_type):
 
     if response:
         response = response[0]
-        return response.get('id'), response.get('title'), response.get('original_title'), response.get('overview'), response.get('poster_path'), response.get('backdrop_path')
+        return response.get('id'), response.get('title'), response.get('original_title'), response.get('original_language'), response.get('overview'), response.get('poster_path'), response.get('backdrop_path')
     else:
         return None, None, None, None, None, None
 
 
 def apply_get_images(df):
-    df['fetched_tmdb_id'], df['title'], df['original_title'], df['overview'], df['poster'], df['cover'] = zip(*df.apply(lambda row: get_images(row['imdb_content_id'], row['type']), axis=1))
+    df['fetched_tmdb_id'], df['title'], df['original_title'], df['original_language'], df['overview'], df['poster'], df['cover'] = zip(*df.apply(lambda row: get_images(row['imdb_content_id'], row['type']), axis=1))
     return df
 
 
@@ -65,4 +65,26 @@ df_titles = pd.read_sql("""
 
 print('Collecting images...')
 df_images = parallelize_dataframe(df_titles, apply_get_images)
+
+language_mapping = {
+    'bn': 'Bengali',
+    'de': 'German',
+    'en': 'English',
+    'es': 'Spanish',
+    'fr': 'French',
+    'hi': 'Hindi',
+    'id': 'Indonesian',
+    'it': 'Italian',
+    'ja': 'Japanese',
+    'kn': 'Kannada',
+    'ml': 'Malayalam',
+    'mr': 'Marathi',
+    'pa': 'Punjabi',
+    'pt': 'Portuguese',
+    'ru': 'Russian',
+    'ta': 'Tamil',
+    'te': 'Telugu',
+    'tl': 'Tagalog'
+}
+df_images['original_language'] = df_images['original_language'].apply(lambda x: language_mapping.get(x))
 df_images.to_csv('images.csv', index=False)
