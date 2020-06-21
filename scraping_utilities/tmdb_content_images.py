@@ -248,7 +248,6 @@ language_mapping = {
     'wa': 'Walloon',
     'wo': 'Wolof',
     'xh': 'Xhosa',
-    'xx': 'No Language',
     'yi': 'Yiddish',
     'yo': 'Yoruba',
     'za': 'Zhuang',

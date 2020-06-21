@@ -271,7 +271,6 @@ def movie_tmdb_data_collection(df_titles):
             'wa': 'Walloon',
             'wo': 'Wolof',
             'xh': 'Xhosa',
-            'xx': 'No Language',
             'yi': 'Yiddish',
             'yo': 'Yoruba',
             'za': 'Zhuang',
