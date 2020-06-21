@@ -37,7 +37,7 @@ def get_images(imdb_content_id, content_type):
             response = requests.get(external_id_url)
             response = response.json().get(content_type+'_results')
         except:
-            return 'Error', 'Error', 'Error', 'Error', 'Error', 'Error'
+            return 'Error', 'Error', 'Error', 'Error', 'Error', 'Error', 'Error'
     else:
         response = response.json().get(content_type + '_results')
 
@@ -45,7 +45,7 @@ def get_images(imdb_content_id, content_type):
         response = response[0]
         return response.get('id'), response.get('title'), response.get('original_title'), response.get('original_language'), response.get('overview'), response.get('poster_path'), response.get('backdrop_path')
     else:
-        return None, None, None, None, None, None
+        return None, None, None, None, None, None, None
 
 
 def apply_get_images(df):
