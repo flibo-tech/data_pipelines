@@ -80,6 +80,7 @@ def movie_tmdb_data_collection(df_titles):
 
     df = pd.DataFrame(details)
     if not df.empty:
+        print(df.columns)
         df['tmdb_details'] = df['tmdb_details'].astype(str)
         df = df[['imdb_id', 'tmdb_id', 'tmdb_details']]
 
