@@ -296,8 +296,6 @@ def artists_to_contents():
 
     df_artists_search.to_csv(upload_resources_folder+'artists_to_contents.csv', index=False)
 
-    conn.close()
-
     return True
 
 
