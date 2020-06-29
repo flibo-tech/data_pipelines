@@ -30,7 +30,7 @@ scrape_data:
   prepare_input_for_scrape_using_spot_instance: False # file titles_to_scrape.csv prepared from this should be pushed to GIT before trigger_data_scrape_using_spot_instance
   collect_new_imdb_ids: False # to collect just the imdb ids for new content releases
   languages: ['en', 'hi', 'as', 'eu', 'bn', 'bho', 'ca', 'nl', 'fil', 'fr', 'gd', 'gl', 'de', 'gu', 'id', 'it', 'ja', 'kn', 'ko', 'ml', 'mr', 'myn', 'nah', 'or', 'pt', 'pa', 'ru', 'sa', 'sd', 'es', 'tl', 'ta', 'te', 'ur', 'cy']
-  latest_release_date: '2020-06-13'
+  latest_release_date: '2020-06-26'
   scrape_title_ids_on: 'local' # local / remote
 
   trigger_data_scrape_using_spot_instance: False # Empty directory spot_instance_scraped_data_folder before running this
@@ -114,7 +114,7 @@ upload_data:
   # Remember to remove or change names of files - artists_to_contents.csv & tags_to_contents.csv in upload_resources folder while running live_search for new data
 
 dump_into_database:
-  calculate_crew_table: True
+  calculate_crew_table: False
   tables: [] # 'movies', 'tv_series', 'artists', 'content_tags', 'awards_master', 'awards_distribution', 'content_certificates', 'content_crew' (upload crew Only After all other uploads), 'live_search', 'similar_contents', 'streaming_info'
 
 # similar movies algo
