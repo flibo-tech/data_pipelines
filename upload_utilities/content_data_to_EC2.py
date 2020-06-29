@@ -699,8 +699,7 @@ def content_crew():
         df_crew[col][pd.notnull(df_crew[col])] = df_crew[col][pd.notnull(df_crew[col])].apply(
             lambda x: '{:.0f}'.format(x))
 
-    df_crew[['person_id', 'content_id', 'credit_as', 'credit_category', 'credit_order',
-             'credit_episodes', 'credit_start_year', 'credit_end_year']].to_csv(to_upload_folder + 'content_crew.csv', sep='^', index=False)
+    df_crew[['person_id', 'content_id', 'credit_as', 'credit_category', 'credit_order']].to_csv(to_upload_folder + 'content_crew.csv', sep='^', index=False)
 
     conn.close()
 
