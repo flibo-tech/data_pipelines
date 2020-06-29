@@ -124,7 +124,7 @@ def common_contents(row):
 
     df_temp = df_contents[df_contents['content_id'].astype(str).str.startswith(content)]
     df_temp['check'] = df_temp['genres'].apply(lambda x: filter_on_genres(x) if str(x).lower() not in ['nan', 'none'] else False)
-    df_temp= df_temp[df_temp['check']]
+    df_temp = df_temp[df_temp['check']]
     if not df_temp.empty:
         del df_temp['check']
 
@@ -364,7 +364,7 @@ def tags_to_contents():
     return True
 
 
-def synonyms_similar_contents():
+def synonyms_similar_contents(content_ids=None, df_prev_clusters=None):
     engine = sqlalchemy.create_engine('postgres://' + config['sql']['user'] + ':' +
                                       config['sql']['password'] + '@' +
                                       config['sql']['host'] + ':' +
@@ -381,9 +381,11 @@ def synonyms_similar_contents():
     global stop_words
     stop_words = set(stopwords.words('english'))
 
+    print('Finding synonyms...')
     df_tags = parallelize_dataframe(df_tags, apply_find_synonyms)
 
     global df_contents
+    print('Grouping synonym_tags against content_ids...')
     df_contents = df_tags.groupby('content_id')['synonym_tags'].apply(sum).reset_index()
     df_contents['synonym_tags'] = df_contents['synonym_tags'].apply(lambda x: list(set(x)))
 
@@ -394,7 +396,14 @@ def synonyms_similar_contents():
 
     df_contents = pd.merge(df_contents, df_full_data, how='left', on='content_id')
 
-    df_contents_final = parallelize_dataframe(df_contents.copy(), apply_common_contents)
+    print('Calculating common contents...')
+    if content_ids:
+        df_selected_contents = df_contents[df_contents['content_id'].isin(content_ids)]
+        df_contents_final = parallelize_dataframe(df_selected_contents, apply_common_contents)
+        df_contents_final = pd.concat([df_contents_final, df_prev_clusters], axis=0)
+        df_contents_final.drop_duplicates('content_id', inplace=True)
+    else:
+        df_contents_final = parallelize_dataframe(df_contents.copy(), apply_common_contents)
 
     df_contents_final.to_csv('/tmp/synonyms_similar_contents.csv', index=False)
 
@@ -1066,7 +1075,20 @@ def calculate_on_remote(public_dns, private_ip, username, key_file, arg):
     with SSHClientInteraction(client, timeout=5*60*60, display=True) as interact:
         interact.expect(default_prompt)
 
+        print('\nTransferring full_data.csv to spot instance...')
         interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2']['public_dns'] + ':/tmp/full_data.csv /tmp/full_data.csv')
+        interact.expect(default_prompt)
+
+        print('\nTransferring synonyms_similar_contents.csv to spot instance...')
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2']['public_dns'] + ':/tmp/synonyms_similar_contents.csv /tmp/synonyms_similar_contents.csv')
+        interact.expect(default_prompt)
+
+        print('\nTransferring movies.csv to spot instance...')
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2']['public_dns'] + ':/tmp/movies.csv /tmp/movies.csv')
+        interact.expect(default_prompt)
+
+        print('\nTransferring tv_series.csv to spot instance...')
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2']['public_dns'] + ':/tmp/tv_series.csv /tmp/tv_series.csv')
         interact.expect(default_prompt)
 
         interact.send('source ./venv_similar_content/bin/activate')
@@ -1085,8 +1107,17 @@ def calculate_on_remote(public_dns, private_ip, username, key_file, arg):
         interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'upload_utilities'))
 
         print('\nUploading file similar_contents.csv to prod server...')
-        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/' + username + '/calculated/similar_contents.csv ec2-user@' +
-                      config['ec2']['public_dns'] + ':/tmp/')
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/' + username + '/calculated/similar_contents.csv ec2-user@' +config['ec2']['public_dns'] + ':/tmp/')
+
+        interact.send('sudo chmod -R 777 /tmp/')
+        interact.expect(default_prompt)
+
+        interact.send('sudo chmod 600 /tmp/key.pem')
+        interact.expect(default_prompt)
+
+        print('\nUploading file synonyms_similar_contents.csv to prod server...')
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /tmp/synonyms_similar_contents.csv ec2-user@' +config['ec2']['public_dns'] + ':/tmp/')
+
         interact.expect(default_prompt)
 
         client.close()

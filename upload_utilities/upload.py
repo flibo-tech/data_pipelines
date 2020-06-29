@@ -5,6 +5,7 @@ import yaml
 import sys
 import os
 import sqlalchemy
+import pandas as pd
 
 from content_data_to_EC2 import *
 from utilities import process_spot_instance_data, launch_spot_instance, install_requirements_on_remote, calculate_on_remote, close_spot_fleet_request_and_instances, calculate_crew_table_on_remote
@@ -47,7 +48,35 @@ if __name__ == "__main__":
         if 'calculate_on_spot_instance' in sys.argv:
             print('\n')
             print('----------- calculating similar contents -----------')
-            calculate_similar_contents()
+            if config['algo']['calculate_only_for_new_content']:
+                print('\nCalculating similar contents for new contents...')
+
+                content_ids = list(pd.read_csv('/tmp/movies.csv', sep='^')['content_id']) + list(
+                    pd.read_csv('/tmp/tv_series.csv', sep='^')['content_id'])
+                content_ids = list(set(content_ids))
+                print('Content ids for 1st stage -', len(content_ids))
+
+                engine = sqlalchemy.create_engine('postgres://' + config['sql']['user'] + ':' +
+                                                  config['sql']['password'] + '@' +
+                                                  config['sql']['host'] + ':' +
+                                                  str(config['sql']['port']) + '/' +
+                                                  config['sql']['db'])
+                conn = engine.connect()
+                df_prev_similar = pd.read_sql("""
+                                               select content_id, filtered_content as filter_contents, similar_content as knn_similar_contents
+                                               from """ + config['sql']['schema'] + """.content_details
+                                               """, con=conn)
+                conn.close()
+
+                df_prev_similar = calculate_similar_contents(content_ids, df_prev_similar, True)
+
+                print('\nCalculating similar contents for 2nd stage...')
+                content_ids = df_prev_similar['knn_similar_contents'][df_prev_similar['content_id'].isin(content_ids)].sum()
+                content_ids = list(set(content_ids))
+                print('Content ids for 2nd stage -', len(content_ids))
+                calculate_similar_contents(content_ids, df_prev_similar, False)
+            else:
+                calculate_similar_contents()
         elif 'operate_spot_instance_to_calculate' in sys.argv:
             spot_fleet_request_id, public_dns, private_ip = launch_spot_instance()
             install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])

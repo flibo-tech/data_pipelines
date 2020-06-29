@@ -1045,7 +1045,7 @@ def apply_calculate_similar(df):
     return df
 
 
-def calculate_similar_contents():
+def calculate_similar_contents(content_ids=None, df_prev_similar=None, return_dataframe=False):
     thread = Thread(target=keep_alive_connection_for_similar_contents)
     thread.start()
 
@@ -1053,13 +1053,30 @@ def calculate_similar_contents():
     df_contents_all_features['genres'] = df_contents_all_features['genres'].apply(lambda x: eval(x) if x else None)
     df_contents_all_features['language'] = df_contents_all_features['language'].apply(lambda x: eval(x) if x else None)
 
+    def clean_array(array):
+        output = []
+        if type(array) == list:
+            for item in array:
+                output.append(item.replace("'", '').strip())
+            return output
+        else:
+            return None
+
     global df_clusters
-    try:
-        df_clusters = pd.read_csv('/tmp/synonyms_similar_contents.csv')
-    except:
-        print('Calculating synonyms similar contents...')
+    print('Calculating synonyms similar contents...')
+    if content_ids:
+        df_prev_clusters = pd.read_csv('/tmp/synonyms_similar_contents.csv')
+        df_prev_clusters['synonym_tags'] = df_prev_clusters['synonym_tags'].apply(
+            lambda x: clean_array(eval(x)) if str(x).lower() not in ['none', 'nan'] else x)
+        df_prev_clusters['genres'] = df_prev_clusters['genres'].apply(
+            lambda x: clean_array(eval(x)) if str(x).lower() not in ['none', 'nan'] else x)
+        df_prev_clusters['language'] = df_prev_clusters['language'].apply(
+            lambda x: clean_array(eval(x)) if str(x).lower() not in ['none', 'nan'] else x)
+        df_prev_clusters['common_contents'] = df_prev_clusters['common_contents'].apply(lambda x: eval(x))
+        synonyms_similar_contents(content_ids, df_prev_clusters)
+    else:
         synonyms_similar_contents()
-        df_clusters = pd.read_csv('/tmp/synonyms_similar_contents.csv')
+    df_clusters = pd.read_csv('/tmp/synonyms_similar_contents.csv')
     df_clusters['common_contents'] = df_clusters['common_contents'].apply(lambda x: eval(x))
 
     engine = sqlalchemy.create_engine('postgres://' + config['sql']['user'] + ':' +
@@ -1093,7 +1110,17 @@ def calculate_similar_contents():
         global df_catg_contents_all_features
         df_catg_contents_all_features = df_contents_all_features[df_contents_all_features['content_id'].astype(str).str.contains('^'+str(id_start_digit))]
 
-        df_output = parallelize_dataframe(df_catg_contents.copy(), apply_calculate_similar)
+        if content_ids:
+            df_selected_contents = df_catg_contents[df_catg_contents['content_id'].isin(content_ids)]
+            df_output = parallelize_dataframe(df_selected_contents, apply_calculate_similar)
+            df_output = pd.concat([df_output, df_prev_similar], axis=0)
+            df_output.drop_duplicates('content_id', inplace=True)
+
+            if return_dataframe:
+                df_output = df_output[['content_id', 'filter_contents', 'knn_similar_contents']]
+                return df_output
+        else:
+            df_output = parallelize_dataframe(df_catg_contents.copy(), apply_calculate_similar)
 
         df_output = df_output[['content_id', 'filter_contents', 'knn_similar_contents']]
         df_output['content_id'] = df_output['content_id'].apply(lambda x: '{:.0f}'.format(x))
