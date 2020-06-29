@@ -79,7 +79,7 @@ def tv_series_tmdb_data_collection(df_titles):
             time_checkpoint = datetime.now()
 
     df = pd.DataFrame(details)
-    if not df.empty:
+    if 'tmdb_details' in df.columns:
         df['tmdb_details'] = df['tmdb_details'].astype(str)
         df = df[['imdb_id', 'tmdb_id', 'tmdb_details']]
 
@@ -350,5 +350,7 @@ def tv_series_tmdb_data_collection(df_titles):
         df = df.where((pd.notnull(df)), None)
 
         del df['tmdb_details']
+    else:
+        df = pd.DataFrame()
 
     return df
