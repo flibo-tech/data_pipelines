@@ -63,7 +63,7 @@ if __name__ == "__main__":
                                                   config['sql']['db'])
                 conn = engine.connect()
                 df_prev_similar = pd.read_sql("""
-                                               select content_id, filtered_content as filter_contents, similar_content as knn_similar_contents
+                                               select content_id, filtered_content as filter_contents, similar_content as similar_contents
                                                from """ + config['sql']['schema'] + """.content_details
                                                """, con=conn)
                 conn.close()
@@ -71,8 +71,8 @@ if __name__ == "__main__":
                 df_prev_similar = calculate_similar_contents(content_ids, df_prev_similar, True)
 
                 print('\nCalculating similar contents for 2nd stage...')
-                content_ids = df_prev_similar['knn_similar_contents'][
-                    pd.notnull(df_prev_similar['knn_similar_contents']) & df_prev_similar['content_id'].isin(content_ids)
+                content_ids = df_prev_similar['similar_contents'][
+                    pd.notnull(df_prev_similar['similar_contents']) & df_prev_similar['content_id'].isin(content_ids)
                 ].sum()
                 content_ids = list(set(content_ids))
                 print('Content ids for 2nd stage -', len(content_ids))

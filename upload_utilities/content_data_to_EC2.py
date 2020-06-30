@@ -1113,24 +1113,26 @@ def calculate_similar_contents(content_ids=None, df_prev_similar=None, return_da
         if content_ids:
             df_selected_contents = df_catg_contents[df_catg_contents['content_id'].isin(content_ids)]
             df_output = parallelize_dataframe(df_selected_contents, apply_calculate_similar)
-
-            df_output = pd.concat([df_output, df_prev_similar], axis=0)
-            df_output.drop_duplicates('content_id', inplace=True)
-
-            if return_dataframe:
-                df_output = df_output[['content_id', 'filter_contents', 'knn_similar_contents']]
-                return df_output
         else:
             df_output = parallelize_dataframe(df_catg_contents.copy(), apply_calculate_similar)
 
         df_output = df_output[['content_id', 'filter_contents', 'knn_similar_contents']]
-        df_output['content_id'] = df_output['content_id'].apply(lambda x: '{:.0f}'.format(x))
         df_output.rename(columns={'knn_similar_contents': 'similar_contents'}, inplace=True)
 
         df_similar_contents = pd.concat([df_similar_contents, df_output], axis=0)
 
-    df_similar_contents['similar_contents'] = df_similar_contents['similar_contents'].apply(lambda x: str(x).replace("'", '').replace('[', '{').replace(']', '}').replace('(', '{').replace(')', '}'))
-    df_similar_contents['filter_contents'] = df_similar_contents['filter_contents'].apply(lambda x: str(x).replace("'", '').replace('[', '{').replace(']', '}').replace('(', '{').replace(')', '}'))
+    df_similar_contents = df_similar_contents[['content_id', 'filter_contents', 'similar_contents']]
+    if content_ids:
+        df_similar_contents = pd.concat([df_similar_contents, df_prev_similar], axis=0)
+        df_similar_contents.drop_duplicates('content_id', inplace=True)
+
+        if return_dataframe:
+            return df_similar_contents
+
+    df_similar_contents.drop_duplicates('content_id', inplace=True)
+    df_similar_contents['content_id'] = df_similar_contents['content_id'].apply(lambda x: '{:.0f}'.format(x))
+    df_similar_contents['similar_contents'] = df_similar_contents['similar_contents'].apply(lambda x: str(x).replace("'", '').replace('[', '{').replace(']', '}').replace('(', '{').replace(')', '}') if str(x).lower() not in ('none', 'nan') else None)
+    df_similar_contents['filter_contents'] = df_similar_contents['filter_contents'].apply(lambda x: str(x).replace("'", '').replace('[', '{').replace(']', '}').replace('(', '{').replace(')', '}') if str(x).lower() not in ('none', 'nan') else None)
     df_similar_contents.to_csv('/home/ec2-user/calculated/similar_contents.csv', sep='^', index=False)
 
     return True
