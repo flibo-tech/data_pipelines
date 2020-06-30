@@ -1140,8 +1140,8 @@ def calculate_similar_contents(content_ids=None, df_prev_similar=None, return_da
 
         df_similar_contents = pd.concat([df_similar_contents, df_output], axis=0)
 
-    df_similar_contents['similar_contents'] = df_similar_contents['similar_contents'].apply(lambda x: str(x).replace("'", '').replace('[', '{').replace(']', '}'))
-    df_similar_contents['filter_contents'] = df_similar_contents['filter_contents'].apply(lambda x: str(x).replace("'", '').replace('[', '{').replace(']', '}'))
+    df_similar_contents['similar_contents'] = df_similar_contents['similar_contents'].apply(lambda x: str(x).replace("'", '').replace('[', '{').replace(']', '}').replace('(', '{').replace(')', '}'))
+    df_similar_contents['filter_contents'] = df_similar_contents['filter_contents'].apply(lambda x: str(x).replace("'", '').replace('[', '{').replace(']', '}').replace('(', '{').replace(')', '}'))
     df_similar_contents.to_csv('/home/ec2-user/calculated/similar_contents.csv', sep='^', index=False)
 
     return True
