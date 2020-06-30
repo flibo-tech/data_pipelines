@@ -1113,38 +1113,26 @@ def calculate_similar_contents(content_ids=None, df_prev_similar=None, return_da
         if content_ids:
             df_selected_contents = df_catg_contents[df_catg_contents['content_id'].isin(content_ids)]
             df_output = parallelize_dataframe(df_selected_contents, apply_calculate_similar)
-            df_output.reset_index(drop=True, inplace=True)
-            for i in range(df_output.shape[0]):
-                print(df_output.loc[i, 'knn_similar_contents'])
-            print('\n')
-
-            df_output['filter_contents'][pd.isnull(df_output['filter_contents'])] = df_output['filter_contents'][
-                pd.isnull(df_output['filter_contents'])].apply(lambda x: [])
-            df_output['knn_similar_contents'][pd.isnull(df_output['knn_similar_contents'])] = \
-                df_output['knn_similar_contents'][pd.isnull(df_output['knn_similar_contents'])].apply(lambda x: [])
-
-            for i in range(df_output.shape[0]):
-                print(df_output.loc[i, 'knn_similar_contents'])
-            print('\n')
-
             df_output = pd.concat([df_output, df_prev_similar], axis=0)
+
             df_output.drop_duplicates('content_id', inplace=True)
             df_output = df_output[pd.notnull(df_output['content_id'])]
             df_output['filter_contents'][pd.isnull(df_output['filter_contents'])] = df_output['filter_contents'][
-                pd.isnull(df_output['filter_contents'])].apply(lambda x: [])
+                pd.isnull(df_output['filter_contents'])].apply(lambda x: ())
             df_output['knn_similar_contents'][pd.isnull(df_output['knn_similar_contents'])] = \
-            df_output['knn_similar_contents'][pd.isnull(df_output['knn_similar_contents'])].apply(lambda x: [])
+            df_output['knn_similar_contents'][pd.isnull(df_output['knn_similar_contents'])].apply(lambda x: ())
 
             if return_dataframe:
                 df_output = df_output[['content_id', 'filter_contents', 'knn_similar_contents']]
                 return df_output
         else:
             df_output = parallelize_dataframe(df_catg_contents.copy(), apply_calculate_similar)
+
             df_output = df_output[pd.notnull(df_output['content_id'])]
             df_output['filter_contents'][pd.isnull(df_output['filter_contents'])] = df_output['filter_contents'][
-                pd.isnull(df_output['filter_contents'])].apply(lambda x: [])
+                pd.isnull(df_output['filter_contents'])].apply(lambda x: ())
             df_output['knn_similar_contents'][pd.isnull(df_output['knn_similar_contents'])] = \
-            df_output['knn_similar_contents'][pd.isnull(df_output['knn_similar_contents'])].apply(lambda x: [])
+            df_output['knn_similar_contents'][pd.isnull(df_output['knn_similar_contents'])].apply(lambda x: ())
 
         df_output = df_output[['content_id', 'filter_contents', 'knn_similar_contents']]
         df_output['content_id'] = df_output['content_id'].apply(lambda x: '{:.0f}'.format(x))
