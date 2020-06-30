@@ -145,13 +145,12 @@ def common_contents(row):
 
             df_temp['common'] = df_temp['synonym_tags'].apply(lambda x: len(set(x).intersection(synonym_tags)))
             contents = list(df_temp.sort_values('common', ascending=False)['content_id'].head(common_count).unique())
-    print(row, '\n', contents, '\n\n')
     return contents
 
 
 def apply_common_contents(df):
-    print('\n', df.shape, '\n')
-    df['common_contents'] = df.apply(lambda row: common_contents(row), axis=1)
+    if not df.empty:
+        df['common_contents'] = df.apply(lambda row: common_contents(row), axis=1)
     return df
 
 
