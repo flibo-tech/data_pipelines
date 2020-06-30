@@ -588,8 +588,9 @@ def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index, scr
                     output = interact.current_output_clean
                     if output.count('streaming_info.csv') != 0:
                         keep_checking = False
-                    print('Sleeping for 5 min...')
-                    time.sleep(5*60)
+                    else:
+                        print('Sleeping for 5 min...')
+                        time.sleep(2*60)
 
                 interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
                 interact.expect(default_prompt.replace('~', 'scraped'))
