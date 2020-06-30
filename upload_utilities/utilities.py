@@ -1107,11 +1107,11 @@ def calculate_on_remote(public_dns, private_ip, username, key_file, arg):
 
         print('\nUploading file similar_contents.csv to prod server...')
         interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/' + username + '/calculated/similar_contents.csv ec2-user@' +config['ec2']['public_dns'] + ':/tmp/')
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'upload_utilities'))
 
         print('\nUploading file synonyms_similar_contents.csv to prod server...')
         interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /tmp/synonyms_similar_contents.csv ec2-user@' +config['ec2']['public_dns'] + ':/tmp/')
-
-        interact.expect(default_prompt)
+        interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'upload_utilities'))
 
         client.close()
         return True
