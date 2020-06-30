@@ -74,7 +74,7 @@ except:
         url_part_5 = ""","release_year_from":"""
         url_part_6 = ""","release_year_until":"""
         url_part_7 = ""","scoring_filter_types":null,"timeline_type":null,"q":null,"person_id":null,"sort_by":null,"sort_asc":null,"query":null,"page":"""
-        url_part_8 = ""","page_size":1000}"""
+        url_part_8 = ""","page_size":100}"""
 
         base_url = url_part_3+ \
                    row['content_type'] + \
