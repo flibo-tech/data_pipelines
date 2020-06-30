@@ -15,7 +15,15 @@ from multiprocessing import Pool
 import sqlalchemy
 import re
 import requests
+from threading import Thread
 
+import sys
+sys.path.extend(['./..'])
+from utilities import keep_connection_alive_for_scraping
+
+
+thread = Thread(target=keep_connection_alive_for_scraping)
+thread.start()
 
 config = yaml.safe_load(open('./../../config.yml'))
 data_folder = config['streaming_sources']

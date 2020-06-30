@@ -540,7 +540,6 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file):
 
 
 def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index, scraping_streaming_info=False):
-    keep_connection_alive_for_scraping()
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
     client = ssh_into_remote(public_dns, username, key_file)
