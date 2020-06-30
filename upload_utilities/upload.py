@@ -71,7 +71,9 @@ if __name__ == "__main__":
                 df_prev_similar = calculate_similar_contents(content_ids, df_prev_similar, True)
 
                 print('\nCalculating similar contents for 2nd stage...')
-                content_ids = df_prev_similar['knn_similar_contents'][df_prev_similar['content_id'].isin(content_ids)].sum()
+                content_ids = df_prev_similar['knn_similar_contents'][
+                    pd.notnull(df_prev_similar['knn_similar_contents']) & df_prev_similar['content_id'].isin(content_ids)
+                ].sum()
                 content_ids = list(set(content_ids))
                 print('Content ids for 2nd stage -', len(content_ids))
                 calculate_similar_contents(content_ids, df_prev_similar, False)
