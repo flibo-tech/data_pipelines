@@ -1,5 +1,3 @@
-# Before running this code move streaming_sources.csv from folder streaming_sources
-
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -16,10 +14,32 @@ import sqlalchemy
 import re
 import requests
 from threading import Thread
+import os
 
-import sys
-sys.path.extend(['./..'])
-from utilities import keep_connection_alive_for_scraping
+
+def keep_connection_alive_for_scraping():
+    start_time = datetime.now()
+    keep_alive = True
+    while keep_alive:
+        time_since_start = (datetime.now() - start_time).seconds
+        if time_since_start < 60:
+            time_since_start = str(time_since_start) + ' seconds'
+        elif time_since_start < 3600:
+            time_since_start = str(time_since_start // 60) + ':' + str(time_since_start % 60) + ' minutes'
+        else:
+            time_since_start = str(time_since_start // 3600) + ':' + str((time_since_start % 3600) // 60) + ' hours'
+
+        print('Keeping connection alive after '+time_since_start+'...')
+
+        time.sleep(30)
+        try:
+            files = os.listdir('/home/ec2-user/scraped/')
+        except FileNotFoundError:
+            files = []
+        if files:
+            keep_alive = False
+
+    return True
 
 
 thread = Thread(target=keep_connection_alive_for_scraping)
