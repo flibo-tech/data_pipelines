@@ -1040,7 +1040,8 @@ def calculate_similar(content):
 
 
 def apply_calculate_similar(df):
-    df['filter_contents'], df['knn_similar_contents'] = zip(*df['content_id'].apply(calculate_similar))
+    if not df.empty:
+        df['filter_contents'], df['knn_similar_contents'] = zip(*df['content_id'].apply(calculate_similar))
     return df
 
 
