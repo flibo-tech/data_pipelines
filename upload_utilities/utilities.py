@@ -269,6 +269,7 @@ def artists_to_contents():
                                 from """ + config['sql']['schema'] + """.content_crew
                                 where credit_order <=5
                                 """, con=conn)
+    conn.close()
 
     df_crew = pd.concat([df_db_crew, df_crew], axis=0)
     df_crew.drop_duplicates(inplace=True)
