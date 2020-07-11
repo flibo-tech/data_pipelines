@@ -44,7 +44,7 @@ scrape_data:
   tv_series: ['tv_series_content_scrape', 'tv_series_crew_scrape', 'tv_series_details_scrape', 'tv_series_keywords_scrape', 'tv_series_synopsys_scrape', 'tv_series_technical_specs_scrape', 'tv_series_tmdb_data_collection'] #'tv_series_content_scrape', 'tv_series_crew_scrape', 'tv_series_details_scrape', 'tv_series_keywords_scrape', 'tv_series_synopsys_scrape', 'tv_series_technical_specs_scrape', 'tv_series_tmdb_artist_data_collection', 'tv_series_tmdb_data_collection'
   awards: [] #'awards_scrape' -- Before running this remember to delete latest year's awards scraped from database & file awards_scraped.csv at scraped_data_folder
 
-  trigger_streaming_info_scrape_using_spot_instance: False
+  trigger_streaming_info_scrape_using_spot_instance: True
   countries: {
     en_CA: {
       name: 'Canada',
@@ -114,14 +114,14 @@ upload_data:
   # Remember to remove or change names of files - artists_to_contents.csv & tags_to_contents.csv in upload_resources folder while running live_search for new data
 
 dump_into_database:
-  calculate_crew_table: True
+  calculate_crew_table: False
   tables: [] # 'movies', 'tv_series', 'artists', 'content_tags', 'awards_master', 'awards_distribution', 'content_certificates', 'content_crew' (upload crew Only After all other uploads), 'live_search', 'similar_contents', 'streaming_info'
 
 # similar movies algo
 algo:
   weight_power: 0.65
   neighbours: 50
-  vCPU: 4
+  vCPU: 96
   calculate_similar_contents: False # This functionality calculates similar movies by fetching data from sql db only. Remember to remove or change name of files synonyms_similar_contents.csv & full_data.csv in upload_resources folder while running this for new data
   calculate_only_for_new_content: True
 
