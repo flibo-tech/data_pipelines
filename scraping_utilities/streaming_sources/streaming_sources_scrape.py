@@ -369,6 +369,8 @@ df_platforms = pd.DataFrame(platforms)
 df_platforms.drop_duplicates(inplace=True)
 
 df_streaming_info = pd.merge(df_streaming_info, df_platforms, how='left', on='provider_id')
+df_streaming_info = df_streaming_info[pd.notnull(df_streaming_info['provider_name'])]
+
 df_streaming_info['country_name'] = df_streaming_info['country_code'].apply(
     lambda x: countries[x]['name'].lower().replace(' ', '_'))
 del df_streaming_info['country_code']
