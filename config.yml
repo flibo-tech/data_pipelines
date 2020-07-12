@@ -122,7 +122,7 @@ algo:
   weight_power: 0.65
   neighbours: 50
   vCPU: 96
-  calculate_similar_contents: True # This functionality calculates similar movies by fetching data from sql db only. Remember to remove or change name of files synonyms_similar_contents.csv & full_data.csv in upload_resources folder while running this for new data
+  calculate_similar_contents: False # This functionality calculates similar movies by fetching data from sql db only. Remember to remove or change name of files synonyms_similar_contents.csv & full_data.csv in upload_resources folder while running this for new data
   calculate_only_for_new_content: True
 
 # s3 credentials
