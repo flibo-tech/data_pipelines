@@ -17,6 +17,7 @@ if __name__ == "__main__":
     if config['dump_into_database']['calculate_crew_table']:
         if 'operate_spot_instance_to_calculate_crew_table' in sys.argv:
             spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('small')
+            print('Public dns -', public_dns)
             install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'], postgres=True)
 
             calculate_crew_table_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
