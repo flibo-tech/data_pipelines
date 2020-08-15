@@ -1533,7 +1533,7 @@ def dump_movies(engine):
     trans = con.begin()
     sql = """
           copy """ + config['sql']['schema'] + """.content_details
-          (content_id,imdb_content_id,title,original_title,is_adult,release_year,runtime,genres,imdb_score,num_votes,summary_text,country,language,filming_location,production_house,budget,opening_weekend_USA,gross_USA,gross_worldwide,critic_review,user_review,award_wins,award_nominations,youtube_trailer_id,cover,poster,metacritic_score,tmdb_id,tmdb_popularity,tmdb_score,tomato_id,tomato_meter,tomato_rating,tomato_score,tomato_userrating_meter,tomato_userrating_rating,tomato_userrating_score,nudity,violence,profanity,drugs,intense_scenes,avg_age_limit,mpaa_age_limit,tags,similar_content,filtered_content,justwatch_rating,website,facebook,instagram,twitter,original_language)
+          (content_id,imdb_content_id,title,original_title,is_adult,release_year,runtime,genres,imdb_score,num_votes,summary_text,country,language,filming_location,production_house,budget,opening_weekend_USA,gross_USA,gross_worldwide,critic_review,user_review,award_wins,award_nominations,youtube_trailer_id,cover,poster,metacritic_score,tmdb_id,tmdb_popularity,tmdb_score,tomato_id,tomato_meter,tomato_rating,tomato_score,tomato_userrating_meter,tomato_userrating_rating,tomato_userrating_score,nudity,violence,profanity,drugs,intense_scenes,avg_age_limit,mpaa_age_limit,tags,similar_content,filtered_content,justwatch_rating,website,facebook,instagram,twitter,original_language,covers,posters)
           FROM '/tmp/movies.csv'
           WITH DELIMITER AS '^'
           CSV HEADER;
@@ -1569,7 +1569,7 @@ def dump_tv_series(engine):
     trans = con.begin()
     sql = """
           copy """ + config['sql']['schema'] + """.content_details
-          (content_id,imdb_content_id,title,original_title,is_adult,release_year,end_year,runtime,genres,imdb_score,num_votes,summary_text,country,language,filming_location,production_house,budget,opening_weekend_usa,gross_usa,gross_worldwide,critic_review,user_review,award_wins,award_nominations,youtube_trailer_id,cover,poster,metacritic_score,tmdb_id,tmdb_popularity,tmdb_score,tomato_id,tomato_meter,tomato_rating,tomato_score,tomato_userrating_meter,tomato_userrating_rating,tomato_userrating_score,nudity,violence,profanity,drugs,intense_scenes,avg_age_limit,mpaa_age_limit,tags,similar_content,filtered_content,justwatch_rating,website,facebook,instagram,twitter,episodes,seasons,in_production,scripting,original_language,type)
+          (content_id,imdb_content_id,title,original_title,is_adult,release_year,end_year,runtime,genres,imdb_score,num_votes,summary_text,country,language,filming_location,production_house,budget,opening_weekend_usa,gross_usa,gross_worldwide,critic_review,user_review,award_wins,award_nominations,youtube_trailer_id,cover,poster,metacritic_score,tmdb_id,tmdb_popularity,tmdb_score,tomato_id,tomato_meter,tomato_rating,tomato_score,tomato_userrating_meter,tomato_userrating_rating,tomato_userrating_score,nudity,violence,profanity,drugs,intense_scenes,avg_age_limit,mpaa_age_limit,tags,similar_content,filtered_content,justwatch_rating,website,facebook,instagram,twitter,episodes,seasons,in_production,scripting,original_language,covers,posters,type)
           FROM '/tmp/tv_series.csv'
           WITH DELIMITER AS '^'
           CSV HEADER;
