@@ -165,6 +165,8 @@ def movies_details():
         'imdb__budget': 'budget',
         'imdb__country': 'country',
         'tmdb__cover_photo': 'cover',
+        'tmdb__covers': 'covers',
+        'tmdb__posters': 'posters',
         'tmdb__original_language': 'original_language',
         'imdb__critic_review': 'critic_review',
         'content__drugs': 'drugs',
@@ -202,7 +204,7 @@ def movies_details():
         'tmdb__youtube_trailer': 'youtube_trailer_id'
     }, inplace=True)
 
-    basic_columns = ['content_id', 'imdb_content_id', 'title', 'original_title', 'is_adult', 'release_year', 'runtime', 'genres', 'imdb_score', 'num_votes', 'summary_text', 'country', 'language', 'filming_location', 'production_house', 'budget', 'opening_weekend_usa', 'gross_usa', 'gross_worldwide', 'critic_review', 'user_review', 'award_wins', 'award_nominations', 'youtube_trailer_id', 'cover', 'poster', 'metacritic_score', 'tmdb_id', 'tmdb_popularity', 'tmdb_score', 'tomato_id', 'tomato_meter', 'tomato_rating', 'tomato_score', 'tomato_userrating_meter', 'tomato_userrating_rating', 'tomato_userrating_score', 'nudity', 'violence', 'profanity', 'drugs', 'intense_scenes', 'avg_age_limit', 'mpaa_age_limit', 'tags', 'similar_content', 'filtered_content', 'justwatch_rating', 'original_language']
+    basic_columns = ['content_id', 'imdb_content_id', 'title', 'original_title', 'is_adult', 'release_year', 'runtime', 'genres', 'imdb_score', 'num_votes', 'summary_text', 'country', 'language', 'filming_location', 'production_house', 'budget', 'opening_weekend_usa', 'gross_usa', 'gross_worldwide', 'critic_review', 'user_review', 'award_wins', 'award_nominations', 'youtube_trailer_id', 'cover', 'poster', 'metacritic_score', 'tmdb_id', 'tmdb_popularity', 'tmdb_score', 'tomato_id', 'tomato_meter', 'tomato_rating', 'tomato_score', 'tomato_userrating_meter', 'tomato_userrating_rating', 'tomato_userrating_score', 'nudity', 'violence', 'profanity', 'drugs', 'intense_scenes', 'avg_age_limit', 'mpaa_age_limit', 'tags', 'similar_content', 'filtered_content', 'justwatch_rating', 'original_language', 'covers', 'posters']
     df_columns = list(df_movies.columns)
     missing_columns = [col for col in basic_columns if col not in df_columns]
     for col in missing_columns:
@@ -230,7 +232,7 @@ def movies_details():
         for item in eval(str_array):
             cleaned_array.append(item.replace('"', '').replace("'", '').strip())
         return set(cleaned_array)
-    list_columns = ['genres', 'country', 'language', 'production_house']
+    list_columns = ['genres', 'country', 'language', 'production_house', 'covers', 'posters']
     for col in list_columns:
         df_movies[col][pd.notnull(df_movies[col])] = df_movies[col][pd.notnull(df_movies[col])].apply(lambda x: clean_col_array(str(x)))
 
@@ -242,7 +244,7 @@ def movies_details():
                            'tomato_userrating_meter', 'tomato_userrating_rating', 'tomato_userrating_score',
                            'nudity', 'violence', 'profanity', 'drugs', 'intense_scenes', 'avg_age_limit', 'mpaa_age_limit', 'tags',
                            'similar_content', 'filtered_content', 'justwatch_rating', 'website', 'facebook','instagram', 'twitter',
-                           'original_language']]
+                           'original_language', 'covers', 'posters']]
 
     # Creating content_id based on ids in db
     engine = sqlalchemy.create_engine('postgres://'+config['sql']['user']+':'+config['sql']['password']+'@'+config['sql']['host']+':'+str(config['sql']['port'])+'/'+config['sql']['db'])
@@ -424,6 +426,8 @@ def tv_series_details():
         'imdb__budget': 'budget',
         'imdb__country': 'country',
         'tmdb__cover_photo': 'cover',
+        'tmdb__covers': 'covers',
+        'tmdb__posters': 'posters',
         'imdb__critic_review': 'critic_review',
         'tmdb__original_language': 'original_language',
         'content__drugs': 'drugs',
@@ -466,7 +470,7 @@ def tv_series_details():
         'tmdb__content_type': 'scripting'
     }, inplace=True)
 
-    basic_columns = ['content_id', 'imdb_content_id', 'title', 'original_title', 'is_adult', 'release_year', 'end_year', 'runtime', 'genres', 'imdb_score', 'num_votes', 'summary_text', 'country', 'language', 'filming_location', 'production_house', 'budget', 'opening_weekend_usa', 'gross_usa', 'gross_worldwide', 'critic_review', 'user_review', 'award_wins', 'award_nominations', 'youtube_trailer_id', 'cover', 'poster', 'metacritic_score', 'tmdb_id', 'tmdb_popularity', 'tmdb_score', 'tomato_id', 'tomato_meter', 'tomato_rating', 'tomato_score', 'tomato_userrating_meter', 'tomato_userrating_rating', 'tomato_userrating_score', 'nudity', 'violence', 'profanity', 'drugs', 'intense_scenes', 'avg_age_limit', 'mpaa_age_limit', 'tags', 'similar_content', 'filtered_content', 'episodes', 'seasons', 'in_production', 'scripting', 'justwatch_rating', 'original_language']
+    basic_columns = ['content_id', 'imdb_content_id', 'title', 'original_title', 'is_adult', 'release_year', 'end_year', 'runtime', 'genres', 'imdb_score', 'num_votes', 'summary_text', 'country', 'language', 'filming_location', 'production_house', 'budget', 'opening_weekend_usa', 'gross_usa', 'gross_worldwide', 'critic_review', 'user_review', 'award_wins', 'award_nominations', 'youtube_trailer_id', 'cover', 'poster', 'metacritic_score', 'tmdb_id', 'tmdb_popularity', 'tmdb_score', 'tomato_id', 'tomato_meter', 'tomato_rating', 'tomato_score', 'tomato_userrating_meter', 'tomato_userrating_rating', 'tomato_userrating_score', 'nudity', 'violence', 'profanity', 'drugs', 'intense_scenes', 'avg_age_limit', 'mpaa_age_limit', 'tags', 'similar_content', 'filtered_content', 'episodes', 'seasons', 'in_production', 'scripting', 'justwatch_rating', 'original_language', 'covers', 'posters']
     df_columns = list(df_tv_series.columns)
     missing_columns = [col for col in basic_columns if col not in df_columns]
     for col in missing_columns:
@@ -494,7 +498,7 @@ def tv_series_details():
         for item in eval(str_array):
             cleaned_array.append(item.replace('"', '').replace("'", '').strip())
         return set(cleaned_array)
-    list_columns = ['genres', 'country', 'language', 'production_house']
+    list_columns = ['genres', 'country', 'language', 'production_house', 'covers', 'posters']
     for col in list_columns:
         df_tv_series[col][pd.notnull(df_tv_series[col])] = df_tv_series[col][pd.notnull(df_tv_series[col])].apply(lambda x: clean_col_array(str(x)))
 
@@ -506,7 +510,7 @@ def tv_series_details():
                            'tomato_userrating_meter', 'tomato_userrating_rating', 'tomato_userrating_score',
                            'nudity', 'violence', 'profanity', 'drugs', 'intense_scenes', 'avg_age_limit', 'mpaa_age_limit', 'tags',
                            'similar_content', 'filtered_content', 'justwatch_rating', 'website', 'facebook','instagram', 'twitter',
-                           'episodes', 'seasons', 'in_production', 'scripting', 'original_language']]
+                           'episodes', 'seasons', 'in_production', 'scripting', 'original_language', 'covers', 'posters']]
     df_tv_series['type'] = 'tv'
 
     # Creating content_id based on ids in db
