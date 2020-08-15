@@ -34,6 +34,23 @@ def tv_series_tmdb_data_collection(df_titles):
             tmdb_details_url = 'https://api.themoviedb.org/3/tv/'+str(tmdb_id)+'?api_key='+tmdb_api_key+'&language=en-US'
             tmdb_details = requests.get(tmdb_details_url).json()
 
+            try:
+                tmdb_images_url = 'https://api.themoviedb.org/3/tv/' + str(tmdb_id) + '/images?api_key=' + tmdb_api_key + '&language=en-US&include_image_language=en%2Cnull'
+                image_response = requests.get(tmdb_images_url).json()
+
+                covers = image_response.get('backdrops', [])
+                covers = [x.get('file_path') for x in covers]
+                covers = ['https://image.tmdb.org/t/p/original'+x for x in covers]
+                tmdb_details['covers'] = covers
+
+                posters = image_response.get('posters', [])
+                posters = [x.get('file_path') for x in posters]
+                posters = ['https://image.tmdb.org/t/p/original' + x for x in posters]
+                tmdb_details['posters'] = posters
+            except:
+                tmdb_details['covers'] = None
+                tmdb_details['posters'] = None
+
             tmdb_videos_url = 'https://api.themoviedb.org/3/tv/'+str(tmdb_id)+'/videos?api_key='+tmdb_api_key+'&language=en-US'
             video_response = requests.get(tmdb_videos_url).json()
             tmdb_details['tmdb_videos'] = video_response.get('results')
@@ -284,6 +301,9 @@ def tv_series_tmdb_data_collection(df_titles):
 
         df['poster'] = df['tmdb_details'].apply(lambda x: eval(x).get('poster_path') if str(x) != 'nan' else None)
         df['poster'] = df['poster'].apply(lambda x: tmdb_image_base_url+x if x else x)
+
+        df['posters'] = df['tmdb_details'].apply(lambda x: eval(x).get('posters') if str(x) != 'nan' else None)
+        df['covers'] = df['tmdb_details'].apply(lambda x: eval(x).get('covers') if str(x) != 'nan' else None)
 
         df['original_language'] = df['tmdb_details'].apply(lambda x: language_mapping.get(eval(x).get('original_language')) if str(x) != 'nan' else None)
 
