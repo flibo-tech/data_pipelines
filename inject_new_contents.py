@@ -12,7 +12,7 @@ def update_config(regex_pattern, new_string):
     return True
 
 
-update_config('vCPU:\s\d+$', 'vCPU: 442')
+update_config('vCPU:\s\d+$', 'vCPU: 96')
 
 
 def push_to_git(files, commit_message):
@@ -25,4 +25,4 @@ def push_to_git(files, commit_message):
     return True
 
 
-push_to_git(['./config.yml', './inject_new_contents.py'], 'added code for committing & pushing to GIT')
+push_to_git(['./config.yml', './inject_new_contents.py'], 'testing code for committing & pushing to GIT')
