@@ -562,6 +562,10 @@ def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index, scr
             interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
             interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
         else:
+            print('\nTransferring RSA key to spot instance...')
+            cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
+            os.system(cmd)
+
             interact.send('cd data_pipelines/scraping_utilities/streaming_sources')
             interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
 
@@ -592,7 +596,14 @@ def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index, scr
                         print('Sleeping for 5 min...')
                         time.sleep(2*60)
 
+                print('\nUploading file streaming_info.csv to prod server...')
+
                 interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
+                interact.expect(default_prompt.replace('~', 'scraped'))
+
+                interact.send(
+                    'sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/ec2-user/scraped/streaming_info.csv ec2-user@' +
+                    config['ec2']['public_dns'] + ':/tmp/streaming_info.csv')
                 interact.expect(default_prompt.replace('~', 'scraped'))
 
         client.close()

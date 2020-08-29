@@ -141,10 +141,6 @@ if __name__ == "__main__":
 
             scrape_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'], None, None, scraping_streaming_info=True)
 
-            cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + config[
-                'pem_key'] + ' ec2-user@' + public_dns + ':/home/ec2-user/scraped/streaming_info.csv ' + config['to_upload']
-            os.system('start "Downloading scraped streaming info" /wait cmd /c ' + cmd)
-
             close_spot_fleet_request_and_instances(spot_fleet_request_id)
         else:
             os.system('start "Scraping streaming info" cmd /k "' + config[

@@ -432,4 +432,31 @@ df_streaming_info = df_streaming_info[[
     'where_to_watch_united_states'
 ]]
 
-df_streaming_info.to_csv('/home/ec2-user/scraped/streaming_info.csv', sep='^', index=False)
+df_streaming_info.to_csv('/home/ec2-user/scraped/streaming_info_temp.csv', sep='^', index=False)
+
+print('Removing wrong JIO links...')
+# imdb ids where jio links need to be removed
+imdb_ids = ['tt0246986', 'tt0155774', 'tt0355784', 'tt0297241', 'tt0072190', 'tt0295297', 'tt0366816', 'tt0466901', 'tt0114369', 'tt0307156', 'tt0470283', 'tt0108329', 'tt7686456', 'tt0423286', 'tt0094621', 'tt7471004', 'tt6903234', 'tt8616144', 'tt5017396', 'tt4014320', 'tt9031094', 'tt4116284', 'tt0071315', 'tt0312859', 'tt6546758', 'tt7151510', 'tt2265544', 'tt0367495', 'tt0103874', 'tt5548032', 'tt5541338', 'tt1106860', 'tt0097416', 'tt0093603', 'tt2542406', 'tt0099043', 'tt0352277', 'tt0082096', 'tt0211915', 'tt0359950', 'tt7717938', 'tt0051792', 'tt2727028', 'tt7180544', 'tt0049366', 'tt2556308', 'tt1144804', 'tt0237038', 'tt0082933', 'tt0329717', 'tt4814290', 'tt2309600', 'tt0091559', 'tt0119978', 'tt0079368', 'tt0087182', 'tt0367110', 'tt0108399', 'tt7605494', 'tt5592256', 'tt0962746', 'tt0352757', 'tt0071707', 'tt0246809', 'tt0118931', 'tt0266875', 'tt0098491', 'tt0290429', 'tt0977636', 'tt1612039', 'tt0152720', 'tt1740092', 'tt2777548', 'tt0197294', 'tt0046164', 'tt0142521', 'tt0152080', 'tt0139110', 'tt0318593', 'tt0298492', 'tt0046695', 'tt0055724', 'tt1736647', 'tt0393724', 'tt0187178', 'tt0315255', 'tt0274604', 'tt2199330', 'tt1310501', 'tt0098615', 'tt9597734', 'tt0274026', 'tt0271572', 'tt5523516', 'tt0103867', 'tt0266486', 'tt4084182', 'tt1813225', 'tt0282139', 'tt0155618', 'tt0245768', 'tt0463939', 'tt6782838', 'tt6358168', 'tt0243559', 'tt0257385', 'tt8139156', 'tt0071072', 'tt0045453', 'tt2359640', 'tt0383702', 'tt1461683', 'tt1149252', 'tt0246052', 'tt1943756', 'tt0886672', 'tt0390587', 'tt3395024', 'tt1582477', 'tt5908938', 'tt0264056', 'tt0140448', 'tt0314942', 'tt0119174', 'tt2187114', 'tt8669128', 'tt0984177', 'tt3453512', 'tt1830477', 'tt0096446', 'tt0119385', 'tt1806959', 'tt4316170', 'tt0102057', 'tt0187574', 'tt0116274', 'tt1194236', 'tt0259170', 'tt1600439', 'tt0117500', 'tt6754688', 'tt0093773', 'tt1540133', 'tt4635548', 'tt0997033', 'tt2091384', 'tt6814630', 'tt0116704', 'tt0475632', 'tt0079098', 'tt3142232', 'tt0268117', 'tt0155928', 'tt2287973', 'tt1814797']
+
+df = pd.read_csv('/home/ec2-user/scraped/streaming_info_temp.csv', sep='^')
+
+
+def remove_jio_link(streaming_info):
+    streaming_info.get('stream', {}).pop('jio_cinema', None)
+
+    if not list(streaming_info.get('stream', {}).keys()):
+        streaming_info.pop('stream', None)
+
+    if not list(streaming_info.keys()):
+        streaming_info = None
+
+    return streaming_info
+
+
+df['where_to_watch_india'][df['imdb_id'].isin(imdb_ids)] = df['where_to_watch_india'][df['imdb_id'].isin(imdb_ids)].apply(
+    lambda x: remove_jio_link(eval(x)) if str(x).lower() not in ['none', 'nan'] else x
+)
+
+df = df[pd.notnull(df['imdb_id'])]
+
+df.to_csv('/home/ec2-user/scraped/streaming_info.csv', sep='^', index=False)
