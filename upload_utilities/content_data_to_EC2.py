@@ -231,7 +231,7 @@ def movies_details():
         cleaned_array = []
         for item in eval(str_array):
             cleaned_array.append(item.replace('"', '').replace("'", '').strip())
-        return set(cleaned_array)
+        return set(cleaned_array) if cleaned_array else None
     list_columns = ['genres', 'country', 'language', 'production_house', 'covers', 'posters']
     for col in list_columns:
         df_movies[col][pd.notnull(df_movies[col])] = df_movies[col][pd.notnull(df_movies[col])].apply(lambda x: clean_col_array(str(x)))
@@ -497,7 +497,7 @@ def tv_series_details():
         cleaned_array = []
         for item in eval(str_array):
             cleaned_array.append(item.replace('"', '').replace("'", '').strip())
-        return set(cleaned_array)
+        return set(cleaned_array) if cleaned_array else None
     list_columns = ['genres', 'country', 'language', 'production_house', 'covers', 'posters']
     for col in list_columns:
         df_tv_series[col][pd.notnull(df_tv_series[col])] = df_tv_series[col][pd.notnull(df_tv_series[col])].apply(lambda x: clean_col_array(str(x)))
