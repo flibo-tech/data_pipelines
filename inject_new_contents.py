@@ -190,6 +190,13 @@ while go_ahead != 'yes':
     go_ahead = input('\n\x1B[30;41m' + 'Have you restarted the servers? (yes/no)\x1B[0m\n')
 
 
+go_ahead = input('\n\x1B[30;41m' + 'Have you removed all the CSVs from /tmp/ folder on EC2? (yes/no)\x1B[0m\n')
+while go_ahead != 'yes':
+    print('\nConfirm when this script can proceed to next step.')
+    time.sleep(1)
+    go_ahead = input('\n\x1B[30;41m' + 'Have you removed all the CSVs from /tmp/ folder on EC2? (yes/no)\x1B[0m\n')
+
+
 # resetting config
 print('\nResetting config...')
 update_config(r'vCPU:\s*\d+', 'vCPU: 4')
