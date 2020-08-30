@@ -49,19 +49,18 @@ for column in list(df_contents.columns):
         df_contents[column] = df_contents[column].astype(float)
 df_contents['award_nominations'] = df_contents.apply(lambda row: row['award_wins'] + row['award_nominations'], axis=1)
 
-def clean_array(array):
-    output = []
-    if type(array) == list:
-        for item in array:
-            output.append(item.replace("'", '').strip())
-        return output
-    else:
-        return None
 
-df_contents['genres'] = df_contents['genres'].apply(clean_array)
+def clean_array(str_array):
+    cleaned_array = []
+    for item in eval(str_array):
+        cleaned_array.append(item.replace('"', '').replace("'", '').strip())
+    return set(cleaned_array) if cleaned_array else None
+
+
+df_contents['genres'][pd.notnull(df_contents['genres'])] = df_contents['genres'][pd.notnull(df_contents['genres'])].apply(lambda x: clean_array(str(x)))
 df_contents = df_contents[pd.notnull(df_contents['genres'])]
 
-df_contents['language'] = df_contents['language'].apply(clean_array)
+df_contents['language'][pd.notnull(df_contents['language'])] = df_contents['language'][pd.notnull(df_contents['language'])].apply(lambda x: clean_array(str(x)))
 df_contents = df_contents[pd.notnull(df_contents['language'])]
 
 df_contents.to_csv('/tmp/full_data.csv', index=False, sep='^')
