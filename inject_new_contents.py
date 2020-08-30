@@ -93,7 +93,8 @@ update_config(r'use_data_scraped_using_spot_instances:\s*(\bFalse\b|\bTrue\b)', 
 update_config(r'scripts:\s*\[.*\]', 'scripts: []')
 update_config(r'tables:\s*\[.*\]', "tables: ['movies', 'tv_series', 'artists', 'content_tags', 'content_certificates']")
 
-command = 'start "Dumping primary data into db..." /wait cmd /c "cd '+current_path+'\\upload_utilities & "' + config['venv_path'] + 'python" upload.py"'
+print('To proceed, close the open terminal once the script is complete.\nTerminal header - "Dumping primary data into db..."')
+command = 'start "Dumping primary data into db..." /wait cmd /k "cd '+current_path+'\\upload_utilities & "' + config['venv_path'] + 'python" upload.py"'
 os.system(command)
 
 
@@ -170,7 +171,8 @@ print('\nDumping final data into db...')
 update_config(r'calculate_similar_contents:\s*(\bFalse\b|\bTrue\b)', 'calculate_similar_contents: False')
 update_config(r'tables:\s*\[.*\]', "tables: ['similar_contents', 'streaming_info', 'live_search']")
 
-command = 'start "Dumping final data into db..." /wait cmd /c "cd '+current_path+'\\upload_utilities & "' + config['venv_path'] + 'python" upload.py"'
+print('To proceed, close the open terminal once the script is complete.\nTerminal header - "Dumping final data into db..."')
+command = 'start "Dumping final data into db..." /wait cmd /k "cd '+current_path+'\\upload_utilities & "' + config['venv_path'] + 'python" upload.py"'
 os.system(command)
 
 
