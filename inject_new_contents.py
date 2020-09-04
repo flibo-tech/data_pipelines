@@ -159,11 +159,11 @@ while go_ahead != 'yes':
     go_ahead = input('\n\x1B[30;41m' + 'Have you dumped crew data into db by running script on EC2? (yes/no)\x1B[0m\n')
 
 
-go_ahead = input('\n\x1B[30;41m' + 'Is similar contents calculation complete? (yes/no)\x1B[0m\n')
+go_ahead = input('\n\x1B[30;41m' + 'Are similar contents calculation & streaming info scrape complete? (yes/no)\x1B[0m\n')
 while go_ahead != 'yes':
     print('\nConfirm when this script can proceed to next step.')
     time.sleep(1)
-    go_ahead = input('\n\x1B[30;41m' + 'Is similar contents calculation complete? (yes/no)\x1B[0m\n')
+    go_ahead = input('\n\x1B[30;41m' + 'Are similar contents calculation & streaming info scrape complete? (yes/no)\x1B[0m\n')
 
 
 # dumping final data into db
