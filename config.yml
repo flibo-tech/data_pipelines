@@ -37,7 +37,7 @@ scrape_data:
 
   extra_titles:
     movie: [] # imdb title ids
-    tv: ['tt9814458'] # imdb title ids
+    tv: [] # imdb title ids
 
   refresh_imdb_meta_info: False # meta info like imdb rating, votes, posters
 
