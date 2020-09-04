@@ -107,12 +107,18 @@ if __name__ == "__main__":
         for scrape_function in config['scrape_data']['movies']:
             df_temp = df_new_ids[df_new_ids['type']=='movie']
             df_temp = df_temp[['imdb_content_id']]
+            if config['scrape_data']['extra_titles']['movie']:
+                df_temp = df_temp.append([{'imdb_content_id': item} for item in config['scrape_data']['extra_titles']['movie']])
+                df_temp.drop_duplicates('imdb_content_id', inplace=True)
             df_temp['function'] = scrape_function
             df = pd.concat([df, df_temp], axis=0)
 
         for scrape_function in config['scrape_data']['tv_series']:
             df_temp = df_new_ids[df_new_ids['type'] == 'tv']
             df_temp = df_temp[['imdb_content_id']]
+            if config['scrape_data']['extra_titles']['tv']:
+                df_temp = df_temp.append([{'imdb_content_id': item} for item in config['scrape_data']['extra_titles']['tv']])
+                df_temp.drop_duplicates('imdb_content_id', inplace=True)
             df_temp['function'] = scrape_function
             df = pd.concat([df, df_temp], axis=0)
 
