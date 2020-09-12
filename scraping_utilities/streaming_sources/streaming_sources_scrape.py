@@ -5,7 +5,6 @@ import pandas as pd
 from datetime import datetime, date
 import yaml
 from urllib.parse import unquote
-from urllib import request
 import urllib
 import numpy as np
 import time
@@ -15,6 +14,28 @@ import re
 import requests
 from threading import Thread
 import os
+
+
+def get_session(proxy=None):
+    session = requests.Session()
+    session.headers.update({
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'accept-encoding': 'gzip, deflate, br',
+        'accept-language': 'en-US,en;q=0.9',
+        'sec-fetch-dest': 'document',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'none',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36'
+    })
+    if proxy:
+        session.proxies.update({
+                'http': 'http://' + proxy,
+                'https': 'https://' + proxy,
+                'ftp': 'ftp://' + proxy
+            })
+
+    return session
 
 
 def keep_connection_alive_for_scraping():
@@ -67,8 +88,9 @@ except:
     for key, value in countries.items():
         print(key, value['name'])
         url_to_scrape = 'https://apis.justwatch.com/content/providers/locale/'+key
-        response = request.urlopen(url_to_scrape)
-        response = eval(response.read().decode('utf8').replace('true', 'True').replace('false', 'False').replace('null', 'None'))
+        session = get_session()
+        response = session.get(url_to_scrape).json()
+        session.close()
         countries[key] = {
             'country_name': countries[key]['name'],
             'platforms': [platform['short_name'] for platform in response]
@@ -119,7 +141,9 @@ except:
         collect_more_urls = True
         while collect_more_urls:
             url = url_part_1+row['country_code']+url_part_2+urllib.parse.urlencode({'body': base_url+str(current_page)+url_part_8})
-            response = requests.get(url)
+            session = get_session()
+            response = session.get(url)
+            session.close()
             if response.status_code == 200:
                 response = response.json()
                 if response['items']:
@@ -163,9 +187,9 @@ except:
 
     def get_content_data(url):
         try:
-            response = request.urlopen(url)
-            response = eval(
-                response.read().decode('utf8').replace('true', 'True').replace('false', 'False').replace('null', 'None'))
+            session = get_session()
+            response = session.get(url).json()
+            session.close()
 
             title = response.get('title')
             url = response.get('full_path')
@@ -357,9 +381,9 @@ countries = config['scrape_data']['countries'].copy()
 platforms = []
 for key, value in countries.items():
     url_to_scrape = 'https://apis.justwatch.com/content/providers/locale/' + key
-    response = request.urlopen(url_to_scrape)
-    response = eval(
-        response.read().decode('utf8').replace('true', 'True').replace('false', 'False').replace('null', 'None'))
+    session = get_session()
+    response = session.get(url_to_scrape).json()
+    session.close()
     for platform in response:
         platforms.append({
             'provider_id': platform['id'],
