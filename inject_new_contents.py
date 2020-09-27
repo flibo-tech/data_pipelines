@@ -152,6 +152,13 @@ command = 'start "Calculating similar content..." cmd /k "cd '+current_path+'\\u
 os.system(command)
 
 
+go_ahead = input('\n\x1B[30;41m' + 'Has 2nd stage of similar contents calculation started? (yes/no)\x1B[0m\n')
+while go_ahead != 'yes':
+    print('\nConfirm when this script can proceed to next step.')
+    time.sleep(1)
+    go_ahead = input('\n\x1B[30;41m' + 'Has 2nd stage of similar contents calculation started? (yes/no)\x1B[0m\n')
+
+
 go_ahead = input('\n\x1B[30;41m' + 'Have you dumped crew data into db by running script on EC2? (yes/no)\x1B[0m\n')
 while go_ahead != 'yes':
     print('\nConfirm when this script can proceed to next step.')
