@@ -113,7 +113,7 @@ except:
                     'end_year': year+1
                 })
     df_justwatch_contents = pd.DataFrame(combos)
-    df_justwatch_contents = df_justwatch_contents.head(df_justwatch_contents.shape[0]//2)
+    df_justwatch_contents = df_justwatch_contents.head(10)
     print('Pages to scrape -', df_justwatch_contents.shape[0])
 
 
