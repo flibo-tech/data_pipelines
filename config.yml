@@ -125,7 +125,7 @@ dump_into_database:
 algo:
   weight_power: 0.65
   neighbours: 50
-  vCPU: 4
+  vCPU: 96
   calculate_similar_contents: False # This functionality calculates similar movies by fetching data from sql db & EC2 only.
   calculate_only_for_new_content: True
 
