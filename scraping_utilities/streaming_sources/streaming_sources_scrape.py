@@ -201,12 +201,13 @@ except:
 
             return title, url1, release_year, streaming_info, clips, external_ids
         except Exception as ex:
+            print(response)
             print(ex)
             import random
             with open(str(random.random()*100000000000000000) + '_temp.txt', 'w') as file:
                     file.write('%s\n' % url)
             print('Sleeping for 5 second...\n')
-            time.sleep(5)
+            time.sleep(30)
             return None, None, None, None, None, None
 
 
