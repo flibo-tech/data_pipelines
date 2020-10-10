@@ -186,6 +186,7 @@ except:
 
 
     def get_content_data(url):
+        print(url)
         try:
             session = get_session()
             response = session.get(url).json()
