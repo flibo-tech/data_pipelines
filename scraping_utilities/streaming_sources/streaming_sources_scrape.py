@@ -112,7 +112,7 @@ except:
                     'start_year': year,
                     'end_year': year+1
                 })
-    df_justwatch_contents = pd.DataFrame(combos).head(100)
+    df_justwatch_contents = pd.DataFrame(combos)
     print('Pages to scrape -', df_justwatch_contents.shape[0])
 
 
@@ -186,24 +186,27 @@ except:
 
 
     def get_content_data(url):
-        # try:
-        session = get_session()
-        response = session.get(url).json()
-        session.close()
+        try:
+            session = get_session()
+            response = session.get(url).json()
+            session.close()
 
-        title = response.get('title')
-        url = response.get('full_path')
-        release_year = response.get('original_release_year')
-        streaming_info = response.get('offers')
-        clips = response.get('clips')
-        external_ids = response.get('external_ids')
+            title = response.get('title')
+            url1 = response.get('full_path')
+            release_year = response.get('original_release_year')
+            streaming_info = response.get('offers')
+            clips = response.get('clips')
+            external_ids = response.get('external_ids')
 
-        return title, url, release_year, streaming_info, clips, external_ids
-        # except Exception as ex:
-        #     print(ex)
-        #     print('Sleeping for 1 second...\n')
-        #     time.sleep(1)
-        #     return None, None, None, None, None, None
+            return title, url1, release_year, streaming_info, clips, external_ids
+        except Exception as ex:
+            print(ex)
+            import random
+            with open(str(random.random()*100000000000000000) + '_temp.txt', 'w') as file:
+                    file.write('%s\n' % url)
+            print('Sleeping for 1 second...\n')
+            time.sleep(1)
+            return None, None, None, None, None, None
 
 
     def apply_get_content_data(df):
