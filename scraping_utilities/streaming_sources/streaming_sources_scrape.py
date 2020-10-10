@@ -204,8 +204,8 @@ except:
             import random
             with open(str(random.random()*100000000000000000) + '_temp.txt', 'w') as file:
                     file.write('%s\n' % url)
-            print('Sleeping for 1 second...\n')
-            time.sleep(1)
+            print('Sleeping for 5 second...\n')
+            time.sleep(5)
             return None, None, None, None, None, None
 
 
