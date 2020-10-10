@@ -189,7 +189,8 @@ except:
         print(url)
         try:
             session = get_session()
-            response = session.get(url).json()
+            response = session.get(url)
+            response = response.json()
             session.close()
 
             title = response.get('title')
