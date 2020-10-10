@@ -186,24 +186,24 @@ except:
 
 
     def get_content_data(url):
-        try:
-            session = get_session()
-            response = session.get(url).json()
-            session.close()
+        # try:
+        session = get_session()
+        response = session.get(url).json()
+        session.close()
 
-            title = response.get('title')
-            url = response.get('full_path')
-            release_year = response.get('original_release_year')
-            streaming_info = response.get('offers')
-            clips = response.get('clips')
-            external_ids = response.get('external_ids')
+        title = response.get('title')
+        url = response.get('full_path')
+        release_year = response.get('original_release_year')
+        streaming_info = response.get('offers')
+        clips = response.get('clips')
+        external_ids = response.get('external_ids')
 
-            return title, url, release_year, streaming_info, clips, external_ids
-        except Exception as ex:
-            print(ex)
-            print('Sleeping for 1 second...\n')
-            time.sleep(1)
-            return None, None, None, None, None, None
+        return title, url, release_year, streaming_info, clips, external_ids
+        # except Exception as ex:
+        #     print(ex)
+        #     print('Sleeping for 1 second...\n')
+        #     time.sleep(1)
+        #     return None, None, None, None, None, None
 
 
     def apply_get_content_data(df):
