@@ -305,11 +305,24 @@ df_streaming_info = pd.merge(df_streaming_info,
 del df_streaming_info['justwatch_id']
 df_streaming_info = df_streaming_info[pd.notnull(df_streaming_info['imdb_id'])]
 df_streaming_info = df_streaming_info.drop_duplicates('imdb_id').reset_index(drop=True)
-print('\n', df_streaming_info.columns, '\n')
 df_streaming_info = df_streaming_info[[
     'imdb_id',
     'trailer_id',
+    'where_to_watch_australia',
+    'where_to_watch_brazil',
     'where_to_watch_canada',
+    'where_to_watch_france',
+    'where_to_watch_germany',
+    'where_to_watch_india',
+    'where_to_watch_indonesia',
+    'where_to_watch_italy',
+    'where_to_watch_japan',
+    'where_to_watch_mexico',
+    'where_to_watch_philippines',
+    'where_to_watch_russia',
+    'where_to_watch_spain',
+    'where_to_watch_united_kingdom',
+    'where_to_watch_united_states'
 ]]
 
 df_streaming_info.to_csv('/home/ec2-user/scraped/streaming_info_temp.csv', sep='^', index=False)
@@ -333,7 +346,7 @@ def remove_jio_link(streaming_info):
     return streaming_info
 
 
-df['where_to_watch_canada'][df['imdb_id'].isin(imdb_ids)] = df['where_to_watch_canada'][df['imdb_id'].isin(imdb_ids)].apply(
+df['where_to_watch_india'][df['imdb_id'].isin(imdb_ids)] = df['where_to_watch_india'][df['imdb_id'].isin(imdb_ids)].apply(
     lambda x: remove_jio_link(eval(x)) if str(x).lower() not in ['none', 'nan'] else x
 )
 
