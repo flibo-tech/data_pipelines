@@ -151,6 +151,7 @@ def get_contents(row):
             else:
                 collect_more_urls = False
         else:
+            print(response.status_code)
             collect_more_urls = False
 
     return response_items
