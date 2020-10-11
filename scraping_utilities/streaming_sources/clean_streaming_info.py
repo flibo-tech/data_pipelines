@@ -333,7 +333,7 @@ def remove_jio_link(streaming_info):
     return streaming_info
 
 
-df['where_to_watch_india'][df['imdb_id'].isin(imdb_ids)] = df['where_to_watch_india'][df['imdb_id'].isin(imdb_ids)].apply(
+df['where_to_watch_canada'][df['imdb_id'].isin(imdb_ids)] = df['where_to_watch_canada'][df['imdb_id'].isin(imdb_ids)].apply(
     lambda x: remove_jio_link(eval(x)) if str(x).lower() not in ['none', 'nan'] else x
 )
 
