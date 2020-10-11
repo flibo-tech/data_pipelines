@@ -828,6 +828,10 @@ def scrape_streaming_info_on_remote(public_dns, private_ip, username, key_file, 
     with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
         interact.expect(default_prompt)
 
+        print('\nTransferring RSA key to spot instance...')
+        cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
+        os.system(cmd)
+
         print('\nTransferring streaming_urls.csv to spot instance...')
         interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2'][
             'public_dns'] + ':/tmp/streaming_urls.csv /tmp/streaming_urls.csv')
@@ -838,10 +842,6 @@ def scrape_streaming_info_on_remote(public_dns, private_ip, username, key_file, 
 
         interact.send('mkdir /home/' + username + '/scraped')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt)
-
-        print('\nTransferring RSA key to spot instance...')
-        cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
-        os.system(cmd)
 
         interact.send('cd data_pipelines/scraping_utilities/streaming_sources')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
@@ -894,6 +894,10 @@ def clean_streaming_info(public_dns, private_ip, username, key_file, count):
     with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
         interact.expect(default_prompt)
 
+        print('\nTransferring RSA key to spot instance...')
+        cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
+        os.system(cmd)
+
         print('\nTransferring streaming_info_index CSVs to spot instance...')
         max_spot_instances = config['scrape_data']['max_spot_instances']
         limit = count // max_spot_instances + (1 if count % max_spot_instances else 0)
@@ -908,10 +912,6 @@ def clean_streaming_info(public_dns, private_ip, username, key_file, count):
 
         interact.send('mkdir /home/' + username + '/scraped')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt)
-
-        print('\nTransferring RSA key to spot instance...')
-        cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
-        os.system(cmd)
 
         interact.send('cd data_pipelines/scraping_utilities/streaming_sources')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
@@ -973,7 +973,9 @@ def trigger_scrape_using_spot_instances(count, arg, limit_calc=False):
     while index_ranges:
         to_scrape_on = index_ranges[:max_spot_instances]
         for index_range in to_scrape_on:
-            if get_active_spot_fleet_requests_count() < max_spot_instances:
+            if get_active_spot_fleet_requests_count() < (
+                    max_spot_instances + 1 if arg == 'scrape_streaming_info_using_spot_instance' else max_spot_instances
+            ):
                 print('Triggering scrape for index', index_range)
                 os.system('start "Scraping for index ' + index_range + '" cmd /k "' + config[
                     'venv_path'] + 'python" scrape.py '+arg+' ' + index_range)
