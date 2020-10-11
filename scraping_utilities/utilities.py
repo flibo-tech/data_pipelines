@@ -271,6 +271,198 @@ def launch_spot_instance(size='small'):
                 ]
             }
         )
+    elif size == 'medium':
+        response = client.request_spot_fleet(
+            SpotFleetRequestConfig={
+                "IamFleetRole": "arn:aws:iam::772835535876:role/aws-ec2-spot-fleet-tagging-role",
+                "AllocationStrategy": "capacityOptimized",
+                "TargetCapacity": 1,
+                "TerminateInstancesWithExpiration": True,
+                "LaunchSpecifications": [],
+                "Type": "request",
+                "LaunchTemplateConfigs": [
+                    {
+                        "LaunchTemplateSpecification": {
+                            "LaunchTemplateId": "lt-0801fa586840fa707",
+                            "Version": "4"
+                        },
+                        "Overrides": [
+                            {
+                                "InstanceType": "m5n.4xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "m5n.4xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "m5n.4xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "c5.4xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "c5.4xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "c5.4xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "c5n.4xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "c5n.4xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "c5n.4xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "c4.4xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "c4.4xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "c4.4xlarge",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
+    elif size == 'smallest':
+        response = client.request_spot_fleet(
+            SpotFleetRequestConfig={
+                "IamFleetRole": "arn:aws:iam::772835535876:role/aws-ec2-spot-fleet-tagging-role",
+                "AllocationStrategy": "capacityOptimized",
+                "TargetCapacity": 1,
+                "TerminateInstancesWithExpiration": True,
+                "LaunchSpecifications": [],
+                "Type": "request",
+                "LaunchTemplateConfigs": [
+                    {
+                        "LaunchTemplateSpecification": {
+                            "LaunchTemplateId": "lt-0801fa586840fa707",
+                            "Version": "4"
+                        },
+                        "Overrides": [
+                            {
+                                "InstanceType": "t3.nano",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "t3.nano",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "t3.nano",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "t3a.nano",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "t3a.nano",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "t3a.nano",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "t3a.micro",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "t3a.micro",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "t3a.micro",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "t3.micro",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "t3.micro",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "t3.micro",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "t3a.small",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "t3a.small",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "t3a.small",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            },
+                            {
+                                "InstanceType": "t3.small",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-6ec3c606"
+                            },
+                            {
+                                "InstanceType": "t3.small",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-aff487d5"
+                            },
+                            {
+                                "InstanceType": "t3.small",
+                                "WeightedCapacity": 1,
+                                "SubnetId": "subnet-49ae7405"
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
     else:
         response = client.request_spot_fleet(
             SpotFleetRequestConfig={
@@ -539,7 +731,7 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file):
         return True
 
 
-def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index, scraping_streaming_info=False):
+def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index):
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
     client = ssh_into_remote(public_dns, username, key_file)
@@ -552,70 +744,231 @@ def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index, scr
         interact.send('mkdir /home/' + username + '/scraped')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt)
 
-        if not scraping_streaming_info:
-            interact.send('cd data_pipelines/scraping_utilities')
-            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+        interact.send('cd data_pipelines/scraping_utilities')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
-            interact.send('sudo python3.6 scrape.py '+arg+' '+index)
-            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
+        interact.send('sudo python3.6 scrape.py ' + arg + ' ' + index)
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
-            interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
-            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
-        else:
-            print('\nTransferring RSA key to spot instance...')
-            cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
-            os.system(cmd)
-
-            interact.send('cd data_pipelines/scraping_utilities/streaming_sources')
-            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
-
-            interact.send('sudo python3.6 streaming_sources_scrape.py')
-            try:
-                interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=15*60)
-            except:
-                print('Waiting for query to end (in next step)...')
-
-            client.close()
-
-            client = ssh_into_remote(public_dns, username, key_file)
-            with SSHClientInteraction(client, timeout=10 * 60, display=True) as interact:
-                default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
-                interact.expect(default_prompt)
-
-                interact.send('cd /home/ec2-user/scraped/')
-                interact.expect(default_prompt.replace('~', 'scraped'))
-
-                keep_checking = True
-                while keep_checking:
-                    interact.send('ls')
-                    interact.expect(default_prompt.replace('~', 'scraped'))
-                    output = interact.current_output_clean
-                    if output.count('streaming_info.csv') != 0:
-                        keep_checking = False
-                    else:
-                        print('Sleeping for 5 min...')
-                        time.sleep(2*60)
-
-                print('\nUploading file streaming_info.csv to prod server...')
-
-                interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
-                interact.expect(default_prompt.replace('~', 'scraped'))
-
-                interact.send(
-                    'sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/ec2-user/scraped/streaming_info.csv ec2-user@' +
-                    config['ec2']['public_dns'] + ':/tmp/streaming_info.csv')
-                interact.expect(default_prompt.replace('~', 'scraped'))
+        interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'scraping_utilities'))
 
         client.close()
         return True
 
 
-def trigger_scrape_using_spot_instances(count, arg):
+def collect_streaming_urls(public_dns, private_ip, username, key_file):
+    default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+
+    client = ssh_into_remote(public_dns, username, key_file)
+    with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
+        interact.expect(default_prompt)
+
+        interact.send('source ./venv_data_collection/bin/activate')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('mkdir /home/' + username + '/scraped')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        print('\nTransferring RSA key to spot instance...')
+        cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
+        os.system(cmd)
+
+        interact.send('cd data_pipelines/scraping_utilities/streaming_sources')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
+
+        interact.send('sudo python3.6 collect_streaming_urls.py')
+        try:
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=15*60)
+        except:
+            print('Waiting for query to end (in next step)...')
+
+        client.close()
+
+        client = ssh_into_remote(public_dns, username, key_file)
+        with SSHClientInteraction(client, timeout=10 * 60, display=True) as interact:
+            default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+            interact.expect(default_prompt)
+
+            interact.send('cd /home/ec2-user/scraped/')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+            keep_checking = True
+            while keep_checking:
+                interact.send('ls')
+                interact.expect(default_prompt.replace('~', 'scraped'))
+                output = interact.current_output_clean
+                if output.count('streaming_urls.csv') != 0:
+                    interact.send('cat streaming_urls.csv | wc -l')
+                    interact.expect(default_prompt.replace('~', 'scraped'))
+                    urls_count = int(interact.current_output_clean)-1
+                    keep_checking = False
+                else:
+                    print('Sleeping for 2 min...')
+                    time.sleep(2*60)
+
+            print('\nUploading file streaming_urls.csv to prod server...')
+
+            interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+            interact.send(
+                'sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/ec2-user/scraped/streaming_urls.csv ec2-user@' +
+                config['ec2']['public_dns'] + ':/tmp/streaming_urls.csv')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+        client.close()
+        return urls_count
+
+
+def scrape_streaming_info_on_remote(public_dns, private_ip, username, key_file, index):
+    default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+
+    client = ssh_into_remote(public_dns, username, key_file)
+    with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
+        interact.expect(default_prompt)
+
+        print('\nTransferring streaming_urls.csv to spot instance...')
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2'][
+            'public_dns'] + ':/tmp/streaming_urls.csv /tmp/streaming_urls.csv')
+        interact.expect(default_prompt)
+
+        interact.send('source ./venv_data_collection/bin/activate')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('mkdir /home/' + username + '/scraped')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        print('\nTransferring RSA key to spot instance...')
+        cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
+        os.system(cmd)
+
+        interact.send('cd data_pipelines/scraping_utilities/streaming_sources')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
+
+        interact.send('sudo python3.6 scrape_streaming_info.py '+index)
+        try:
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=15*60)
+        except:
+            print('Waiting for query to end (in next step)...')
+
+        client.close()
+
+        client = ssh_into_remote(public_dns, username, key_file)
+        with SSHClientInteraction(client, timeout=10 * 60, display=True) as interact:
+            default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+            interact.expect(default_prompt)
+
+            interact.send('cd /home/ec2-user/scraped/')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+            keep_checking = True
+            while keep_checking:
+                interact.send('ls')
+                interact.expect(default_prompt.replace('~', 'scraped'))
+                output = interact.current_output_clean
+                if output.count('streaming_info.csv') != 0:
+                    keep_checking = False
+                else:
+                    print('Sleeping for 2 min...')
+                    time.sleep(2*60)
+
+            print('\nUploading file streaming_info.csv to prod server...')
+
+            interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+            interact.send(
+                'sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/ec2-user/scraped/streaming_info.csv ec2-user@' +
+                config['ec2']['public_dns'] + ':/tmp/streaming_info_'+index+'.csv')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+        client.close()
+        return True
+
+
+def clean_streaming_info(public_dns, private_ip, username, key_file, count):
+    default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+
+    client = ssh_into_remote(public_dns, username, key_file)
+    with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
+        interact.expect(default_prompt)
+
+        print('\nTransferring streaming_info_index CSVs to spot instance...')
+        max_spot_instances = config['scrape_data']['max_spot_instances']
+        limit = count // max_spot_instances + (1 if count % max_spot_instances else 0)
+        for i in range(max_spot_instances):
+            index = str(i * limit) + '-' + str(min(limit * i + limit, count))
+            interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2'][
+                'public_dns'] + ':/tmp/streaming_info_'+index+'.csv /tmp/streaming_info_'+index+'.csv')
+            interact.expect(default_prompt)
+
+        interact.send('source ./venv_data_collection/bin/activate')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('mkdir /home/' + username + '/scraped')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        print('\nTransferring RSA key to spot instance...')
+        cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
+        os.system(cmd)
+
+        interact.send('cd data_pipelines/scraping_utilities/streaming_sources')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
+
+        interact.send('sudo python3.6 clean_streaming_info.py')
+        try:
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=15*60)
+        except:
+            print('Waiting for query to end (in next step)...')
+
+        client.close()
+
+        client = ssh_into_remote(public_dns, username, key_file)
+        with SSHClientInteraction(client, timeout=10 * 60, display=True) as interact:
+            default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+            interact.expect(default_prompt)
+
+            interact.send('cd /home/ec2-user/scraped/')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+            keep_checking = True
+            while keep_checking:
+                interact.send('ls')
+                interact.expect(default_prompt.replace('~', 'scraped'))
+                output = interact.current_output_clean
+                if output.count('streaming_info.csv') != 0:
+                    keep_checking = False
+                else:
+                    print('Sleeping for 2 min...')
+                    time.sleep(2*60)
+
+            print('\nUploading file streaming_info.csv to prod server...')
+
+            interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+            interact.send(
+                'sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/ec2-user/scraped/streaming_info.csv ec2-user@' +
+                config['ec2']['public_dns'] + ':/tmp/streaming_info.csv')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+        client.close()
+        return True
+
+
+def trigger_scrape_using_spot_instances(count, arg, limit_calc=False):
     max_spot_instances = config['scrape_data']['max_spot_instances']
-    limit = config['scrape_data']['crawls_per_spot_instance']
-    index_ranges = []
-    for i in range((count // limit) + (1 if count % limit else 0)):
-        index_ranges.append(str(i * limit) + '-' + str(limit * i + limit))
+    if limit_calc:
+        limit = count // max_spot_instances + (1 if count % max_spot_instances else 0)
+        index_ranges = []
+        for i in range(max_spot_instances):
+            index_ranges.append(str(i * limit) + '-' + str(min(limit * i + limit, count)))
+    else:
+        limit = config['scrape_data']['crawls_per_spot_instance']
+        index_ranges = []
+        for i in range((count // limit) + (1 if count % limit else 0)):
+            index_ranges.append(str(i * limit) + '-' + str(limit * i + limit))
 
     while index_ranges:
         to_scrape_on = index_ranges[:max_spot_instances]
