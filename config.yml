@@ -23,7 +23,7 @@ pem_key: 'C:\Users\bhask\Desktop\Flibo\t2_micro_2nd.pem'
 
 ec2:
   user: 'ec2-user'
-  public_dns: 'ec2-3-22-222-161.us-east-2.compute.amazonaws.com'
+  public_dns: 'ec2-13-59-44-163.us-east-2.compute.amazonaws.com'
   file_upload_location: '/tmp/'
 
 scrape_data:

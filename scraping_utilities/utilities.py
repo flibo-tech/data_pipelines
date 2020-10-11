@@ -818,7 +818,7 @@ def collect_streaming_urls(public_dns, private_ip, username, key_file):
             interact.expect(default_prompt.replace('~', 'scraped'))
 
         client.close()
-        return 103
+        return urls_count
 
 
 def scrape_streaming_info_on_remote(public_dns, private_ip, username, key_file, index):
