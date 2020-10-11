@@ -93,11 +93,12 @@ if __name__ == "__main__":
 
     elif 'scrape_streaming_info_using_spot_instance' in sys.argv:
         spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('smallest')
+        print('smallest -', spot_fleet_request_id)
         install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
 
         scrape_streaming_info_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'], sys.argv[-1])
 
-        close_spot_fleet_request_and_instances(spot_fleet_request_id)
+        # close_spot_fleet_request_and_instances(spot_fleet_request_id)
 
     elif config['scrape_data']['prepare_input_for_scrape_using_spot_instance']:
         print('Collecting db IDs')
@@ -151,11 +152,12 @@ if __name__ == "__main__":
     elif config['scrape_data']['trigger_streaming_info_scrape_using_spot_instance']:
         # collecting list of urls having streaming info
         spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('medium')
+        print('medium -', spot_fleet_request_id)
         install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
 
         urls_count = collect_streaming_urls(public_dns, private_ip, 'ec2-user', config['pem_key'])
 
-        close_spot_fleet_request_and_instances(spot_fleet_request_id)
+        # close_spot_fleet_request_and_instances(spot_fleet_request_id)
 
         # launching spot instances
         trigger_scrape_using_spot_instances(urls_count, 'scrape_streaming_info_using_spot_instance', limit_calc=True)
@@ -169,12 +171,13 @@ if __name__ == "__main__":
                 '\n\x1B[30;41m' + 'Have all streaming info scrapers finished scraping? (yes/no)\x1B[0m\n')
 
         # cleaning streaming info
-        spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('big')
+        spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('medium')
+        print('big -', spot_fleet_request_id)
         install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
 
         clean_streaming_info(public_dns, private_ip, 'ec2-user', config['pem_key'], urls_count)
 
-        close_spot_fleet_request_and_instances(spot_fleet_request_id)
+        # close_spot_fleet_request_and_instances(spot_fleet_request_id)
 
     elif config['scrape_data']['refresh_imdb_meta_info']:
         collect_new_imdb_ids()
