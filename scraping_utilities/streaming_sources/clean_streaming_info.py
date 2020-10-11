@@ -93,6 +93,10 @@ def apply_eval(df):
     df['external_ids'] = df['external_ids'].apply(
         lambda x: eval(x) if str(x).lower() not in ['none', 'nan'] else None
     )
+    df['clips'] = df['clips'].apply(
+        lambda x: eval(x) if str(x).lower() not in ['none', 'nan'] else None
+    )
+
     return df
 
 
