@@ -305,6 +305,7 @@ df_streaming_info = pd.merge(df_streaming_info,
 del df_streaming_info['justwatch_id']
 df_streaming_info = df_streaming_info[pd.notnull(df_streaming_info['imdb_id'])]
 df_streaming_info = df_streaming_info.drop_duplicates('imdb_id').reset_index(drop=True)
+print('\n', df_streaming_info.columns, '\n')
 df_streaming_info = df_streaming_info[[
     'imdb_id',
     'trailer_id',
