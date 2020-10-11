@@ -85,7 +85,7 @@ for filename in os.listdir('/tmp/'):
     if filename.startswith('streaming_info_') and filename.endswith('.csv'):
         print(filename)
         df_justwatch_contents = pd.concat([
-            df_justwatch_contents, pd.read_csv('/tmp/'+filename)
+            df_justwatch_contents, pd.read_csv('/tmp/'+filename, sep='^')
         ], axis=0)
 
 
