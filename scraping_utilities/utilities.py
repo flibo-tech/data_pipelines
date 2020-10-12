@@ -757,7 +757,7 @@ def scrape_on_remote(public_dns, private_ip, username, key_file, arg, index):
         return True
 
 
-def collect_streaming_urls(public_dns, private_ip, username, key_file):
+def collect_streaming_info_url_combos(public_dns, private_ip, username, key_file):
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
     client = ssh_into_remote(public_dns, username, key_file)
@@ -777,7 +777,76 @@ def collect_streaming_urls(public_dns, private_ip, username, key_file):
         interact.send('cd data_pipelines/scraping_utilities/streaming_sources')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
 
-        interact.send('sudo python3.6 collect_streaming_urls.py')
+        interact.send('sudo python3.6 collect_streaming_urls_combos.py')
+        try:
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=15*60)
+        except:
+            print('Waiting for query to end (in next step)...')
+
+        client.close()
+
+        client = ssh_into_remote(public_dns, username, key_file)
+        with SSHClientInteraction(client, timeout=10 * 60, display=True) as interact:
+            default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+            interact.expect(default_prompt)
+
+            interact.send('cd /home/ec2-user/scraped/')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+            keep_checking = True
+            while keep_checking:
+                interact.send('ls')
+                interact.expect(default_prompt.replace('~', 'scraped'))
+                output = interact.current_output_clean
+                if output.count('streaming_url_combos.csv') != 0:
+                    interact.send('cat streaming_url_combos.csv | wc -l')
+                    interact.expect(default_prompt.replace('~', 'scraped'))
+                    combo_count = int(interact.current_output_clean)-1
+                    keep_checking = False
+                else:
+                    print('Sleeping for 2 min...')
+                    time.sleep(2*60)
+
+            print('\nUploading file streaming_url_combos.csv to prod server...')
+
+            interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+            interact.send(
+                'sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/ec2-user/scraped/streaming_url_combos.csv ec2-user@' +
+                config['ec2']['public_dns'] + ':/tmp/streaming_url_combos.csv')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+        client.close()
+        return combo_count
+
+
+def collect_streaming_urls(public_dns, private_ip, username, key_file, index):
+    default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+
+    client = ssh_into_remote(public_dns, username, key_file)
+    with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
+        interact.expect(default_prompt)
+
+        print('\nTransferring RSA key to spot instance...')
+        cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
+        os.system(cmd)
+
+        print('\nTransferring streaming_url_combos.csv to spot instance...')
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2'][
+            'public_dns'] + ':/tmp/streaming_url_combos.csv /tmp/streaming_url_combos.csv')
+        interact.expect(default_prompt)
+
+        interact.send('source ./venv_data_collection/bin/activate')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('mkdir /home/' + username + '/scraped')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('cd data_pipelines/scraping_utilities/streaming_sources')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
+
+        interact.send('sudo python3.6 collect_streaming_urls.py '+index)
         try:
             interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=15*60)
         except:
@@ -799,9 +868,6 @@ def collect_streaming_urls(public_dns, private_ip, username, key_file):
                 interact.expect(default_prompt.replace('~', 'scraped'))
                 output = interact.current_output_clean
                 if output.count('streaming_urls.csv') != 0:
-                    interact.send('cat streaming_urls.csv | wc -l')
-                    interact.expect(default_prompt.replace('~', 'scraped'))
-                    urls_count = int(interact.current_output_clean)-1
                     keep_checking = False
                 else:
                     print('Sleeping for 2 min...')
@@ -814,7 +880,105 @@ def collect_streaming_urls(public_dns, private_ip, username, key_file):
 
             interact.send(
                 'sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/ec2-user/scraped/streaming_urls.csv ec2-user@' +
+                config['ec2']['public_dns'] + ':/tmp/streaming_urls_'+index+'.csv')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+        client.close()
+        return True
+
+
+def collate_streaming_urls(public_dns, private_ip, username, key_file, count):
+    default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+
+    client = ssh_into_remote(public_dns, username, key_file)
+    with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
+        interact.expect(default_prompt)
+
+        max_spot_instances = config['scrape_data']['max_spot_instances']
+        limit = count // max_spot_instances + (1 if count % max_spot_instances else 0)
+        index_ranges = []
+        for i in range(max_spot_instances):
+            index_ranges.append(str(i * limit) + '-' + str(min(limit * i + limit, count)))
+
+        print('\nTransferring RSA key to spot instance...')
+        cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
+        os.system(cmd)
+
+        print('\nTransferring streaming_urls.csv to spot instance...')
+        for index in index_ranges:
+            interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2'][
+                'public_dns'] + ':/tmp/streaming_urls_'+index+'.csv /tmp/streaming_urls_'+index+'.csv')
+            interact.expect(default_prompt)
+
+        interact.send('source ./venv_data_collection/bin/activate')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
+
+        interact.send('cd data_pipelines/scraping_utilities/streaming_sources')
+        interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
+
+        interact.send('sudo python3.6 collate_streaming_urls.py')
+        try:
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=15*60)
+        except:
+            print('Waiting for query to end (in next step)...')
+
+        client.close()
+
+        client = ssh_into_remote(public_dns, username, key_file)
+        with SSHClientInteraction(client, timeout=10 * 60, display=True) as interact:
+            default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
+            interact.expect(default_prompt)
+
+            interact.send('cd /home/ec2-user/scraped/')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+            keep_checking = True
+            while keep_checking:
+                interact.send('ls')
+                interact.expect(default_prompt.replace('~', 'scraped'))
+                output = interact.current_output_clean
+                if output.count('final_streaming_urls.csv') != 0:
+                    interact.send('cat final_streaming_urls.csv | wc -l')
+                    interact.expect(default_prompt.replace('~', 'scraped'))
+                    urls_count = int(interact.current_output_clean) - 1
+                    keep_checking = False
+                else:
+                    print('Sleeping for 2 min...')
+                    time.sleep(2*60)
+
+            print('\nUploading file final_streaming_urls.csv to prod server...')
+
+            interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+            interact.send(
+                'sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/ec2-user/scraped/final_streaming_urls.csv ec2-user@' +
                 config['ec2']['public_dns'] + ':/tmp/streaming_urls.csv')
+            interact.expect(default_prompt.replace('~', 'scraped'))
+
+            print('Dumping content details data into CSV on prod...')
+            interact.send('psql -h ' + config['sql']['host'] + ' -U ' + config['sql']['user'] + ' -p ' + str(
+                config['sql']['port']))
+            interact.expect('Password for user postgres\:\s*')
+
+            interact.send(config['sql']['password'])
+            interact.expect('postgres\=\#\s+')
+
+            interact.send('\c flibo')
+            interact.expect('flibo\=\#\s+')
+
+            interact.send(
+                """copy (select imdb_content_id,
+                                title,
+                                release_year,
+                                case when type = 'tv' then 'show' else type end as item_type
+                         From app.content_details
+                         order by num_votes desc)
+                    To '/tmp/content_metainfo.csv' WITH CSV DELIMITER '^' HEADER;"""
+            )
+            interact.expect('flibo\=\#\s+')
+
+            interact.send('\q')
             interact.expect(default_prompt.replace('~', 'scraped'))
 
         client.close()
@@ -832,9 +996,13 @@ def scrape_streaming_info_on_remote(public_dns, private_ip, username, key_file, 
         cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
         os.system(cmd)
 
-        print('\nTransferring streaming_urls.csv to spot instance...')
+        print('\nTransferring streaming_urls.csv & content_metainfo.csv to spot instance...')
         interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2'][
             'public_dns'] + ':/tmp/streaming_urls.csv /tmp/streaming_urls.csv')
+        interact.expect(default_prompt)
+
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2'][
+            'public_dns'] + ':/tmp/content_metainfo.csv /tmp/content_metainfo.csv')
         interact.expect(default_prompt)
 
         interact.send('source ./venv_data_collection/bin/activate')
@@ -887,22 +1055,25 @@ def scrape_streaming_info_on_remote(public_dns, private_ip, username, key_file, 
         return True
 
 
-def clean_streaming_info(public_dns, private_ip, username, key_file, count):
+def collate_streaming_info(public_dns, private_ip, username, key_file, count):
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
     client = ssh_into_remote(public_dns, username, key_file)
     with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
         interact.expect(default_prompt)
 
+        max_spot_instances = config['scrape_data']['max_spot_instances']
+        limit = count // max_spot_instances + (1 if count % max_spot_instances else 0)
+        index_ranges = []
+        for i in range(max_spot_instances):
+            index_ranges.append(str(i * limit) + '-' + str(min(limit * i + limit, count)))
+
         print('\nTransferring RSA key to spot instance...')
         cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
         os.system(cmd)
 
-        print('\nTransferring streaming_info_index CSVs to spot instance...')
-        max_spot_instances = config['scrape_data']['max_spot_instances']
-        limit = count // max_spot_instances + (1 if count % max_spot_instances else 0)
-        for i in range(max_spot_instances):
-            index = str(i * limit) + '-' + str(min(limit * i + limit, count))
+        print('\nTransferring streaming_info CSVs to spot instance...')
+        for index in index_ranges:
             interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2'][
                 'public_dns'] + ':/tmp/streaming_info_'+index+'.csv /tmp/streaming_info_'+index+'.csv')
             interact.expect(default_prompt)
@@ -910,13 +1081,10 @@ def clean_streaming_info(public_dns, private_ip, username, key_file, count):
         interact.send('source ./venv_data_collection/bin/activate')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt)
 
-        interact.send('mkdir /home/' + username + '/scraped')
-        interact.expect('\(venv_data_collection\)\s+' + default_prompt)
-
         interact.send('cd data_pipelines/scraping_utilities/streaming_sources')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'))
 
-        interact.send('sudo python3.6 clean_streaming_info.py')
+        interact.send('sudo python3.6 collate_streaming_info.py')
         try:
             interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=15*60)
         except:
@@ -937,19 +1105,19 @@ def clean_streaming_info(public_dns, private_ip, username, key_file, count):
                 interact.send('ls')
                 interact.expect(default_prompt.replace('~', 'scraped'))
                 output = interact.current_output_clean
-                if output.count('streaming_info.csv') != 0:
+                if output.count('final_streaming_info.csv') != 0:
                     keep_checking = False
                 else:
                     print('Sleeping for 2 min...')
                     time.sleep(2*60)
 
-            print('\nUploading file streaming_info.csv to prod server...')
+            print('\nUploading file final_streaming_info.csv to prod server...')
 
             interact.send('sudo chmod -R 777 /home/' + username + '/scraped/')
             interact.expect(default_prompt.replace('~', 'scraped'))
 
             interact.send(
-                'sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/ec2-user/scraped/streaming_info.csv ec2-user@' +
+                'sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem /home/ec2-user/scraped/final_streaming_info.csv ec2-user@' +
                 config['ec2']['public_dns'] + ':/tmp/streaming_info.csv')
             interact.expect(default_prompt.replace('~', 'scraped'))
 
@@ -970,24 +1138,28 @@ def trigger_scrape_using_spot_instances(count, arg, limit_calc=False):
         for i in range((count // limit) + (1 if count % limit else 0)):
             index_ranges.append(str(i * limit) + '-' + str(limit * i + limit))
 
+    i = 0
     while index_ranges:
         to_scrape_on = index_ranges[:max_spot_instances]
         for index_range in to_scrape_on:
-            if get_active_spot_fleet_requests_count() < (
-                    max_spot_instances + 1 if arg == 'scrape_streaming_info_using_spot_instance' else max_spot_instances
-            ):
+            if get_active_spot_fleet_requests_count() < max_spot_instances:
+                i += 1
                 print('Triggering scrape for index', index_range)
-                os.system('start "Scraping for index ' + index_range + '" cmd /k "' + config[
-                    'venv_path'] + 'python" scrape.py '+arg+' ' + index_range)
+                if arg in ['collect_streaming_urls_using_spot_instance', 'scrape_streaming_urls_using_spot_instance']:
+                    os.system('start "Scraping for index ' + index_range + '" cmd /c "' + config[
+                        'venv_path'] + 'python" scrape.py ' + arg + ' ' + str(i) + ' ' + index_range)
+                else:
+                    os.system('start "Scraping for index ' + index_range + '" cmd /k "' + config[
+                        'venv_path'] + 'python" scrape.py ' + arg + ' ' + index_range)
 
                 index_ranges.remove(index_range)
-                time.sleep(15)
+                time.sleep(1)
             else:
                 break
         print('\nRemaining instances to be triggered -', len(index_ranges))
         if index_ranges:
-            print('Sleeping for 5 minutes, will check then if we can launch more spot instances.\n')
-            time.sleep(5 * 60)
+            print('Sleeping for 1 minute, will check then if we can launch more spot instances.\n')
+            time.sleep(60)
     print('\n\nRequired number of spot instances launched. Check progress in any open terminals.')
 
     return True

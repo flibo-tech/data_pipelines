@@ -12,6 +12,7 @@ from multiprocessing import Pool
 import requests
 from threading import Thread
 import os
+import sys
 
 
 def get_session(proxy=None):
@@ -67,8 +68,14 @@ thread.start()
 config = yaml.safe_load(open('./../../config.yml'))
 data_folder = config['streaming_sources']
 
+indices = [int(x) for x in sys.argv[-1].split('-')]
 
-def parallelize_dataframe(df, func, n_cores=16):
+df_justwatch_contents = pd.read_csv('/tmp/streaming_url_combos.csv', sep='^')
+df_justwatch_contents = df_justwatch_contents.iloc[indices[0]:indices[1], :]
+print('Pages to scrape -', df_justwatch_contents.shape[0])
+
+
+def parallelize_dataframe(df, func, n_cores=2):
     df_split = np.array_split(df, n_cores)
     pool = Pool(n_cores)
     df = pd.concat(pool.map(func, df_split))
@@ -78,38 +85,6 @@ def parallelize_dataframe(df, func, n_cores=16):
 
 
 countries = config['scrape_data']['countries'].copy()
-
-print('Collecting country wise platforms...')
-for key, value in countries.items():
-    print(key, value['name'])
-    url_to_scrape = 'https://apis.justwatch.com/content/providers/locale/'+key
-    session = get_session()
-    response = session.get(url_to_scrape).json()
-    session.close()
-    countries[key] = {
-        'country_name': countries[key]['name'],
-        'platforms': [platform['short_name'] for platform in response]
-    }
-
-start_year = 1900
-this_year = date.today().year
-years = [1900+i for i in range(this_year-start_year+1)]
-
-combos = []
-for key, value in countries.items():
-    for year in years:
-        for content_type in ['movie', 'show']:
-            combos.append({
-                'country_code': key,
-                'country_name': value['country_name'],
-                'platforms': value['platforms'],
-                'content_type': content_type,
-                'start_year': year,
-                'end_year': year+1
-            })
-df_justwatch_contents = pd.DataFrame(combos)
-df_justwatch_contents = df_justwatch_contents
-print('Pages to scrape -', df_justwatch_contents.shape[0])
 
 
 def get_contents(row):

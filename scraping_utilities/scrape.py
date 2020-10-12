@@ -91,13 +91,35 @@ if __name__ == "__main__":
 
         close_spot_fleet_request_and_instances(spot_fleet_request_id)
 
-    elif 'scrape_streaming_info_using_spot_instance' in sys.argv:
-        spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('smallest')
-        install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
+    elif 'collect_streaming_urls_using_spot_instance' in sys.argv:
+        if sys.argv[-2] == '1':
+            df = pd.read_csv('ec2_1.csv')
+            df = df.to_dict(orient='records')[0]
+            spot_fleet_request_id = df['spot_fleet_request_id']
+            public_dns = df['public_dns']
+            private_ip = df['private_ip']
+        else:
+            spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('smallest')
+            pd.DataFrame([{
+                'spot_fleet_request_id': spot_fleet_request_id,
+                'public_dns': public_dns,
+                'private_ip': private_ip
+            }]).to_csv('ec2_'+sys.argv[-2]+'.csv', index=False)
+            install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
+
+        collect_streaming_urls(public_dns, private_ip, 'ec2-user', config['pem_key'], sys.argv[-1])
+
+    elif 'scrape_streaming_urls_using_spot_instance' in sys.argv:
+        df = pd.read_csv('ec2_'+sys.argv[-2]+'.csv')
+        df = df.to_dict(orient='records')[0]
+        spot_fleet_request_id = df['spot_fleet_request_id']
+        public_dns = df['public_dns']
+        private_ip = df['private_ip']
 
         scrape_streaming_info_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'], sys.argv[-1])
 
-        close_spot_fleet_request_and_instances(spot_fleet_request_id)
+        if sys.argv[-2] != '1':
+            close_spot_fleet_request_and_instances(spot_fleet_request_id)
 
     elif config['scrape_data']['prepare_input_for_scrape_using_spot_instance']:
         print('Collecting db IDs')
@@ -149,32 +171,46 @@ if __name__ == "__main__":
             trigger_scrape_using_spot_instances(count, 'scrape_data_using_spot_instance')
 
     elif config['scrape_data']['trigger_streaming_info_scrape_using_spot_instance']:
-        # collecting list of urls having streaming info
-        spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('medium')
+        # getting URL combos to fetch all the content URLs
+        spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('smallest')
+        pd.DataFrame([{
+            'spot_fleet_request_id': spot_fleet_request_id,
+            'public_dns': public_dns,
+            'private_ip': private_ip
+        }]).to_csv('ec2_1.csv', index=False)
         install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
 
-        urls_count = collect_streaming_urls(public_dns, private_ip, 'ec2-user', config['pem_key'])
-
-        close_spot_fleet_request_and_instances(spot_fleet_request_id)
+        combo_count = collect_streaming_info_url_combos(public_dns, private_ip, 'ec2-user', config['pem_key'])
 
         # launching spot instances
-        trigger_scrape_using_spot_instances(urls_count, 'scrape_streaming_info_using_spot_instance', limit_calc=True)
+        trigger_scrape_using_spot_instances(combo_count, 'collect_streaming_urls_using_spot_instance', limit_calc=True)
 
         go_ahead = input(
-            '\n\x1B[30;41m' + 'Have all streaming info scrapers finished scraping? (yes/no)\x1B[0m\n')
+            '\n\x1B[30;41m' + 'Have all streaming url collectors finished collecting? (yes/no)\x1B[0m\n')
         while go_ahead != 'yes':
             print('\nConfirm when this script can proceed to next step.')
             time.sleep(1)
             go_ahead = input(
-                '\n\x1B[30;41m' + 'Have all streaming info scrapers finished scraping? (yes/no)\x1B[0m\n')
+                '\n\x1B[30;41m' + 'Have all streaming url collectors finished collecting? (yes/no)\x1B[0m\n')
 
-        # cleaning streaming info
-        spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('big')
-        install_requirements_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'])
+        urls_count = collate_streaming_urls(public_dns, private_ip, 'ec2-user', config['pem_key'], combo_count)
 
-        clean_streaming_info(public_dns, private_ip, 'ec2-user', config['pem_key'], urls_count)
+        # relaunching the same spot instances
+        trigger_scrape_using_spot_instances(urls_count, 'scrape_streaming_urls_using_spot_instance', limit_calc=True)
+
+        go_ahead = input(
+            '\n\x1B[30;41m' + 'Have all streaming url scrapers finished scraping? (yes/no)\x1B[0m\n')
+        while go_ahead != 'yes':
+            print('\nConfirm when this script can proceed to next step.')
+            time.sleep(1)
+            go_ahead = input(
+                '\n\x1B[30;41m' + 'Have all streaming url scrapers finished scraping? (yes/no)\x1B[0m\n')
+
+        collate_streaming_info(public_dns, private_ip, 'ec2-user', config['pem_key'], urls_count)
 
         close_spot_fleet_request_and_instances(spot_fleet_request_id)
+
+        os.system('del ec2_*.csv')
 
     elif config['scrape_data']['refresh_imdb_meta_info']:
         collect_new_imdb_ids()
