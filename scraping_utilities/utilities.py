@@ -1119,7 +1119,7 @@ def collate_streaming_info(public_dns, private_ip, username, key_file, count):
         return True
 
 
-def trigger_scrape_using_spot_instances(count, arg, limit_calc=False):
+def trigger_scrape_using_spot_instances(count, arg, limit_calc=False, skip_active_req_check=False):
     max_spot_instances = config['scrape_data']['max_spot_instances']
     if limit_calc:
         limit = count // max_spot_instances + (1 if count % max_spot_instances else 0)
@@ -1136,7 +1136,7 @@ def trigger_scrape_using_spot_instances(count, arg, limit_calc=False):
     while index_ranges:
         to_scrape_on = index_ranges[:max_spot_instances]
         for index_range in to_scrape_on:
-            if get_active_spot_fleet_requests_count() < max_spot_instances:
+            if skip_active_req_check or (get_active_spot_fleet_requests_count() < max_spot_instances):
                 i += 1
                 print('Triggering scrape for index', index_range)
                 if arg in ['collect_streaming_urls_using_spot_instance', 'scrape_streaming_urls_using_spot_instance']:
