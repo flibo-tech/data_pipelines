@@ -957,29 +957,23 @@ def collate_streaming_urls(public_dns, private_ip, username, key_file, count):
             interact.expect(default_prompt.replace('~', 'scraped'))
 
             print('Dumping content details data into CSV on prod...')
-            interact.send('psql -h ' + config['sql']['host'] + ' -U ' + config['sql']['user'] + ' -p ' + str(
-                config['sql']['port']))
-            interact.expect('Password for user postgres\:\s*')
+            engine = sqlalchemy.create_engine(
+                'postgres://' + config['sql']['user'] + ':' + config['sql']['password'] + '@' + config['sql'][
+                    'host'] + ':' + str(config['sql']['port']) + '/' + config['sql']['db'])
 
-            interact.send(config['sql']['password'])
-            interact.expect('postgres\=\#\s+')
-
-            interact.send('\c flibo')
-            interact.expect('flibo\=\#\s+')
-
-            interact.send(
-                """copy (select imdb_content_id,
-                                title,
-                                release_year,
-                                case when type = 'tv' then 'show' else type end as item_type
-                         From app.content_details
-                         order by num_votes desc)
-                    To '/tmp/content_metainfo.csv' WITH CSV DELIMITER '^' HEADER;"""
-            )
-            interact.expect('flibo\=\#\s+')
-
-            interact.send('\q')
-            interact.expect(default_prompt.replace('~', 'scraped'))
+            con = engine.connect()
+            trans = con.begin()
+            sql_script = """copy (select imdb_content_id,
+                                         title,
+                                         release_year,
+                                         case when type = 'tv' then 'show' else type end as item_type
+                                  From app.content_details
+                                  order by num_votes desc)
+                            To '/tmp/content_metainfo.csv' WITH CSV DELIMITER '^' HEADER;
+                         """
+            con.execute(sql_script)
+            trans.commit()
+            con.close()
 
         client.close()
         return urls_count
