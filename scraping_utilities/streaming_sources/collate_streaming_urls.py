@@ -49,5 +49,5 @@ for filename in os.listdir('/tmp/'):
             df_justwatch_contents, pd.read_csv('/tmp/'+filename, sep='^')
         ], axis=0)
 
-df_justwatch_contents.drop_duplicates(inplace=True)
+df_justwatch_contents.drop_duplicates(inplace=True).head(103)
 df_justwatch_contents.to_csv('/home/ec2-user/scraped/final_streaming_urls.csv', sep='^', index=False)
