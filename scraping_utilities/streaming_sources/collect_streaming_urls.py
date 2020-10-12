@@ -153,7 +153,9 @@ df_justwatch_contents['contents'] = df_justwatch_contents.apply(lambda row: add_
 df_justwatch_contents = pd.DataFrame(df_justwatch_contents['contents'].sum())
 df_justwatch_contents.drop_duplicates(inplace=True)
 
-df_justwatch_contents['url'] = None
-df_justwatch_contents['url'] = df_justwatch_contents.apply(lambda row: 'https://apis.justwatch.com/content/titles/'+row['item_type']+'/'+str(row['justwatch_id'])+'/locale/'+row['country_code']+'?language=en', axis=1)
+if not df_justwatch_contents.empty:
+    df_justwatch_contents['url'] = None
+    df_justwatch_contents['url'] = df_justwatch_contents.apply(lambda row: 'https://apis.justwatch.com/content/titles/'+row['item_type']+'/'+str(row['justwatch_id'])+'/locale/'+row['country_code']+'?language=en', axis=1)
+
 
 df_justwatch_contents.to_csv('/home/ec2-user/scraped/streaming_urls.csv', sep='^', index=False)

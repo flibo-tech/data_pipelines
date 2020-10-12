@@ -183,7 +183,7 @@ if __name__ == "__main__":
         combo_count = collect_streaming_info_url_combos(public_dns, private_ip, 'ec2-user', config['pem_key'])
 
         # launching spot instances
-        trigger_scrape_using_spot_instances(combo_count, 'collect_streaming_urls_using_spot_instance', limit_calc=True)
+        trigger_scrape_using_spot_instances(combo_count, 'collect_streaming_urls_using_spot_instance', limit_calc=True, skip_active_req_check=True)
 
         go_ahead = input(
             '\n\x1B[30;41m' + 'Have all streaming url collectors finished collecting? (yes/no)\x1B[0m\n')
