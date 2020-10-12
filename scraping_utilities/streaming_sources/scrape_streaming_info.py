@@ -56,7 +56,7 @@ def keep_connection_alive_for_scraping():
             files = os.listdir('/home/ec2-user/scraped/')
         except FileNotFoundError:
             files = []
-        if files:
+        if 'streaming_info.csv' in files:
             keep_alive = False
 
     return True

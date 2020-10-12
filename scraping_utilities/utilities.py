@@ -1010,7 +1010,7 @@ def scrape_streaming_info_on_remote(public_dns, private_ip, username, key_file, 
 
         interact.send('sudo python3.6 scrape_streaming_info.py '+index)
         try:
-            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=15*60)
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=60*60)
         except:
             print('Waiting for query to end (in next step)...')
 
@@ -1080,7 +1080,7 @@ def collate_streaming_info(public_dns, private_ip, username, key_file, count):
 
         interact.send('sudo python3.6 collate_streaming_info.py')
         try:
-            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=15*60)
+            interact.expect('\(venv_data_collection\)\s+' + default_prompt.replace('~', 'streaming_sources'), timeout=60*60)
         except:
             print('Waiting for query to end (in next step)...')
 
