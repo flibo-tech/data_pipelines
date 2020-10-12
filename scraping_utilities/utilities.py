@@ -1153,7 +1153,6 @@ def trigger_scrape_using_spot_instances(count, arg, limit_calc=False):
                         'venv_path'] + 'python" scrape.py ' + arg + ' ' + index_range)
 
                 index_ranges.remove(index_range)
-                time.sleep(1)
             else:
                 break
         print('\nRemaining instances to be triggered -', len(index_ranges))
