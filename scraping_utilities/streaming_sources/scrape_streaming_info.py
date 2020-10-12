@@ -123,6 +123,7 @@ df_justwatch_contents = pd.read_csv('/tmp/justwatch_countries_contents.csv')
 df_justwatch_contents['external_ids'][pd.notnull(df_justwatch_contents['external_ids'])] = df_justwatch_contents['external_ids'][pd.notnull(df_justwatch_contents['external_ids'])].apply(eval)
 df_justwatch_contents['clips'][pd.notnull(df_justwatch_contents['clips'])] = df_justwatch_contents['clips'][pd.notnull(df_justwatch_contents['clips'])].apply(eval)
 df_justwatch_contents['streaming_info'][pd.notnull(df_justwatch_contents['streaming_info'])] = df_justwatch_contents['streaming_info'][pd.notnull(df_justwatch_contents['streaming_info'])].apply(eval)
+df_justwatch_contents['streaming_info'][pd.notnull(df_justwatch_contents['streaming_info'])] = df_justwatch_contents['streaming_info'][pd.notnull(df_justwatch_contents['streaming_info'])].apply(list)
 
 df_justwatch_contents['justwatch_id'] = df_justwatch_contents.apply(
     lambda row:str(row['justwatch_id'])+'^'+re.sub(r'[^a-z0-9]+', '-', str(row['title']), flags=re.I).lower()+'^'+str(row['release_year']),
