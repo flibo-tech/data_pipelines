@@ -177,11 +177,9 @@ del df_justwatch_contents['clips']
 
 print('Parsing streaming info...')
 
-df_justwatch_contents.to_csv('temp.csv', index=False)
 
 def parse_streaming_info(row):
     for idx, item in enumerate(row['streaming_info']):
-        print(row['streaming_info'])
         row['streaming_info'][idx] = {
             'justwatch_id': row['justwatch_id'],
             'country_code': row['country_code'],
