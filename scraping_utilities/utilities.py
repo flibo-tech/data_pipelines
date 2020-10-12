@@ -14,6 +14,7 @@ import sqlalchemy
 from datetime import datetime, date
 from bs4 import BeautifulSoup
 import os
+import psutil
 
 
 LOGGER.setLevel(logging.WARNING)
@@ -1119,7 +1120,15 @@ def collate_streaming_info(public_dns, private_ip, username, key_file, count):
         return True
 
 
-def trigger_scrape_using_spot_instances(count, arg, limit_calc=False, skip_active_req_check=False):
+def cmd_count():
+    processes = []
+    for p in psutil.process_iter():
+        processes.append(p.name())
+
+    return processes.count('cmd.exe')
+
+
+def trigger_scrape_using_spot_instances(count, arg, limit_calc=False, cmd_limit=0):
     max_spot_instances = config['scrape_data']['max_spot_instances']
     if limit_calc:
         limit = count // max_spot_instances + (1 if count % max_spot_instances else 0)
@@ -1136,7 +1145,7 @@ def trigger_scrape_using_spot_instances(count, arg, limit_calc=False, skip_activ
     while index_ranges:
         to_scrape_on = index_ranges[:max_spot_instances]
         for index_range in to_scrape_on:
-            if skip_active_req_check or (get_active_spot_fleet_requests_count() < max_spot_instances):
+            if ((cmd_count() <= cmd_limit) if cmd_limit else (get_active_spot_fleet_requests_count() < max_spot_instances)):
                 i += 1
                 print('Triggering scrape for index', index_range)
                 if arg in ['collect_streaming_urls_using_spot_instance', 'scrape_streaming_urls_using_spot_instance']:
@@ -1151,8 +1160,8 @@ def trigger_scrape_using_spot_instances(count, arg, limit_calc=False, skip_activ
                 break
         print('\nRemaining instances to be triggered -', len(index_ranges))
         if index_ranges:
-            print('Sleeping for 1 minute, will check then if we can launch more spot instances.\n')
-            time.sleep(60)
+            print('Sleeping for 15 secs, will check then if we can launch more spot instances.\n')
+            time.sleep(15)
     print('\n\nRequired number of spot instances launched. Check progress in any open terminals.')
 
     return True
