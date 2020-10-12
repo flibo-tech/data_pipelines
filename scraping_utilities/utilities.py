@@ -1149,7 +1149,7 @@ def trigger_scrape_using_spot_instances(count, arg, limit_calc=False, cmd_limit=
                 i += 1
                 print('Triggering scrape for index', index_range)
                 if arg in ['collect_streaming_urls_using_spot_instance', 'scrape_streaming_urls_using_spot_instance']:
-                    os.system('start "Scraping for index ' + index_range + '" cmd /k "' + config[
+                    os.system('start "Scraping for index ' + index_range + '" cmd /c "' + config[
                         'venv_path'] + 'python" scrape.py ' + arg + ' ' + str(i) + ' ' + index_range)
                 else:
                     os.system('start "Scraping for index ' + index_range + '" cmd /k "' + config[
