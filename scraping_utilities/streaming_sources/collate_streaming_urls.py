@@ -45,9 +45,9 @@ df_justwatch_contents = pd.DataFrame()
 for filename in os.listdir('/tmp/'):
     if filename.startswith('streaming_urls_') and filename.endswith('.csv'):
         print(filename)
-        df_justwatch_contents = pd.concat([
-            df_justwatch_contents, pd.read_csv('/tmp/'+filename, sep='^')
-        ], axis=0)
+        df_temp = pd.read_csv('/tmp/'+filename, sep='^')
+        if not df_temp.empty:
+            df_justwatch_contents = pd.concat([df_justwatch_contents, df_temp], axis=0)
 
 df_justwatch_contents.drop_duplicates(inplace=True)
 df_justwatch_contents.to_csv('/home/ec2-user/scraped/final_streaming_urls.csv', sep='^', index=False)
