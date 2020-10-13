@@ -122,8 +122,8 @@ if __name__ == "__main__":
 
         scrape_streaming_info_on_remote(public_dns, private_ip, 'ec2-user', config['pem_key'], sys.argv[-1])
 
-        # if sys.argv[-2] != '1':
-        #     close_spot_fleet_request_and_instances(spot_fleet_request_id)
+        if sys.argv[-2] != '1':
+            close_spot_fleet_request_and_instances(spot_fleet_request_id)
 
     elif config['scrape_data']['prepare_input_for_scrape_using_spot_instance']:
         print('Collecting db IDs')
@@ -212,9 +212,8 @@ if __name__ == "__main__":
 
         collate_streaming_info(public_dns, private_ip, 'ec2-user', config['pem_key'])
 
-        # close_spot_fleet_request_and_instances(spot_fleet_request_id)
-
-        # os.system('del ec2_*.csv')
+        close_spot_fleet_request_and_instances(spot_fleet_request_id)
+        os.system('del ec2_*.csv')
 
     elif config['scrape_data']['refresh_imdb_meta_info']:
         collect_new_imdb_ids()

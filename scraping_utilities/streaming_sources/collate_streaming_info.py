@@ -118,6 +118,7 @@ print('Replacing null in other columns with empty string...')
 for col in columns:
     df_justwatch_contents[col][pd.isnull(df_justwatch_contents[col])] = ''
 
+print('Grouping by imdb_id...')
 df_justwatch_contents = df_justwatch_contents.groupby('imdb_id').agg({
     'trailer_id': 'max',
     'where_to_watch_australia': 'max',
@@ -144,4 +145,23 @@ for col in columns:
     df_justwatch_contents[col][df_justwatch_contents[col] == ''] = None
 
 print('Dumping collated streaming info...')
+df_justwatch_contents = df_justwatch_contents[[
+    'imdb_id',
+    'trailer_id',
+    'where_to_watch_australia',
+    'where_to_watch_brazil',
+    'where_to_watch_canada',
+    'where_to_watch_france',
+    'where_to_watch_germany',
+    'where_to_watch_india',
+    'where_to_watch_indonesia',
+    'where_to_watch_italy',
+    'where_to_watch_japan',
+    'where_to_watch_mexico',
+    'where_to_watch_philippines',
+    'where_to_watch_russia',
+    'where_to_watch_spain',
+    'where_to_watch_united_kingdom',
+    'where_to_watch_united_states'
+]]
 df_justwatch_contents.to_csv('/home/ec2-user/scraped/final_streaming_info.csv', sep='^', index=False)

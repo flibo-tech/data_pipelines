@@ -122,7 +122,7 @@ print('\nScraping streaming info...')
 update_config(r'calculate_crew_table:\s*(\bFalse\b|\bTrue\b)', 'calculate_crew_table: False')
 update_config(r'vCPU:\s*\d+', 'vCPU: 96')
 update_config(r'trigger_streaming_info_scrape_using_spot_instance:\s*(\bFalse\b|\bTrue\b)', 'trigger_streaming_info_scrape_using_spot_instance: True')
-update_config(r'max_spot_instances:\s*\d+', 'max_spot_instances: 48')
+update_config(r'max_spot_instances:\s*\d+', 'max_spot_instances: 300')
 
 push_to_git('./config.yml', 'scraping streaming info')
 
