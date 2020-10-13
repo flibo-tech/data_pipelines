@@ -888,28 +888,21 @@ def collect_streaming_urls(public_dns, private_ip, username, key_file, index):
         return True
 
 
-def collate_streaming_urls(public_dns, private_ip, username, key_file, count):
+def collate_streaming_urls(public_dns, private_ip, username, key_file):
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
     client = ssh_into_remote(public_dns, username, key_file)
     with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
         interact.expect(default_prompt)
 
-        max_spot_instances = config['scrape_data']['max_spot_instances']
-        limit = count // max_spot_instances + (1 if count % max_spot_instances else 0)
-        index_ranges = []
-        for i in range(max_spot_instances):
-            index_ranges.append(str(i * limit) + '-' + str(min(limit * i + limit, count)))
-
         print('\nTransferring RSA key to spot instance...')
         cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
         os.system(cmd)
 
-        print('\nTransferring streaming_urls.csv to spot instance...')
-        for index in index_ranges:
-            interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2'][
-                'public_dns'] + ':/tmp/streaming_urls_'+index+'.csv /tmp/streaming_urls_'+index+'.csv')
-            interact.expect(default_prompt)
+        print('\nTransferring streaming_urls CSVs to spot instance...')
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2'][
+            'public_dns'] + ':/tmp/streaming_urls_*.csv /tmp/')
+        interact.expect(default_prompt)
 
         interact.send('source ./venv_data_collection/bin/activate')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt)
@@ -1050,28 +1043,21 @@ def scrape_streaming_info_on_remote(public_dns, private_ip, username, key_file, 
         return True
 
 
-def collate_streaming_info(public_dns, private_ip, username, key_file, count):
+def collate_streaming_info(public_dns, private_ip, username, key_file):
     default_prompt = '\[username@ip-private-ip ~\]\$\s+'.replace('private-ip', private_ip.replace('.', '-')).replace('username', username)
 
     client = ssh_into_remote(public_dns, username, key_file)
     with SSHClientInteraction(client, timeout=60*60, display=True) as interact:
         interact.expect(default_prompt)
 
-        max_spot_instances = config['scrape_data']['max_spot_instances']
-        limit = count // max_spot_instances + (1 if count % max_spot_instances else 0)
-        index_ranges = []
-        for i in range(max_spot_instances):
-            index_ranges.append(str(i * limit) + '-' + str(min(limit * i + limit, count)))
-
         print('\nTransferring RSA key to spot instance...')
         cmd = 'scp -r -o StrictHostKeyChecking=no -i ' + key_file + ' ' + key_file + ' ec2-user@' + public_dns + ':/tmp/key.pem'
         os.system(cmd)
 
         print('\nTransferring streaming_info CSVs to spot instance...')
-        for index in index_ranges:
-            interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2'][
-                'public_dns'] + ':/tmp/streaming_info_'+index+'.csv /tmp/streaming_info_'+index+'.csv')
-            interact.expect(default_prompt)
+        interact.send('sudo scp -r -o StrictHostKeyChecking=no -i /tmp/key.pem ec2-user@' + config['ec2'][
+            'public_dns'] + ':/tmp/streaming_info_*.csv /tmp/')
+        interact.expect(default_prompt)
 
         interact.send('source ./venv_data_collection/bin/activate')
         interact.expect('\(venv_data_collection\)\s+' + default_prompt)
@@ -1131,10 +1117,18 @@ def cmd_count():
 def trigger_scrape_using_spot_instances(count, arg, limit_calc=False, cmd_limit=0):
     max_spot_instances = config['scrape_data']['max_spot_instances']
     if limit_calc:
-        limit = count // max_spot_instances + (1 if count % max_spot_instances else 0)
+        limit = count // max_spot_instances
+        rem = count % max_spot_instances
         index_ranges = []
         for i in range(max_spot_instances):
-            index_ranges.append(str(i * limit) + '-' + str(min(limit * i + limit, count)))
+            if i == 0:
+                index_ranges.append('0-' + str(limit + (1 if rem else 0)))
+            else:
+                index_ranges.append(
+                    index_ranges[i - 1].split('-')[-1] + '-' + str(
+                        int(index_ranges[i - 1].split('-')[-1]) + (limit + 1 if i < rem else limit)
+                    )
+                )
     else:
         limit = config['scrape_data']['crawls_per_spot_instance']
         index_ranges = []

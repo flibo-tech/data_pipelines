@@ -99,7 +99,11 @@ if __name__ == "__main__":
             public_dns = df['public_dns']
             private_ip = df['private_ip']
         else:
-            spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('smallest')
+            public_dns = None
+            while (public_dns is None) or (public_dns == ''):
+                spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('smallest')
+                if (public_dns is None) or (public_dns == ''):
+                    close_spot_fleet_request_and_instances(spot_fleet_request_id)
             pd.DataFrame([{
                 'spot_fleet_request_id': spot_fleet_request_id,
                 'public_dns': public_dns,
@@ -193,7 +197,7 @@ if __name__ == "__main__":
             go_ahead = input(
                 '\n\x1B[30;41m' + 'Have all streaming url collectors finished collecting? (yes/no)\x1B[0m\n')
 
-        urls_count = collate_streaming_urls(public_dns, private_ip, 'ec2-user', config['pem_key'], combo_count)
+        urls_count = collate_streaming_urls(public_dns, private_ip, 'ec2-user', config['pem_key'])
 
         # relaunching the same spot instances
         trigger_scrape_using_spot_instances(urls_count, 'scrape_streaming_urls_using_spot_instance', limit_calc=True, cmd_limit=60)
@@ -206,7 +210,7 @@ if __name__ == "__main__":
             go_ahead = input(
                 '\n\x1B[30;41m' + 'Have all streaming url scrapers finished scraping? (yes/no)\x1B[0m\n')
 
-        collate_streaming_info(public_dns, private_ip, 'ec2-user', config['pem_key'], urls_count)
+        collate_streaming_info(public_dns, private_ip, 'ec2-user', config['pem_key'])
 
         # close_spot_fleet_request_and_instances(spot_fleet_request_id)
 
