@@ -58,7 +58,7 @@ print('\nScraping new contents...')
 update_config(r'prepare_input_for_scrape_using_spot_instance:\s*(\bFalse\b|\bTrue\b)', 'prepare_input_for_scrape_using_spot_instance: False')
 update_config(r'collect_new_imdb_ids:\s*(\bFalse\b|\bTrue\b)', 'collect_new_imdb_ids: False')
 update_config(r'trigger_data_scrape_using_spot_instance:\s*(\bFalse\b|\bTrue\b)', 'trigger_data_scrape_using_spot_instance: True')
-latest_date = (datetime.datetime.today()-datetime.timedelta(days=2)).date().strftime('%Y-%m-%d')
+latest_date = (datetime.datetime.today()-datetime.timedelta(days=10)).date().strftime('%Y-%m-%d')
 update_config(r'latest_release_date:\s*\'\d{4}-\d{2}-\d{2}\'', "latest_release_date: '"+latest_date+"'")
 
 push_to_git([
