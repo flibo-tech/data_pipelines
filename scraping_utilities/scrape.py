@@ -176,7 +176,7 @@ if __name__ == "__main__":
 
     elif config['scrape_data']['trigger_streaming_info_scrape_using_spot_instance']:
         # getting URL combos to fetch all the content URLs
-        spot_fleet_request_id, public_dns, private_ip = launch_spot_instance('smallest')
+        spot_fleet_request_id, public_dns, private_ip = launch_spot_instance()
         pd.DataFrame([{
             'spot_fleet_request_id': spot_fleet_request_id,
             'public_dns': public_dns,
