@@ -81,9 +81,11 @@ def parallelize_dataframe(df, func, n_cores=2):
 
 print('concatenating CSVs...')
 df_justwatch_contents = pd.DataFrame()
+i = 0
 for filename in os.listdir('/tmp/'):
     if filename.startswith('streaming_info_') and filename.endswith('.csv'):
-        print(filename)
+        i += 1
+        print(filename, i)
         try:
             df_temp = pd.read_csv('/tmp/'+filename, sep='^')
             df_justwatch_contents = pd.concat([df_justwatch_contents, df_temp], axis=0)
