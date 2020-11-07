@@ -30,6 +30,7 @@ def push_to_git(files, commit_message):
 
 # resetting config to start
 print('\nResetting config to start...')
+os.system('del config.yml.bak')
 update_config(r'vCPU:\s*\d+', 'vCPU: 4')
 update_config(r'max_spot_instances:\s*\d+', 'max_spot_instances: 10')
 update_config(r'tables:\s*\[.*\]', 'tables: []')
