@@ -234,6 +234,8 @@ def clean_streaming_links(link):
             link = link.split('?')[0]
         if (link.count('camp=') != 0) or (link.count('tag=just') != 0):
             link = link.split('?')[0]
+        if link.count('app.primevideo.com') != 0:
+            link = link.replace('app.primevideo.com', 'primevideo.com')
     return link
 
 
