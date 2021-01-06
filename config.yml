@@ -33,7 +33,7 @@ scrape_data:
   latest_release_date: '2020-12-27'
   scrape_title_ids_on: 'local' # local / remote
 
-  trigger_data_scrape_using_spot_instance: True # Empty directory spot_instance_scraped_data_folder before running this
+  trigger_data_scrape_using_spot_instance: False # Empty directory spot_instance_scraped_data_folder before running this
 
   extra_titles:
     movie: [] # imdb title ids
@@ -118,7 +118,7 @@ upload_data:
   # Remember to remove or change names of files - artists_to_contents.csv & tags_to_contents.csv in upload_resources folder while running live_search for new data
 
 dump_into_database:
-  calculate_crew_table: False
+  calculate_crew_table: True
   tables: [] # 'movies', 'tv_series', 'artists', 'content_tags', 'awards_master', 'awards_distribution', 'content_certificates', 'content_crew' (upload crew Only After all other uploads), 'live_search', 'similar_contents', 'streaming_info'
 
 # similar movies algo
