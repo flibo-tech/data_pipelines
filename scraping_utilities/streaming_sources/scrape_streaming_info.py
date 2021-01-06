@@ -135,16 +135,37 @@ print('Getting IMDb ids...')
 
 
 def get_imdb_id(external_ids):
-    imdb_id = None
+    imdb_ids = []
     for external_id in external_ids:
-        if external_id.get('provider') == 'imdb':
-            imdb_id = external_id['external_id']
-    return imdb_id
+        if (external_id.get('provider') == 'imdb') and str(external_id['external_id']).count('tt'):
+            imdb_ids.append(external_id['external_id'])
+
+    if not imdb_ids:
+        imdb_ids = [None]
+
+    return imdb_ids
 
 
-df_justwatch_contents['imdb_id'] = None
-df_justwatch_contents['imdb_id'][pd.notnull(df_justwatch_contents['external_ids'])] = df_justwatch_contents['external_ids'][pd.notnull(df_justwatch_contents['external_ids'])].apply(get_imdb_id)
+df_justwatch_contents['imdb_ids'] = None
+df_justwatch_contents['imdb_ids'][pd.notnull(df_justwatch_contents['external_ids'])] = df_justwatch_contents['external_ids'][pd.notnull(df_justwatch_contents['external_ids'])].apply(get_imdb_id)
 del df_justwatch_contents['external_ids']
+
+df_justwatch_contents = df_justwatch_contents.where((pd.notnull(df_justwatch_contents)), None)
+
+
+def flatten_imdb_ids(row):
+    output = []
+    for imdb_id in (row['imdb_ids'] or [None]):
+        row['imdb_id'] = imdb_id
+        output.append(row.copy())
+    return output
+
+
+print('Flattening imdb ids...')
+df_justwatch_contents['temp'] = df_justwatch_contents.apply(lambda row: flatten_imdb_ids(row), axis=1)
+df_justwatch_contents = pd.DataFrame(df_justwatch_contents['temp'].sum()).reset_index(drop=True)
+del df_justwatch_contents['imdb_ids']
+print('Done flattening.\n')
 
 df_db_ids = pd.read_csv('/tmp/content_metainfo.csv', sep='^')
 df_db_ids.drop_duplicates(['title', 'release_year', 'item_type'], inplace=True)
