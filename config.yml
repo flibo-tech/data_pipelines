@@ -30,10 +30,10 @@ scrape_data:
   prepare_input_for_scrape_using_spot_instance: False # file titles_to_scrape.csv prepared from this should be pushed to GIT before trigger_data_scrape_using_spot_instance
   collect_new_imdb_ids: False # to collect just the imdb ids for new content releases
   languages: ['en', 'hi', 'as', 'eu', 'bn', 'bho', 'ca', 'nl', 'fil', 'fr', 'gd', 'gl', 'de', 'gu', 'id', 'it', 'ja', 'kn', 'ko', 'ml', 'mr', 'myn', 'nah', 'or', 'pt', 'pa', 'ru', 'sa', 'sd', 'es', 'tl', 'ta', 'te', 'ur', 'cy']
-  latest_release_date: '2020-12-27'
+  latest_release_date: '2020-12-28'
   scrape_title_ids_on: 'local' # local / remote
 
-  trigger_data_scrape_using_spot_instance: False # Empty directory spot_instance_scraped_data_folder before running this
+  trigger_data_scrape_using_spot_instance: True # Empty directory spot_instance_scraped_data_folder before running this
 
   extra_titles:
     movie: [] # imdb title ids
@@ -41,14 +41,14 @@ scrape_data:
 
   refresh_imdb_meta_info: False # meta info like imdb rating, votes, posters
 
-  max_spot_instances: 300
+  max_spot_instances: 10
   crawls_per_spot_instance: 8000
 
   movies: ['movie_budget_n_metacritic_scrape', 'movie_content_scrape', 'movie_crew_scrape', 'movie_keywords_scrape', 'movie_synopsys_scrape', 'movie_technical_specs_scrape', 'movie_tmdb_data_collection'] #'movie_budget_n_metacritic_scrape', 'movie_content_scrape', 'movie_crew_scrape', 'movie_keywords_scrape', 'movie_synopsys_scrape', 'movie_technical_specs_scrape', 'movie_tmdb_artist_data_collection', 'movie_tmdb_data_collection'
   tv_series: ['tv_series_content_scrape', 'tv_series_crew_scrape', 'tv_series_details_scrape', 'tv_series_keywords_scrape', 'tv_series_synopsys_scrape', 'tv_series_technical_specs_scrape', 'tv_series_tmdb_data_collection'] #'tv_series_content_scrape', 'tv_series_crew_scrape', 'tv_series_details_scrape', 'tv_series_keywords_scrape', 'tv_series_synopsys_scrape', 'tv_series_technical_specs_scrape', 'tv_series_tmdb_artist_data_collection', 'tv_series_tmdb_data_collection'
   awards: [] #'awards_scrape' -- Before running this remember to delete latest year's awards scraped from database & file awards_scraped.csv at scraped_data_folder
 
-  trigger_streaming_info_scrape_using_spot_instance: True
+  trigger_streaming_info_scrape_using_spot_instance: False
   countries: {
     en_CA: {
       name: 'Canada',
@@ -125,7 +125,7 @@ dump_into_database:
 algo:
   weight_power: 0.65
   neighbours: 50
-  vCPU: 96
+  vCPU: 4
   calculate_similar_contents: False # This functionality calculates similar movies by fetching data from sql db & EC2 only.
   calculate_only_for_new_content: True
 
