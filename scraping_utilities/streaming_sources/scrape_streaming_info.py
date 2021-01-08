@@ -333,7 +333,7 @@ df_streaming_info = df_streaming_info.pivot(index='justwatch_id', columns='count
 del df_streaming_info.columns.name
 
 df_streaming_info = pd.merge(df_streaming_info,
-                             df_justwatch_contents[['justwatch_id', 'imdb_id', 'trailer_id']].drop_duplicates('justwatch_id'),
+                             df_justwatch_contents[['justwatch_id', 'imdb_id', 'trailer_id']].drop_duplicates(['justwatch_id', 'imdb_id']),
                              how='left',
                              on='justwatch_id')
 del df_streaming_info['justwatch_id']
