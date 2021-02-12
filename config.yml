@@ -36,7 +36,7 @@ scrape_data:
   trigger_data_scrape_using_spot_instance: False # Empty directory spot_instance_scraped_data_folder before running this
 
   extra_titles:
-    movie: [] # imdb title ids
+    movie: ['tt11464826'] # imdb title ids
     tv: [] # imdb title ids
 
   refresh_imdb_meta_info: False # meta info like imdb rating, votes, posters
