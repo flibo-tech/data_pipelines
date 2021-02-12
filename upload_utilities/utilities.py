@@ -1017,6 +1017,12 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file, p
             interact.send('git checkout develop')
             interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'data_pipelines'))
 
+            interact.send('sudo pip-3.6 install -U setuptools')
+            interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'data_pipelines'))
+
+            interact.send('sudo pip-3.6 install wheel')
+            interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'data_pipelines'))
+
             interact.send('sudo pip-3.6 install -r requirements.txt')
             interact.expect('\(venv_similar_content\)\s+' + default_prompt.replace('~', 'data_pipelines'))
 
