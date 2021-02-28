@@ -30,10 +30,10 @@ scrape_data:
   prepare_input_for_scrape_using_spot_instance: False # file titles_to_scrape.csv prepared from this should be pushed to GIT before trigger_data_scrape_using_spot_instance
   collect_new_imdb_ids: False # to collect just the imdb ids for new content releases
   languages: ['en', 'hi', 'as', 'eu', 'bn', 'bho', 'ca', 'nl', 'fil', 'fr', 'gd', 'gl', 'de', 'gu', 'id', 'it', 'ja', 'kn', 'ko', 'ml', 'mr', 'myn', 'nah', 'or', 'pt', 'pa', 'ru', 'sa', 'sd', 'es', 'tl', 'ta', 'te', 'ur', 'cy']
-  latest_release_date: '2021-02-09'
+  latest_release_date: '2021-02-18'
   scrape_title_ids_on: 'local' # local / remote
 
-  trigger_data_scrape_using_spot_instance: False # Empty directory spot_instance_scraped_data_folder before running this
+  trigger_data_scrape_using_spot_instance: True # Empty directory spot_instance_scraped_data_folder before running this
 
   extra_titles:
     movie: [] # imdb title ids
