@@ -968,10 +968,10 @@ def install_requirements_on_remote(public_dns, private_ip, username, key_file, p
             interact.send('sudo pip-3.6 install pandas')
             interact.expect(default_prompt)
 
-            interact.send('sudo pip-3.6 install SQLAlchemy')
+            interact.send('sudo pip-3.6 install SQLAlchemy==1.0.9')
             interact.expect(default_prompt)
 
-            interact.send('sudo pip-3.6 install psycopg2')
+            interact.send('sudo pip-3.6 install psycopg2==2.6.1')
             interact.expect(default_prompt)
         else:
             interact.send('sudo pip-3.6 install virtualenv')
